@@ -93,10 +93,30 @@ scripts/make-app.sh StatusItemKitDemo
 scripts/make-app.sh BatteryTime "Battery Time"
 ```
 
-> **The ad-hoc `codesign` step is mandatory, not cosmetic.**
+> **The `codesign` step is mandatory, not cosmetic.**
 > `UNUserNotificationCenter` silently drops notification requests from unsigned
 > bundles — threshold/alert notifications will appear to "not fire" if the
 > signature is missing.
+
+### Stable signing (so TCC grants survive rebuilds)
+
+By default the bundle is **ad-hoc** signed. Ad-hoc signatures have no stable
+identity, so every rebuild produces a new code hash (CDHash). macOS keys TCC
+permissions — Accessibility, Screen Recording, etc. — on that hash, so an
+ad-hoc app **loses its grant on every rebuild** and the user must re-approve it.
+(That bites any app needing such a permission, e.g. a key-intercepting app.)
+
+Run once to install a self-signed code-signing identity in your login keychain:
+
+```sh
+scripts/setup-signing.sh   # idempotent; creates "StatusItemKit Local Signing"
+```
+
+`make-app.sh` then signs with it automatically (precedence:
+`$STATUSITEMKIT_SIGN_ID` → the `StatusItemKit Local Signing` identity → ad-hoc).
+A real identity gives the bundle a stable Designated Requirement (the cert's
+leaf hash, not the CDHash), so TCC honors the grant across rebuilds: approve
+once, and it sticks.
 
 Your app provides its own `Resources/Info.plist` with `LSUIElement=true` (no
 Dock icon) and a real bundle identifier; use this repo's
