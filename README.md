@@ -80,6 +80,62 @@ final class App: NSObject, NSApplicationDelegate {
 }
 ```
 
+## Status-item icons
+
+`MeterIcon` draws the glyph itself rather than shipping assets, so a status item
+can show a live value without a single image file. Every style is drawn at 18pt,
+the menu-bar glyph size.
+
+![MeterIcon styles](docs/meter-icons.png)
+
+| Style | Call | Reads as |
+|---|---|---|
+| `gauge` | `MeterIcon.gauge(fraction: 0.4, color: .black)` | Speedometer needle over a faint track. Distinctive, but the needle is thin — small changes are hard to see at 18pt. |
+| `arc` | `MeterIcon.arc(fraction: 0.4, color: .black)` | Ring filling clockwise. The most legible at menu-bar size: the filled length reads instantly. |
+| `pie` | `MeterIcon.pie(fraction: 0.4, color: .black)` | Outlined circle with a wedge filling in. Clear as a fraction, though 100% is a solid disc. |
+| `wedge` | `MeterIcon.wedge(fraction: 0.4, color: .black)` | Solid disc with a wedge. Highest contrast — but note 0% is still a filled circle, so "empty" and "full" can be confused at a glance. |
+| `dot` | `MeterIcon.dot(color: .systemGreen)` | No level at all — a plain filled circle for discrete states. Takes an optional `diameter` (default 10). |
+
+`fraction` is clamped to `0...1`, so callers need not range-check.
+
+Setting one is a single call on the controller:
+
+```swift
+controller.setIcon(MeterIcon.arc(fraction: 0.4, color: .black))
+```
+
+### Colour vs. template
+
+These are **full-colour, non-template** images by default, which is what you want
+when the colour carries meaning:
+
+```swift
+let pct = currentPercentage()
+controller.setIcon(MeterIcon.arc(fraction: CGFloat(pct) / 100,
+                                 color: Severity.level(pct: pct, warnPct: 85).color))
+```
+
+To instead match the standard menu-bar glyph — black in light mode, white in dark,
+inverted while the menu is open — draw in black and mark it a template:
+
+```swift
+let icon = MeterIcon.arc(fraction: 0.4, color: .black)
+icon.isTemplate = true
+controller.setIcon(icon)
+```
+
+Template tinting uses only the drawn *alpha*, so the colour you pass is discarded;
+black is simply the conventional ink. That also means the faint 28%-alpha track the
+meters draw survives templating and still reads as a track. A useful pattern is to
+template while the app can act, and fall back to a muted `.systemGray` full-colour
+icon when it cannot — the greyed icon then reads as unavailable in both appearances.
+
+Regenerate the image above after changing `MeterIcon`:
+
+```sh
+scripts/render-meter-icons.sh    # writes docs/meter-icons.png
+```
+
 ## Building a `.app` bundle
 
 `scripts/make-app.sh` wraps a SwiftPM executable product into an ad-hoc-signed
