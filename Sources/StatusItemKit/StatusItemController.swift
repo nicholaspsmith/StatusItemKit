@@ -9,6 +9,8 @@ public final class StatusItemController: NSObject, NSMenuDelegate {
     private let pollInterval: TimeInterval
     private let onPoll: () -> Void
     private let onBuildMenu: (NSMenu) -> Void
+    private let onPrimaryClick: (() -> Void)?
+    private let menu = NSMenu()
     private var timer: Timer?
 
     public var button: NSStatusBarButton? { statusItem.button }
@@ -17,22 +19,58 @@ public final class StatusItemController: NSObject, NSMenuDelegate {
     ///   position under (`NSStatusItem Preferred Position <name>` in the app's
     ///   defaults). Supply one when the position matters and you want it stable
     ///   and inspectable; leave nil for the system default, `Item-0`.
+    /// - Parameter onPrimaryClick: when supplied, a left click runs this instead
+    ///   of opening the menu, and the menu moves to right-click (and
+    ///   control-click). Leave nil for the usual behaviour, where any click opens
+    ///   the menu.
     public init(
         pollInterval: TimeInterval,
         onPoll: @escaping () -> Void,
         onBuildMenu: @escaping (NSMenu) -> Void,
-        autosaveName: String? = nil
+        autosaveName: String? = nil,
+        onPrimaryClick: (() -> Void)? = nil
     ) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         if let autosaveName { statusItem.autosaveName = autosaveName }
         self.pollInterval = pollInterval
         self.onPoll = onPoll
         self.onBuildMenu = onBuildMenu
+        self.onPrimaryClick = onPrimaryClick
         super.init()
         statusItem.button?.attributedTitle = NSAttributedString(string: "…")
-        let menu = NSMenu()
         menu.delegate = self
+
+        if onPrimaryClick == nil {
+            statusItem.menu = menu
+        } else {
+            // Leaving `statusItem.menu` unset is what frees the left click: with
+            // a menu attached, AppKit swallows the click to open it and the
+            // button's action never runs.
+            statusItem.button?.target = self
+            statusItem.button?.action = #selector(handleClick)
+            statusItem.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
+        }
+    }
+
+    // MARK: Click handling
+
+    @objc private func handleClick() {
+        let event = NSApp.currentEvent
+        let isSecondary = event?.type == .rightMouseUp
+            || event?.modifierFlags.contains(.control) == true
+        if isSecondary {
+            showMenu()
+        } else {
+            onPrimaryClick?()
+        }
+    }
+
+    /// Attach the menu just long enough to pop it, then detach so the next left
+    /// click still reaches the button's action.
+    private func showMenu() {
         statusItem.menu = menu
+        statusItem.button?.performClick(nil)
+        statusItem.menu = nil
     }
 
     public func start() {
@@ -68,10 +106,19 @@ public final class StatusItemController: NSObject, NSMenuDelegate {
         button.image = image
     }
 
-    /// Show or hide the item itself. Used by `YieldClient` so a menu-bar manager
-    /// can borrow this app's slot during a peek without moving anything.
+    /// Give up this item's width, or take it back. Used by `YieldClient` so a
+    /// menu-bar manager can borrow the slot during a peek without moving
+    /// anything.
+    ///
+    /// Deliberately *not* `isVisible = false`. Hiding an item makes macOS discard
+    /// its remembered position outright — measured: four apps lost their
+    /// `Preferred Position` keys across a single peek and came back at x≈-1200,
+    /// inside the very block that was supposed to be hidden. Writing the saved
+    /// value back before un-hiding does not help; it is cleared again. Shrinking
+    /// to zero width frees essentially the same space while the item stays
+    /// present, so its placement survives untouched.
     public func setVisible(_ visible: Bool) {
-        statusItem.isVisible = visible
+        statusItem.length = visible ? NSStatusItem.variableLength : 0
     }
 
     /// The item's width. A status item grows leftward — its right edge stays put
