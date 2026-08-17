@@ -68,6 +68,13 @@ public final class StatusItemController: NSObject, NSMenuDelegate {
     /// Attach the menu just long enough to pop it, then detach so the next left
     /// click still reaches the button's action.
     private func showMenu() {
+        popUp(menu)
+    }
+
+    /// Drop an arbitrary menu under the item, anchored and highlighted the way a
+    /// status menu should be. Useful when a left click should present something
+    /// other than the item's own menu.
+    public func popUp(_ menu: NSMenu) {
         statusItem.menu = menu
         statusItem.button?.performClick(nil)
         statusItem.menu = nil
