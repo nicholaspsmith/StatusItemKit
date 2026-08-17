@@ -62,6 +62,12 @@ public final class StatusItemController: NSObject, NSMenuDelegate {
         button.image = image
     }
 
+    /// Show or hide the item itself. Used by `YieldClient` so a menu-bar manager
+    /// can borrow this app's slot during a peek without moving anything.
+    public func setVisible(_ visible: Bool) {
+        statusItem.isVisible = visible
+    }
+
     // MARK: Lazy menu rebuild
 
     public func menuNeedsUpdate(_ menu: NSMenu) {
