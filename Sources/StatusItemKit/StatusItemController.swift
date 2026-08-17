@@ -13,12 +13,18 @@ public final class StatusItemController: NSObject, NSMenuDelegate {
 
     public var button: NSStatusBarButton? { statusItem.button }
 
+    /// - Parameter autosaveName: names the slot macOS remembers the item's
+    ///   position under (`NSStatusItem Preferred Position <name>` in the app's
+    ///   defaults). Supply one when the position matters and you want it stable
+    ///   and inspectable; leave nil for the system default, `Item-0`.
     public init(
         pollInterval: TimeInterval,
         onPoll: @escaping () -> Void,
-        onBuildMenu: @escaping (NSMenu) -> Void
+        onBuildMenu: @escaping (NSMenu) -> Void,
+        autosaveName: String? = nil
     ) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        if let autosaveName { statusItem.autosaveName = autosaveName }
         self.pollInterval = pollInterval
         self.onPoll = onPoll
         self.onBuildMenu = onBuildMenu
@@ -66,6 +72,14 @@ public final class StatusItemController: NSObject, NSMenuDelegate {
     /// can borrow this app's slot during a peek without moving anything.
     public func setVisible(_ visible: Bool) {
         statusItem.isVisible = visible
+    }
+
+    /// The item's width. A status item grows leftward — its right edge stays put
+    /// — which is what lets a wide item push its left-hand neighbours off the
+    /// display without disturbing anything to its right.
+    public var length: CGFloat {
+        get { statusItem.length }
+        set { statusItem.length = newValue }
     }
 
     // MARK: Lazy menu rebuild
