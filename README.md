@@ -237,3 +237,35 @@ Notes:
   target, and `NSMenuItem` does not retain its target. It drops its hold on the
   shared colour panel when the panel closes, so one app's picker cannot end up
   writing into another's preference.
+
+## The menu-bar suite
+
+One of the two frameworks behind a suite of macOS menu-bar apps. They share
+one build-and-sign script and one installer, and are designed to sit in the
+same bar together.
+
+| App | What it does |
+|---|---|
+| [Claude Usage](https://github.com/nicholaspsmith/claude-usage-menubar) | Claude Code plan limits, resets, and live agent sessions |
+| [Apollo Monitor](https://github.com/nicholaspsmith/apollo-monitor-menubar) | Universal Audio Apollo monitor level, plus a UA process watchdog |
+| [Battery Time](https://github.com/nicholaspsmith/battery-time-menubar) | Time remaining, power mode, and 24h usage |
+| [VPN & DNS](https://github.com/nicholaspsmith/vpn-dns-menubar) | One dot for Mullvad + Tailscale state, with a DNS watcher |
+| [Process Monitor](https://github.com/nicholaspsmith/MacOS_Process_Monitor) | Process-count sparkline against the per-UID limit |
+| [KeyLight](https://github.com/nicholaspsmith/keylight-menubar) | Ctrl+brightness keys remapped to keyboard backlight |
+| [MacRecorder](https://github.com/nicholaspsmith/MacRecorder) | Screen recording with system audio |
+| [Media Tracking Killer](https://github.com/nicholaspsmith/media-tracking-killer-menubar) | Kills Apple's media tracking daemons |
+| [Download Recycler](https://github.com/nicholaspsmith/download-recycler-menubar) | Sweeps stale files out of ~/Downloads |
+| [Curtain](https://github.com/nicholaspsmith/menubar-curtain) | Hides a block of status icons by width, so it cannot strand one |
+
+| Framework | |
+|---|---|
+| **StatusItemKit** | Status-item lifecycle, polling, menus, meter icons, the shared Icon picker |
+| [HotkeyKit](https://github.com/nicholaspsmith/HotkeyKit) | CGEventTap engine for intercepting and remapping global keys |
+
+Install the whole suite on a fresh Mac with
+[macOS Dev Environment Setup](https://github.com/nicholaspsmith/MacOS-Dev-Environment-Setup):
+
+```bash
+git clone https://github.com/nicholaspsmith/MacOS-Dev-Environment-Setup.git
+cd MacOS-Dev-Environment-Setup && ./bootstrap.sh --all
+```
