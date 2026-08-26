@@ -25,6 +25,10 @@ monitor, battery time, VPN/DNS status).
 | `MenuBuilder` | `labelWidth(...)` and a view-based `textView(...)` that escapes NSMenu's keyboard-shortcut column reservation (uses explicit frames, not auto-layout). |
 | `MeterIcon` | Custom-drawn, full-color status glyphs: `dot`, and the proportional `gauge` / `arc` / `pie` / `wedge` meters (take a `0...1` fraction + color). |
 | `Severity` | `level(pct:warnPct:)` → `.normal` / `.elevated` / `.high`, with a `.color`. |
+| `MeterStyle` | The meter shapes as a value: `.arc` / `.gauge` / `.pie` / `.wedge` / `.dot`, plus `MeterIcon.image(style:fraction:color:)`. |
+| `MeterColor` | Named presets and the `#RRGGBB` round-trip used to persist a colour, plus `swatch(_:)` for menu-item images. |
+| `MeterAppearance` | The user's chosen shape and colour, persisted in the app's own defaults (`MeterStyle`, `MeterColorHex`). |
+| `AppearanceMenu` | The shared **Icon** submenu: shapes, colour presets, and the system colour picker. |
 | `LoginItem` | `SMAppService.mainApp` register/unregister + the "must live in /Applications" alert. |
 | `Notifier` | `UNUserNotificationCenter` authorization + `post(title:body:)`. |
 
@@ -191,3 +195,45 @@ unit-tested — it's verified by running the demo.
 ## License
 
 [MIT](LICENSE)
+
+## The Icon menu
+
+Any app with a meter icon can offer the same picker — shape, seven colour
+presets, and the macOS colour panel — in three lines:
+
+```swift
+let appearance = MeterAppearance(defaultStyle: .arc)
+lazy var appearanceMenu = AppearanceMenu(appearance: appearance) { [weak self] in
+    self?.redraw()          // called whenever a choice changes
+}
+
+// ...while building the menu:
+menu.addItem(appearanceMenu.menuItem())     // an "Icon" item with the picker under it
+```
+
+Then draw with what the user chose:
+
+```swift
+controller.setIcon(appearance.image(fraction: fraction))
+// or, when the app has its own severity ramp:
+controller.setIcon(MeterIcon.image(style: appearance.style, fraction: fraction, color: myColor))
+```
+
+Notes:
+
+- **`styles:` defaults to `MeterStyle.proportional`**, which omits `.dot` — it
+  ignores the fraction, so it cannot do a percentage icon's job. Pass
+  `MeterStyle.allCases` for an app whose icon shows state rather than a level.
+- **Treat `appearance.color` as the resting colour.** If your app escalates
+  (`Severity`), keep your warning colours for the upper bands: a meter that
+  looks identical at 5% and 95% has stopped saying the thing it exists to say.
+- **The default colour is the Green preset, not `NSColor.systemGreen`.** The
+  system colour is dynamic and resolves to a different hex in dark mode, so it
+  would never match a preset and a fresh install would show "Custom Colour…"
+  ticked with nothing customised.
+- **Colours persist as hex**, not archived `NSColor`: readable in
+  `defaults read`, stable across OS versions, and fixable by hand.
+- `AppearanceMenu` must be **retained by the app** — it is the menu items'
+  target, and `NSMenuItem` does not retain its target. It drops its hold on the
+  shared colour panel when the panel closes, so one app's picker cannot end up
+  writing into another's preference.
