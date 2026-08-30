@@ -27,4 +27,21 @@ final class ShellTests: XCTestCase {
         // The timeout is a backstop; well-behaved commands are unaffected.
         XCTAssertEqual(Shell.run("/bin/echo", ["hi"], timeout: 5), "hi\n")
     }
+
+    func testEnvOverlayReachesChild() {
+        // Overlay vars are visible in the child. The Tailscale CLI silently
+        // misbehaves without TERM (prints an error to stdout, exit 0), so
+        // callers must be able to inject it.
+        let out = Shell.run("/bin/sh", ["-c", "printf %s \"$SIK_TEST_VAR\""],
+                            env: ["SIK_TEST_VAR": "dumb"])
+        XCTAssertEqual(out, "dumb")
+    }
+
+    func testEnvOverlayStillInheritsParentEnvironment() {
+        // The overlay merges over the inherited environment, not replaces it:
+        // HOME must survive when only an unrelated var is injected.
+        let out = Shell.run("/bin/sh", ["-c", "printf %s \"$HOME\""],
+                            env: ["SIK_TEST_VAR": "x"])
+        XCTAssertEqual(out, ProcessInfo.processInfo.environment["HOME"])
+    }
 }

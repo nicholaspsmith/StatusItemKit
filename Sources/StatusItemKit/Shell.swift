@@ -13,10 +13,18 @@ import Foundation
 ///   - stderr is drained concurrently so a chatty child can't deadlock by filling
 ///     its stderr pipe while we're reading stdout.
 public enum Shell {
-    public static func run(_ path: String, _ args: [String], timeout: TimeInterval = 10) -> String? {
+    public static func run(_ path: String, _ args: [String], timeout: TimeInterval = 10,
+                           env: [String: String]? = nil) -> String? {
         let task = Process()
         task.executableURL = URL(fileURLWithPath: path)
         task.arguments = args
+        // `env` overlays the inherited environment rather than replacing it —
+        // some CLIs (Tailscale) change behavior on vars like TERM, and a
+        // login-launched app's environment doesn't carry them.
+        if let env {
+            task.environment = ProcessInfo.processInfo.environment
+                .merging(env) { _, new in new }
+        }
         let outPipe = Pipe()
         let errPipe = Pipe()
         task.standardOutput = outPipe
