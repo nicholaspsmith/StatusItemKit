@@ -2,6 +2,8 @@
 
 <p align="center"><img src="docs/mascot.png" width="160" alt="StatusItemKit mascot, from the Menubarn widget library"></p>
 
+<p align="center">Part of the <a href="https://widgets.nicksmith.software">Menubarn</a> widget library.</p>
+
 A small, reusable framework for building **standalone macOS menu-bar apps** in
 Swift — no third-party host (like SwiftBar) required. It factors out the
 mechanics every such app repeats: the status-item lifecycle, a polling loop, a
