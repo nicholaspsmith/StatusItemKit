@@ -28,6 +28,33 @@ public enum MeterIcon {
         return img
     }
 
+    /// An SF Symbol inked in a single flat colour, on the same 18pt canvas as
+    /// the meters, for discrete-state apps that want a *recognisable* glyph
+    /// rather than a dot. Non-template on purpose: the colour is the state.
+    ///
+    /// Falls back to a `dot` of the same colour if the symbol name is unknown to
+    /// this macOS, so an app never launches with an empty status item.
+    public static func symbol(
+        _ name: String,
+        color: NSColor,
+        pointSize: CGFloat = 12,
+        weight: NSFont.Weight = .semibold
+    ) -> NSImage {
+        let config = NSImage.SymbolConfiguration(pointSize: pointSize, weight: weight)
+        guard let base = NSImage(systemSymbolName: name, accessibilityDescription: nil)?
+            .withSymbolConfiguration(config)
+        else { return dot(color: color) }
+        let glyph = base.size
+        return image { rect in
+            let origin = NSPoint(x: (rect.width - glyph.width) / 2, y: (rect.height - glyph.height) / 2)
+            let frame = NSRect(origin: origin, size: glyph)
+            base.draw(in: frame, from: .zero, operation: .sourceOver, fraction: 1)
+            // Recolour: keep the glyph's alpha, replace its ink.
+            color.set()
+            frame.fill(using: .sourceAtop)
+        }
+    }
+
     /// Speedometer: needle angle proportional to fraction over a ~250° arc.
     public static func gauge(fraction: CGFloat, color: NSColor) -> NSImage {
         let frac = clamp(fraction)

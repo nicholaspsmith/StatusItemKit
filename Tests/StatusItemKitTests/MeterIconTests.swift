@@ -28,4 +28,31 @@ final class MeterIconTests: XCTestCase {
         _ = MeterIcon.arc(fraction: -1, color: .systemGreen)
         _ = MeterIcon.wedge(fraction: 2, color: .systemRed)
     }
+
+    func testSymbolIsNonTemplate18ptInTheGivenColour() throws {
+        let img = MeterIcon.symbol("arrow.3.trianglepath", color: .systemGreen)
+        XCTAssertFalse(img.isTemplate)
+        XCTAssertEqual(img.size.width, 18, accuracy: 0.001)
+        XCTAssertEqual(img.size.height, 18, accuracy: 0.001)
+        // Something was actually inked, and in the requested colour: sample the
+        // most opaque pixel and check it is green rather than the template black.
+        guard let tiff = img.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff) else {
+            return XCTFail("no bitmap")
+        }
+        var best: NSColor?
+        for x in 0..<rep.pixelsWide {
+            for y in 0..<rep.pixelsHigh {
+                if let c = rep.colorAt(x: x, y: y), c.alphaComponent > (best?.alphaComponent ?? 0.5) { best = c }
+            }
+        }
+        let c = try XCTUnwrap(best).usingColorSpace(.deviceRGB)!
+        XCTAssertGreaterThan(c.greenComponent, c.redComponent)
+        XCTAssertGreaterThan(c.greenComponent, c.blueComponent)
+    }
+
+    func testUnknownSymbolFallsBackToADot() {
+        let img = MeterIcon.symbol("no.such.symbol.name", color: .systemGray)
+        XCTAssertFalse(img.isTemplate)
+        XCTAssertEqual(img.size.width, 18, accuracy: 0.001)
+    }
 }
