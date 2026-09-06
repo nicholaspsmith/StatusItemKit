@@ -12,6 +12,36 @@ bundle.
 It's the extracted common core of several personal menu-bar apps (process
 monitor, battery time, VPN/DNS status).
 
+## Why not SwiftBar?
+
+[SwiftBar](https://github.com/swiftbar/SwiftBar) is a fine way to get a script
+into the menu bar, and several of these apps started life as SwiftBar plugins.
+They were rewritten as standalone apps because the plugin model kept getting in
+the way:
+
+- **No host process.** Each widget is its own `.app` with its own icon, its own
+  process, and its own Start-at-Login toggle (`SMAppService`). Nothing to install
+  first, no shared plugin directory where a stray file becomes a phantom icon, and
+  one widget hanging cannot take the others down with it.
+- **Real AppKit menus, not rendered stdout.** A plugin's dropdown is whatever its
+  text protocol can express. Here it is a native `NSMenu`: sliders, checkmarks,
+  submenus, custom views, images, keyboard shortcuts, the system colour picker.
+- **Event-driven, not re-run on a timer.** A plugin is a script executed again
+  every N seconds. An app can sit on IOKit power-source notifications (Battery
+  Time), a `CGEventTap` (KeyLight, Apollo Monitor), `mullvad status listen`
+  (VPN & DNS), or ScreenCaptureKit (MacRecorder) — things a shell script cannot
+  do at all — and react the instant something changes.
+- **The icon stays put.** A native status item keeps its position in the bar. A
+  plugin's refresh re-creates its item, which is what bounces it around under
+  menu-bar managers. Signing with a stable identity (`make-app.sh`) also keeps
+  the cdhash stable, so TCC grants such as Accessibility survive rebuilds instead
+  of having to be re-granted.
+- **Testable.** The logic lives in Swift libraries with unit tests (for example
+  `BatteryTimeCore`), not in a shell script whose only test is eyeballing the menu.
+- **Data-driven icons.** `MeterIcon` draws proportional gauges, arcs, pies and
+  wedges in colour from a single 0…1 value. A plugin is limited to text and
+  pre-rendered images.
+
 ## Requirements
 
 - macOS **13+** (required by `SMAppService` for Start-at-Login)
