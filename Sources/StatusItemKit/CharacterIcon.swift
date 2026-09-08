@@ -54,10 +54,19 @@ public enum CharacterIcon {
     }
     // OCTOPUS v2: mantle dome, brow, four tentacles curling outward; tentacles light up by quarter.
     /// Green to 25%, yellow above, orange above 50%, red above 75%.
-        public static func octopusColor(_ f: CGFloat) -> NSColor { f > 0.75 ? .systemRed : f > 0.5 ? .systemOrange : f > 0.25 ? .systemYellow : .systemGreen }
+    /// A pale blue while nearly idle (below 15%), green from there, orange above
+    /// 50%, red above 75%.
+    public static func octopusColor(_ f: CGFloat) -> NSColor {
+        if f > 0.75 { return .systemRed }
+        if f > 0.5 { return .systemOrange }
+        if f >= 0.15 { return .systemGreen }
+        return NSColor(red: 0.62, green: 0.84, blue: 1.0, alpha: 1)
+    }
+
     public static func octopus(fraction: CGFloat) -> NSImage {
         canvas { ctx in
-            let lit = Int((max(0, min(1, fraction)) * 4).rounded()); let col = Self.octopusColor(fraction)
+            // One tentacle per quarter, but never none: the colour is part of the reading.
+            let lit = max(1, Int((max(0, min(1, fraction)) * 4).rounded())); let col = Self.octopusColor(fraction)
             // tentacles first (behind the head): each a thick stroke from under the head, down, curling outward
             let arms: [(NSPoint, NSPoint, NSPoint, NSPoint)] = [   // start, c1, c2, end
                 (NSPoint(x: 5.2, y: 8.5), NSPoint(x: 3.6, y: 5.5), NSPoint(x: 0.8, y: 2.6), NSPoint(x: 3.2, y: 2.4)),
@@ -168,7 +177,7 @@ public enum CharacterIcon {
             let mask = NSBezierPath(roundedRect: NSRect(x: 3.2, y: 6.8, width: 11.6, height: 4.2), xRadius: 2.1, yRadius: 2.1); cut(ctx, mask)
             NSColor(white: 0.3, alpha: 1).set(); mask.fill()
             if active {
-                (NSColor.systemGreen).set()
+                NSColor.systemRed.set()
                 NSBezierPath(ovalIn: NSRect(x: 5, y: 7.7, width: 2.6, height: 2.6)).fill(); NSBezierPath(ovalIn: NSRect(x: 10.4, y: 7.7, width: 2.6, height: 2.6)).fill()
             } else {
                 let z = NSBezierPath(); z.move(to: NSPoint(x: 5, y: 9)); z.line(to: NSPoint(x: 7.6, y: 9)); z.move(to: NSPoint(x: 10.4, y: 9)); z.line(to: NSPoint(x: 13, y: 9)); z.lineWidth = 1.2; z.lineCapStyle = .round; body.set(); z.stroke()
@@ -182,7 +191,13 @@ public enum CharacterIcon {
             (active ? NSColor.systemGreen : body).set()
             let b = NSBezierPath(); b.move(to: NSPoint(x: 4, y: 12)); b.line(to: NSPoint(x: 14, y: 12)); b.line(to: NSPoint(x: 13, y: 1.5)); b.line(to: NSPoint(x: 5, y: 1.5)); b.close(); b.fill()
             if active {
-                let lid = NSBezierPath(); lid.move(to: NSPoint(x: 3.5, y: 13.6)); lid.line(to: NSPoint(x: 13.2, y: 16.4)); lid.line(to: NSPoint(x: 13.6, y: 14.8)); lid.line(to: NSPoint(x: 3.9, y: 12)); lid.close(); lid.fill()
+                // Lid flung back to the left; a little guy peeks out over the rim on the right.
+                let lid = NSBezierPath(); lid.move(to: NSPoint(x: 2.2, y: 12.2)); lid.line(to: NSPoint(x: 8.6, y: 17.2)); lid.line(to: NSPoint(x: 9.4, y: 16)); lid.line(to: NSPoint(x: 3.2, y: 11.2)); lid.close(); lid.fill()
+                body.set()
+                NSBezierPath(ovalIn: NSRect(x: 8.6, y: 11.2, width: 5.6, height: 5.6)).fill()   // head
+                NSBezierPath(rect: NSRect(x: 12.4, y: 10.6, width: 2.6, height: 2.2)).fill()      // an arm over the rim
+                cut(ctx, NSBezierPath(ovalIn: NSRect(x: 9.8, y: 13.5, width: 1.3, height: 1.3)))
+                cut(ctx, NSBezierPath(ovalIn: NSRect(x: 11.9, y: 13.5, width: 1.3, height: 1.3)))
             } else {
                 NSBezierPath(roundedRect: NSRect(x: 3, y: 12.4, width: 12, height: 1.8), xRadius: 0.6, yRadius: 0.6).fill()
                 NSBezierPath(roundedRect: NSRect(x: 7.5, y: 14, width: 3, height: 1.4), xRadius: 0.5, yRadius: 0.5).fill()

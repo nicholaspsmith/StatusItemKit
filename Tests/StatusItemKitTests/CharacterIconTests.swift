@@ -19,8 +19,8 @@ final class CharacterIconTests: XCTestCase {
     }
 
     func testOctopusColourSteps() {
+        XCTAssertNotEqual(CharacterIcon.octopusColor(0.1), .systemGreen)   // pale blue while idle
         XCTAssertEqual(CharacterIcon.octopusColor(0.2), .systemGreen)
-        XCTAssertEqual(CharacterIcon.octopusColor(0.3), .systemYellow)
         XCTAssertEqual(CharacterIcon.octopusColor(0.6), .systemOrange)
         XCTAssertEqual(CharacterIcon.octopusColor(0.8), .systemRed)
     }
