@@ -13,6 +13,9 @@ public enum MeterStyle: String, CaseIterable, Equatable, Sendable {
     case pie
     case wedge
     case dot
+    /// The app's own mascot pictogram (see `CharacterIcon`). The app draws it;
+    /// `MeterIcon.image` falls back to an arc for callers that do not.
+    case character
 
     /// Every style that actually varies with the fraction.
     public static let proportional: [MeterStyle] = [.arc, .gauge, .pie, .wedge]
@@ -24,6 +27,7 @@ public enum MeterStyle: String, CaseIterable, Equatable, Sendable {
         case .pie: return "Pie"
         case .wedge: return "Wedge"
         case .dot: return "Dot"
+        case .character: return "Character"
         }
     }
 
@@ -45,6 +49,7 @@ public extension MeterIcon {
         case .pie:   return pie(fraction: fraction, color: color)
         case .wedge: return wedge(fraction: fraction, color: color)
         case .dot:   return dot(color: color)
+        case .character: return arc(fraction: fraction, color: color)
         }
     }
 }

@@ -8,16 +8,21 @@ import AppKit
 public final class AppearanceMenu: NSObject, NSWindowDelegate {
     private let appearance: MeterAppearance
     private let styles: [MeterStyle]
+    private let characterTitle: String?
     private let onChange: () -> Void
 
     /// - Parameter styles: which shapes to offer. Defaults to the proportional
     ///   ones; pass `MeterStyle.allCases` for an app whose icon shows state
     ///   rather than a fraction.
+    /// - Parameter characterTitle: what to call `.character` in the menu when
+    ///   it is offered — "Owl", "Octopus" — since "Character" says nothing.
     public init(appearance: MeterAppearance,
                 styles: [MeterStyle] = MeterStyle.proportional,
+                characterTitle: String? = nil,
                 onChange: @escaping () -> Void) {
         self.appearance = appearance
         self.styles = styles
+        self.characterTitle = characterTitle
         self.onChange = onChange
         super.init()
     }
@@ -28,7 +33,8 @@ public final class AppearanceMenu: NSObject, NSWindowDelegate {
         let submenu = NSMenu()
 
         for style in styles {
-            let choice = NSMenuItem(title: style.title, action: #selector(pickStyle(_:)), keyEquivalent: "")
+            let title = style == .character ? (characterTitle ?? style.title) : style.title
+            let choice = NSMenuItem(title: title, action: #selector(pickStyle(_:)), keyEquivalent: "")
             choice.target = self
             choice.representedObject = style.rawValue
             choice.state = style == appearance.style ? .on : .off
