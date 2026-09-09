@@ -67,21 +67,26 @@ public enum CharacterIcon {
                 // white picks up a faint pink and short red veins appear, both
                 // reddening as the lid comes down.
                 let tired = max(0, min(1, (closed - 0.25) / 0.75))
+                let pr: CGFloat = 3.1
                 NSColor(red: 1, green: 1 - 0.18 * tired, blue: 1 - 0.18 * tired, alpha: 1).set(); eye.fill()
                 if tired > 0 {
                     ctx.saveGraphicsState(); eye.addClip()
                     NSColor(red: 0.95, green: 0.12, blue: 0.12, alpha: 0.3 + 0.7 * tired).set()
-                    for (angle, sweep) in [(CGFloat(200), CGFloat(-1)), (CGFloat(245), CGFloat(1)), (CGFloat(300), CGFloat(-1)), (CGFloat(340), CGFloat(1)), (CGFloat(160), CGFloat(1))] {
-                        let a = angle * .pi / 180
-                        let vc = NSPoint(x: c.x + cos(a) * 5.3, y: c.y + sin(a) * 5.3)
-                        let v = NSBezierPath()
-                        v.appendArc(withCenter: NSPoint(x: vc.x + cos(a + sweep * .pi / 2) * 1.6, y: vc.y + sin(a + sweep * .pi / 2) * 1.6), radius: 2.0, startAngle: angle + sweep * 90 - 160, endAngle: angle + sweep * 90 - 20, clockwise: false)
+                    // Veins run radially: one end near the pupil, the other near
+                    // the rim, each with a slight bend, fanned across the lower
+                    // half where the lid leaves them visible longest.
+                    for (i, angle) in [CGFloat(200), 232, 262, 292, 322, 350].enumerated() {
+                        let a = angle * .pi / 180, bend: CGFloat = i % 2 == 0 ? 0.9 : -0.9
+                        let start = NSPoint(x: c.x + cos(a) * (pr + 0.6), y: c.y + sin(a) * (pr + 0.6))
+                        let end = NSPoint(x: c.x + cos(a) * (r - 0.5), y: c.y + sin(a) * (r - 0.5))
+                        let mid = NSPoint(x: (start.x + end.x) / 2 - sin(a) * bend, y: (start.y + end.y) / 2 + cos(a) * bend)
+                        let v = NSBezierPath(); v.move(to: start)
+                        v.curve(to: end, controlPoint1: mid, controlPoint2: mid)
                         v.lineWidth = 0.5; v.lineCapStyle = .round; v.stroke()
                     }
                     ctx.restoreGraphicsState()
                 }
                 // Pupil.
-                let pr: CGFloat = 3.1
                 NSColor.black.set(); NSBezierPath(ovalIn: NSRect(x: c.x - pr, y: c.y - pr, width: pr * 2, height: pr * 2)).fill()
                 // Eyelid: brown, sliding down from the top by `closed` of the eye's height.
                 ctx.saveGraphicsState()
