@@ -119,9 +119,12 @@ public final class StatusItemController: NSObject, NSMenuDelegate {
     /// Icon render path: clears title + tint (icons are full-color non-template).
     public func setIcon(_ image: NSImage) {
         guard let button = statusItem.button else { return }
-        button.attributedTitle = NSAttributedString(string: "")
-        button.imagePosition = .imageOnly
-        button.contentTintColor = nil
+        // Touch only what changes: resetting the title or image position on a
+        // status button forces the bar to re-lay out, which cancels a menu
+        // that is tracking on the same item.
+        if button.attributedTitle.length != 0 { button.attributedTitle = NSAttributedString(string: "") }
+        if button.imagePosition != .imageOnly { button.imagePosition = .imageOnly }
+        if button.contentTintColor != nil { button.contentTintColor = nil }
         button.image = image
     }
 
@@ -145,7 +148,7 @@ public final class StatusItemController: NSObject, NSMenuDelegate {
     /// display without disturbing anything to its right.
     public var length: CGFloat {
         get { statusItem.length }
-        set { statusItem.length = newValue }
+        set { if statusItem.length != newValue { statusItem.length = newValue } }
     }
 
     // MARK: Lazy menu rebuild
