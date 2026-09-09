@@ -58,6 +58,7 @@ the way:
 | `setTitle(_:warn:)` / `setIcon(_:)` | The render funnel — mutually-exclusive text vs. image paths, so you never get stray title spacing. |
 | `MenuBuilder` | `labelWidth(...)` and a view-based `textView(...)` that escapes NSMenu's keyboard-shortcut column reservation (uses explicit frames, not auto-layout). |
 | `MeterIcon` | Custom-drawn, full-color status glyphs: `dot`, and the proportional `gauge` / `arc` / `pie` / `wedge` meters (take a `0...1` fraction + color). |
+| `CharacterIcon` | The Menubarn mascots as status glyphs that still carry the data: an owl whose eyelids droop with usage, a chameleon that changes colour and grows a tail or tongue per connection, an octopus that grows arms and heats up with load, a keycap whose rays light with the backlight, a rocket whose flame is the level, a raccoon, a bin, a camcorder. Each app pairs one with `MeterStyle.character` in the shared Icon picker. |
 | `Severity` | `level(pct:warnPct:)` → `.normal` / `.elevated` / `.high`, with a `.color`. |
 | `MeterStyle` | The meter shapes as a value: `.arc` / `.gauge` / `.pie` / `.wedge` / `.dot`, plus `MeterIcon.image(style:fraction:color:)`. |
 | `MeterColor` | Named presets and the `#RRGGBB` round-trip used to persist a colour, plus `swatch(_:)` for menu-item images. |
@@ -283,7 +284,7 @@ same bar together.
 | [Claude Usage](https://github.com/nicholaspsmith/claude-usage-menubar) | Claude Code plan limits, resets, and live agent sessions |
 | [Apollo Monitor](https://github.com/nicholaspsmith/apollo-monitor-menubar) | Universal Audio Apollo monitor level, plus a UA process watchdog |
 | [Battery Time](https://github.com/nicholaspsmith/battery-time-menubar) | Time remaining, power mode, and 24h usage |
-| [VPN & DNS](https://github.com/nicholaspsmith/vpn-dns-menubar) | One dot for Mullvad + Tailscale state, with a DNS watcher |
+| [VPN & DNS](https://github.com/nicholaspsmith/vpn-dns-menubar) | A chameleon for Mullvad + Tailscale state, with a DNS watcher |
 | [Process Monitor](https://github.com/nicholaspsmith/MacOS_Process_Monitor) | Process-count sparkline against the per-UID limit |
 | [KeyLight](https://github.com/nicholaspsmith/keylight-menubar) | Ctrl+brightness keys remapped to keyboard backlight |
 | [MacRecorder](https://github.com/nicholaspsmith/MacRecorder) | Screen recording with system audio |
