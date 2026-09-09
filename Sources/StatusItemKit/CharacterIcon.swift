@@ -52,9 +52,10 @@ public enum CharacterIcon {
             ears.move(to: NSPoint(x: 28, y: 13)); ears.curve(to: NSPoint(x: 27, y: 21.5), controlPoint1: NSPoint(x: 28.8, y: 17), controlPoint2: NSPoint(x: 28.4, y: 20.6)); ears.curve(to: NSPoint(x: 20, y: 17.5), controlPoint1: NSPoint(x: 24.6, y: 20.2), controlPoint2: NSPoint(x: 22, y: 18.6)); ears.close()
             head.append(ears); head.windingRule = .nonZero
             head.fill()
+            // Beak: a big black wedge, drawn before the eyes so they sit on top of it.
             let beak = NSBezierPath()
-            beak.move(to: NSPoint(x: 14.2, y: 6.8)); beak.line(to: NSPoint(x: 17.8, y: 6.8)); beak.line(to: NSPoint(x: 16, y: 3.4)); beak.close()
-            cut(ctx, beak)
+            beak.move(to: NSPoint(x: 12.6, y: 9.2)); beak.line(to: NSPoint(x: 19.4, y: 9.2)); beak.line(to: NSPoint(x: 16, y: 0.3)); beak.close()
+            cut(ctx, beak); NSColor.black.set(); beak.fill()
             // Eyes: two big eyes bulging past the sides of the head.
             for (cx, frac) in [(CGFloat(8.6), session), (CGFloat(23.4), weekly)] {
                 let c = NSPoint(x: cx, y: 11); let r: CGFloat = 7.4
@@ -62,7 +63,23 @@ public enum CharacterIcon {
                 cut(ctx, NSBezierPath(ovalIn: NSRect(x: c.x - r - 1, y: c.y - r - 1, width: (r + 1) * 2, height: (r + 1) * 2)))
                 eyelid.set(); NSBezierPath(ovalIn: NSRect(x: c.x - r - 0.8, y: c.y - r - 0.8, width: (r + 0.8) * 2, height: (r + 0.8) * 2)).fill()
                 let eye = NSBezierPath(ovalIn: NSRect(x: c.x - r, y: c.y - r, width: r * 2, height: r * 2))
-                NSColor.white.set(); eye.fill()
+                // Tiredness: once the eye is less than three-quarters open the
+                // white picks up a faint pink and short red veins appear, both
+                // reddening as the lid comes down.
+                let tired = max(0, min(1, (closed - 0.25) / 0.75))
+                NSColor(red: 1, green: 1 - 0.18 * tired, blue: 1 - 0.18 * tired, alpha: 1).set(); eye.fill()
+                if tired > 0 {
+                    ctx.saveGraphicsState(); eye.addClip()
+                    NSColor(red: 0.95, green: 0.12, blue: 0.12, alpha: 0.3 + 0.7 * tired).set()
+                    for (angle, sweep) in [(CGFloat(200), CGFloat(-1)), (CGFloat(245), CGFloat(1)), (CGFloat(300), CGFloat(-1)), (CGFloat(340), CGFloat(1)), (CGFloat(160), CGFloat(1))] {
+                        let a = angle * .pi / 180
+                        let vc = NSPoint(x: c.x + cos(a) * 5.3, y: c.y + sin(a) * 5.3)
+                        let v = NSBezierPath()
+                        v.appendArc(withCenter: NSPoint(x: vc.x + cos(a + sweep * .pi / 2) * 1.6, y: vc.y + sin(a + sweep * .pi / 2) * 1.6), radius: 2.0, startAngle: angle + sweep * 90 - 160, endAngle: angle + sweep * 90 - 20, clockwise: false)
+                        v.lineWidth = 0.5; v.lineCapStyle = .round; v.stroke()
+                    }
+                    ctx.restoreGraphicsState()
+                }
                 // Pupil.
                 let pr: CGFloat = 3.1
                 NSColor.black.set(); NSBezierPath(ovalIn: NSRect(x: c.x - pr, y: c.y - pr, width: pr * 2, height: pr * 2)).fill()
