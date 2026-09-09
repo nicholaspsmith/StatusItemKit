@@ -98,8 +98,9 @@ public enum CharacterIcon {
     }
     // CHAMELEON with 0/1/2 tails
     public static func chameleon(color: NSColor, tails: Int) -> NSImage {
-        canvas(width: 20, height: 20) { ctx in
-            let scale = NSAffineTransform(); scale.scale(by: 20.0 / 18.0); scale.concat()
+        // 10% wider and a further 10% taller than the 18pt grid.
+        canvas(width: 20, height: 22) { ctx in
+            let scale = NSAffineTransform(); scale.scaleX(by: 20.0 / 18.0, yBy: 22.0 / 18.0); scale.concat()
             color.set()
             let p = NSBezierPath()
             p.move(to: NSPoint(x: 2, y: 7))
@@ -119,7 +120,9 @@ public enum CharacterIcon {
     }
     // KEYLIGHT: a keycap with sunglasses; rays around it light up clockwise with the backlight level.
     public static func key(level: CGFloat, active: Bool = true) -> NSImage {
-        canvas { ctx in
+        // Drawn on the 18pt grid, shown 10% larger; the rays already reach the edges.
+        canvas(width: 20, height: 20) { ctx in
+            let scale = NSAffineTransform(); scale.scale(by: 20.0 / 18.0); scale.concat()
             let lit = active ? Int((max(0, min(1, level)) * 8).rounded()) : 0
             for i in 0..<8 {
                 let a = CGFloat(90 - i * 45) * .pi / 180

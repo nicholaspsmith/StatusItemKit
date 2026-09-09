@@ -6,14 +6,15 @@ final class CharacterIconTests: XCTestCase {
     func testWideCharactersUseTheRoomTheBarGives() {
         let owl = CharacterIcon.owl(session: 0.5, weekly: 0.3, sessionColor: .black, weeklyColor: .black)
         XCTAssertEqual(owl.size, NSSize(width: 32, height: 22))
-        XCTAssertEqual(CharacterIcon.chameleon(color: .systemGreen, tails: 2).size, NSSize(width: 20, height: 20))
+        XCTAssertEqual(CharacterIcon.chameleon(color: .systemGreen, tails: 2).size, NSSize(width: 20, height: 22))
+        XCTAssertEqual(CharacterIcon.key(level: 0.5).size, NSSize(width: 20, height: 20))
         XCTAssertFalse(owl.isTemplate)
     }
 
     func testCharactersAreNonTemplate18pt() {
         for img in [
             CharacterIcon.octopus(fraction: 0.6),
-            CharacterIcon.key(level: 0.5), CharacterIcon.battery(charge: 0.7, color: .systemGreen),
+            CharacterIcon.battery(charge: 0.7, color: .systemGreen),
             CharacterIcon.camcorder(recording: true), CharacterIcon.rocket(level: 0.4, online: true),
             CharacterIcon.raccoon(active: false), CharacterIcon.bin(active: true),
         ] {
