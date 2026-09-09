@@ -24,19 +24,19 @@ final class CharacterIconTests: XCTestCase {
     }
 
     func testSeaStagesByQuarter() {
-        XCTAssertEqual(CharacterIcon.seaStage(0), .twoArms)
-        XCTAssertEqual(CharacterIcon.seaStage(0.24), .twoArms)
-        XCTAssertEqual(CharacterIcon.seaStage(0.25), .fourArms)
-        XCTAssertEqual(CharacterIcon.seaStage(0.5), .eightArms)
-        XCTAssertEqual(CharacterIcon.seaStage(0.75), .redEightArms)
-        XCTAssertEqual(CharacterIcon.seaStage(1), .redEightArms)
+        XCTAssertEqual(CharacterIcon.seaStage(0), .greenFour)
+        XCTAssertEqual(CharacterIcon.seaStage(0.24), .greenFour)
+        XCTAssertEqual(CharacterIcon.seaStage(0.25), .yellowFour)
+        XCTAssertEqual(CharacterIcon.seaStage(0.5), .orangeEight)
+        XCTAssertEqual(CharacterIcon.seaStage(0.75), .redEight)
+        XCTAssertEqual(CharacterIcon.seaStage(1), .redEight)
     }
 
     func testSeaStagesHeatUp() {
-        XCTAssertEqual(CharacterIcon.SeaStage.twoArms.color, .systemGreen)
-        XCTAssertEqual(CharacterIcon.SeaStage.fourArms.color, .systemYellow)
-        XCTAssertEqual(CharacterIcon.SeaStage.eightArms.color, .systemOrange)
-        XCTAssertEqual(CharacterIcon.SeaStage.redEightArms.color, .systemRed)
+        XCTAssertEqual(CharacterIcon.SeaStage.greenFour.color, .systemGreen)
+        XCTAssertEqual(CharacterIcon.SeaStage.yellowFour.color, .systemYellow)
+        XCTAssertEqual(CharacterIcon.SeaStage.orangeEight.color, .systemOrange)
+        XCTAssertEqual(CharacterIcon.SeaStage.redEight.color, .systemRed)
     }
 
     func testSeaStagesShareOneCanvas() {
