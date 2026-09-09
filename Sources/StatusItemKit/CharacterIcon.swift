@@ -187,10 +187,28 @@ public enum CharacterIcon {
 /// A chameleon climbing at an incline, painted the state colour. Its tail
     /// hangs down when Tailscale is connected; its tongue flicks out when
     /// Mullvad is.
-    public static func chameleon(color: NSColor, tail: Bool, tongue: Bool) -> NSImage {
+    /// The chameleon's stick, and its colour when nothing is connected.
+    static let stick = NSColor(red: 0.45, green: 0.28, blue: 0.14, alpha: 1)
+    /// Its colour while Mullvad is up (#ddca01).
+    static let mullvadYellow = NSColor(red: 0xdd / 255.0, green: 0xca / 255.0, blue: 0x01 / 255.0, alpha: 1)
+
+    /// A chameleon hanging onto a brown stick. Brown like the stick when
+    /// nothing is connected; green with its tail out for Tailscale; yellow
+    /// with its tongue out for Mullvad; yellow with green splotches, tongue
+    /// and tail when both are up. `alert` overrides the body colour for
+    /// Mullvad's in-between states (connecting, blocked).
+    public static func chameleon(tailscale: Bool, mullvad: Bool, alert: NSColor? = nil) -> NSImage {
+        let color = alert ?? (mullvad ? mullvadYellow : tailscale ? NSColor.systemGreen : stick)
+        return chameleon(color: color, tail: tailscale, tongue: mullvad, splotches: mullvad && tailscale)
+    }
+
+    public static func chameleon(color: NSColor, tail: Bool, tongue: Bool, splotches: Bool = false) -> NSImage {
             canvas(width: 30, height: 22) { ctx in
             // body on an 18-grid, tilted nose-up ~35° like it is climbing; room on the left for the tongue
             let t = NSAffineTransform(); t.translateX(by: 18, yBy: 13); t.rotate(byDegrees: -35); t.scale(by: 1.25); t.translateX(by: -9, yBy: -7.5); t.concat()
+            // the stick it hangs from, under the feet, running the length of the body
+            let branch = NSBezierPath(); branch.move(to: NSPoint(x: -0.5, y: 1.1)); branch.line(to: NSPoint(x: 15.5, y: 1.1))
+            branch.lineWidth = 1.8; branch.lineCapStyle = .round; stick.set(); branch.stroke()
             if tongue {
                 // a long thin tongue from the snout with a knob at the tip
                 // (aimed slightly down in body space so it reads level once the body is tilted up)
@@ -207,8 +225,17 @@ public enum CharacterIcon {
             p.curve(to: NSPoint(x: 8.5, y: 4.3), controlPoint1: NSPoint(x: 12.4, y: 4.8), controlPoint2: NSPoint(x: 11, y: 4.1))
             p.curve(to: NSPoint(x: 1.5, y: 7), controlPoint1: NSPoint(x: 6, y: 4.3), controlPoint2: NSPoint(x: 3, y: 5))
             p.close(); p.fill()
-            NSBezierPath(rect: NSRect(x: 5.6, y: 2, width: 1.9, height: 3.2)).fill()
-            NSBezierPath(rect: NSRect(x: 10, y: 2, width: 1.9, height: 3.2)).fill()
+            if splotches {
+                ctx.saveGraphicsState(); p.addClip()
+                NSColor.systemGreen.set()
+                for (x, y, w, h) in [(CGFloat(5.6), CGFloat(9.8), CGFloat(2.4), CGFloat(1.9)), (8.6, 6.6, 2.2, 1.8), (10.4, 9.4, 1.9, 1.6), (7.2, 11.0, 1.7, 1.3), (11.8, 6.8, 1.3, 1.2), (3.2, 6.2, 1.5, 1.2)] {
+                    NSBezierPath(ovalIn: NSRect(x: x - w / 2, y: y - h / 2, width: w, height: h)).fill()
+                }
+                ctx.restoreGraphicsState(); color.set()
+            }
+            // feet, gripping the stick
+            NSBezierPath(rect: NSRect(x: 5.6, y: 1.6, width: 1.9, height: 3.6)).fill()
+            NSBezierPath(rect: NSRect(x: 10, y: 1.6, width: 1.9, height: 3.6)).fill()
             if tail {
                 // a long sweep down from the rump that ends in a smooth curl: the sweep
                 // lands on the top of the curl circle, tangent to it
