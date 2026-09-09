@@ -6,7 +6,7 @@ final class CharacterIconTests: XCTestCase {
     func testWideCharactersUseTheRoomTheBarGives() {
         let owl = CharacterIcon.owl(session: 0.5, weekly: 0.3, sessionColor: .black, weeklyColor: .black)
         XCTAssertEqual(owl.size, NSSize(width: 32, height: 22))
-        XCTAssertEqual(CharacterIcon.chameleon(color: .systemGreen, tails: 2).size, NSSize(width: 20, height: 22))
+        XCTAssertEqual(CharacterIcon.chameleon(color: .systemGreen, tail: true, tongue: true).size, NSSize(width: 26, height: 22))
         XCTAssertEqual(CharacterIcon.key(level: 0.5).size, NSSize(width: 20, height: 20))
         XCTAssertFalse(owl.isTemplate)
     }
@@ -56,7 +56,7 @@ final class CharacterIconTests: XCTestCase {
     func testFractionExtremesDoNotCrash() {
         _ = CharacterIcon.owl(session: -1, weekly: 2, sessionColor: .red, weeklyColor: .blue)
         _ = CharacterIcon.octopus(fraction: 5)
-        _ = CharacterIcon.chameleon(color: .red, tails: 9)
+        _ = CharacterIcon.chameleon(color: .red, tail: false, tongue: false)
         _ = CharacterIcon.key(level: 3)
     }
 }

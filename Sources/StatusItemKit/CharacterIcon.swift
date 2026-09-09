@@ -96,28 +96,46 @@ public enum CharacterIcon {
             cut(ctx, NSBezierPath(ovalIn: NSRect(x: 9.7, y: 8.6, width: 2.6, height: 2.6)))
         }
     }
-    // CHAMELEON with 0/1/2 tails
-    public static func chameleon(color: NSColor, tails: Int) -> NSImage {
-        // 10% wider and a further 10% taller than the 18pt grid.
-        canvas(width: 20, height: 22) { ctx in
-            let scale = NSAffineTransform(); scale.scaleX(by: 20.0 / 18.0, yBy: 22.0 / 18.0); scale.concat()
+    // CHAMELEON
+/// A chameleon climbing at an incline, painted the state colour. Its tail
+    /// hangs down when Tailscale is connected; its tongue flicks out when
+    /// Mullvad is.
+    public static func chameleon(color: NSColor, tail: Bool, tongue: Bool) -> NSImage {
+            canvas(width: 26, height: 22) { ctx in
+            // body on an 18-grid, tilted nose-up like it is climbing; room on the left for the tongue
+            let t = NSAffineTransform(); t.translateX(by: 14.5, yBy: 11); t.rotate(byDegrees: 24); t.scale(by: 1.05); t.translateX(by: -9, yBy: -8); t.concat()
+            if tongue {
+                // a long thin tongue from the snout with a knob at the tip
+                let tg = NSBezierPath(); tg.move(to: NSPoint(x: 2.2, y: 7.2)); tg.line(to: NSPoint(x: -4.2, y: 8.6)); tg.lineWidth = 1.1; tg.lineCapStyle = .round
+                NSColor(red: 0.96, green: 0.42, blue: 0.56, alpha: 1).set(); tg.stroke()
+                NSBezierPath(ovalIn: NSRect(x: -5.4, y: 7.7, width: 1.9, height: 1.9)).fill()
+            }
             color.set()
             let p = NSBezierPath()
-            p.move(to: NSPoint(x: 2, y: 7))
-            p.curve(to: NSPoint(x: 8, y: 12.5), controlPoint1: NSPoint(x: 3, y: 10.5), controlPoint2: NSPoint(x: 5.5, y: 12.8))
-            p.curve(to: NSPoint(x: 12.5, y: 10.2), controlPoint1: NSPoint(x: 10, y: 12.3), controlPoint2: NSPoint(x: 11.6, y: 11.5))
-            p.curve(to: NSPoint(x: 13.2, y: 6.2), controlPoint1: NSPoint(x: 13.6, y: 9), controlPoint2: NSPoint(x: 13.8, y: 7.5))
-            p.curve(to: NSPoint(x: 9, y: 4.2), controlPoint1: NSPoint(x: 12.4, y: 4.6), controlPoint2: NSPoint(x: 11.5, y: 4))
-            p.curve(to: NSPoint(x: 2, y: 7), controlPoint1: NSPoint(x: 6.5, y: 4.2), controlPoint2: NSPoint(x: 3.5, y: 5))
+            p.move(to: NSPoint(x: 1.5, y: 7))
+            p.curve(to: NSPoint(x: 7.5, y: 12.3), controlPoint1: NSPoint(x: 2.5, y: 10.5), controlPoint2: NSPoint(x: 5, y: 12.6))
+            p.curve(to: NSPoint(x: 12.5, y: 10.2), controlPoint1: NSPoint(x: 9.8, y: 12.1), controlPoint2: NSPoint(x: 11.6, y: 11.5))
+            p.curve(to: NSPoint(x: 13.2, y: 6.4), controlPoint1: NSPoint(x: 13.6, y: 9), controlPoint2: NSPoint(x: 13.8, y: 7.6))
+            p.curve(to: NSPoint(x: 8.5, y: 4.3), controlPoint1: NSPoint(x: 12.4, y: 4.8), controlPoint2: NSPoint(x: 11, y: 4.1))
+            p.curve(to: NSPoint(x: 1.5, y: 7), controlPoint1: NSPoint(x: 6, y: 4.3), controlPoint2: NSPoint(x: 3, y: 5))
             p.close(); p.fill()
-            NSBezierPath(rect: NSRect(x: 6, y: 2.2, width: 1.8, height: 3)).fill()
-            NSBezierPath(rect: NSRect(x: 10.4, y: 2.2, width: 1.8, height: 3)).fill()
-            if tails >= 1 { let t = NSBezierPath(); t.appendArc(withCenter: NSPoint(x: 14.6, y: 4.2), radius: 2.0, startAngle: 110, endAngle: 410, clockwise: false); t.lineWidth = 1.5; t.lineCapStyle = .round; t.stroke() }
-            if tails >= 2 { let t = NSBezierPath(); t.appendArc(withCenter: NSPoint(x: 15.6, y: 9.4), radius: 1.8, startAngle: 200, endAngle: 500, clockwise: false); t.lineWidth = 1.4; t.lineCapStyle = .round; t.stroke() }
-            cut(ctx, NSBezierPath(ovalIn: NSRect(x: 4.6, y: 8.3, width: 2.2, height: 2.2)))
-            color.set(); NSBezierPath(ovalIn: NSRect(x: 5.3, y: 9, width: 0.9, height: 0.9)).fill()
+            NSBezierPath(rect: NSRect(x: 5.6, y: 2, width: 1.9, height: 3.2)).fill()
+            NSBezierPath(rect: NSRect(x: 10, y: 2, width: 1.9, height: 3.2)).fill()
+            if tail {
+                // a long sweep down from the rump that ends in a smooth curl: the sweep
+                // lands on the top of the curl circle, tangent to it
+                let c = NSPoint(x: 15.6, y: 0.9); let r: CGFloat = 1.7
+                let s = NSBezierPath()
+                s.move(to: NSPoint(x: 12.9, y: 6.5))
+                s.curve(to: NSPoint(x: c.x, y: c.y + r), controlPoint1: NSPoint(x: 14.9, y: 5.6), controlPoint2: NSPoint(x: 13.6, y: c.y + r))
+                s.appendArc(withCenter: c, radius: r, startAngle: 90, endAngle: -200, clockwise: true)
+                s.lineWidth = 1.6; s.lineCapStyle = .round; s.lineJoinStyle = .round; s.stroke()
+            }
+            cut(ctx, NSBezierPath(ovalIn: NSRect(x: 4.2, y: 8.2, width: 2.3, height: 2.3)))
+            color.set(); NSBezierPath(ovalIn: NSRect(x: 4.95, y: 8.95, width: 0.9, height: 0.9)).fill()
+            }
         }
-    }
+
     // KEYLIGHT: a keycap with sunglasses; rays around it light up clockwise with the backlight level.
     public static func key(level: CGFloat, active: Bool = true) -> NSImage {
         // Drawn on the 18pt grid, shown 10% larger; the rays already reach the edges.
