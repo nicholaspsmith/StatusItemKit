@@ -120,14 +120,15 @@ public enum CharacterIcon {
     /// hangs down when Tailscale is connected; its tongue flicks out when
     /// Mullvad is.
     public static func chameleon(color: NSColor, tail: Bool, tongue: Bool) -> NSImage {
-            canvas(width: 26, height: 22) { ctx in
-            // body on an 18-grid, tilted nose-up like it is climbing; room on the left for the tongue
-            let t = NSAffineTransform(); t.translateX(by: 14.5, yBy: 11); t.rotate(byDegrees: 24); t.scale(by: 1.05); t.translateX(by: -9, yBy: -8); t.concat()
+            canvas(width: 30, height: 22) { ctx in
+            // body on an 18-grid, tilted nose-up ~35° like it is climbing; room on the left for the tongue
+            let t = NSAffineTransform(); t.translateX(by: 18, yBy: 13); t.rotate(byDegrees: -35); t.scale(by: 1.25); t.translateX(by: -9, yBy: -7.5); t.concat()
             if tongue {
                 // a long thin tongue from the snout with a knob at the tip
-                let tg = NSBezierPath(); tg.move(to: NSPoint(x: 2.2, y: 7.2)); tg.line(to: NSPoint(x: -4.2, y: 8.6)); tg.lineWidth = 1.1; tg.lineCapStyle = .round
+                // (aimed slightly down in body space so it reads level once the body is tilted up)
+                let tg = NSBezierPath(); tg.move(to: NSPoint(x: 2.2, y: 7.2)); tg.line(to: NSPoint(x: -3.8, y: 5.6)); tg.lineWidth = 1.1; tg.lineCapStyle = .round
                 NSColor(red: 0.96, green: 0.42, blue: 0.56, alpha: 1).set(); tg.stroke()
-                NSBezierPath(ovalIn: NSRect(x: -5.4, y: 7.7, width: 1.9, height: 1.9)).fill()
+                NSBezierPath(ovalIn: NSRect(x: -5.0, y: 4.4, width: 1.9, height: 1.9)).fill()
             }
             color.set()
             let p = NSBezierPath()
@@ -143,10 +144,11 @@ public enum CharacterIcon {
             if tail {
                 // a long sweep down from the rump that ends in a smooth curl: the sweep
                 // lands on the top of the curl circle, tangent to it
-                let c = NSPoint(x: 15.6, y: 0.9); let r: CGFloat = 1.7
+                // (trailing out behind the rump in body space, so it hangs down-right once tilted)
+                let c = NSPoint(x: 17.6, y: 4.6); let r: CGFloat = 1.7
                 let s = NSBezierPath()
                 s.move(to: NSPoint(x: 12.9, y: 6.5))
-                s.curve(to: NSPoint(x: c.x, y: c.y + r), controlPoint1: NSPoint(x: 14.9, y: 5.6), controlPoint2: NSPoint(x: 13.6, y: c.y + r))
+                s.curve(to: NSPoint(x: c.x, y: c.y + r), controlPoint1: NSPoint(x: 15.2, y: 6.6), controlPoint2: NSPoint(x: 15.4, y: c.y + r))
                 s.appendArc(withCenter: c, radius: r, startAngle: 90, endAngle: -200, clockwise: true)
                 s.lineWidth = 1.6; s.lineCapStyle = .round; s.lineJoinStyle = .round; s.stroke()
             }
