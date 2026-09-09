@@ -195,7 +195,8 @@ public enum CharacterIcon {
     /// A chameleon hanging onto a brown stick. Brown like the stick when
     /// nothing is connected, with a short straight tail. Tailscale: dark spots
     /// (its icon is dots) and the tail curls. Mullvad: yellow with its tongue
-    /// out. Both: yellow, spotted, tongue and curled tail. `alert` overrides
+    /// out under a yellow hard hat. Both: yellow, spotted, hat, tongue and curled
+    /// tail. `alert` overrides
     /// the body colour for Mullvad's in-between states (connecting, blocked).
     public static func chameleon(tailscale: Bool, mullvad: Bool, alert: NSColor? = nil) -> NSImage {
         let color = alert ?? (mullvad ? mullvadYellow : stick)
@@ -205,7 +206,7 @@ public enum CharacterIcon {
     public static func chameleon(color: NSColor, tail: Bool, tongue: Bool, spots: Bool = false) -> NSImage {
             canvas(width: 30, height: 22) { ctx in
             // body on an 18-grid, tilted nose-up ~35° like it is climbing; room on the left for the tongue
-            let t = NSAffineTransform(); t.translateX(by: 18, yBy: 13); t.rotate(byDegrees: -35); t.scale(by: 1.25); t.translateX(by: -9, yBy: -7.5); t.concat()
+            let t = NSAffineTransform(); t.translateX(by: 17.6, yBy: 12.2); t.rotate(byDegrees: -35); t.scale(by: 1.12); t.translateX(by: -9, yBy: -7.5); t.concat()
             // the stick it hangs from, under the feet, running the length of the body
             let branch = NSBezierPath(); branch.move(to: NSPoint(x: -0.5, y: 1.1)); branch.line(to: NSPoint(x: 15.5, y: 1.1))
             branch.lineWidth = 1.8; branch.lineCapStyle = .round; stick.set(); branch.stroke()
@@ -233,7 +234,25 @@ public enum CharacterIcon {
                 }
                 ctx.restoreGraphicsState(); color.set()
             }
+            if tongue {
+                // Mullvad's hard hat: a yellow dome with a dark outline (so it reads on
+                // the yellow body), a short brim over the eye, and a headlamp.
+                let navy = NSColor(red: 0.12, green: 0.18, blue: 0.27, alpha: 1)
+                let hatYellow = NSColor(red: 1.0, green: 0.84, blue: 0.14, alpha: 1)
+                let dome = NSBezierPath()
+                dome.move(to: NSPoint(x: 2.2, y: 11.3))
+                dome.curve(to: NSPoint(x: 9.6, y: 11.6), controlPoint1: NSPoint(x: 3.0, y: 15.0), controlPoint2: NSPoint(x: 9.2, y: 14.8))
+                dome.close()
+                hatYellow.set(); dome.fill()
+                dome.lineWidth = 0.7; dome.lineJoinStyle = .round; navy.set(); dome.stroke()
+                let brim = NSBezierPath(); brim.move(to: NSPoint(x: 0.4, y: 10.9)); brim.line(to: NSPoint(x: 4.4, y: 11.5))
+                brim.lineWidth = 1.9; brim.lineCapStyle = .round; navy.set(); brim.stroke()
+                brim.lineWidth = 1.0; hatYellow.set(); brim.stroke()
+                navy.set(); NSBezierPath(ovalIn: NSRect(x: 2.5, y: 11.8, width: 2.2, height: 2.2)).fill()
+                NSColor.white.set(); NSBezierPath(ovalIn: NSRect(x: 2.9, y: 12.2, width: 1.4, height: 1.4)).fill()
+            }
             // feet, gripping the stick
+            color.set()
             NSBezierPath(rect: NSRect(x: 5.6, y: 1.6, width: 1.9, height: 3.6)).fill()
             NSBezierPath(rect: NSRect(x: 10, y: 1.6, width: 1.9, height: 3.6)).fill()
             if !tail {

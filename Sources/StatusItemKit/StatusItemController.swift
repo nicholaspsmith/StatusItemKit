@@ -79,18 +79,17 @@ public final class StatusItemController: NSObject, NSMenuDelegate {
     /// status menu should be. Useful when a left click should present something
     /// other than the item's own menu.
     public func popUp(_ menu: NSMenu, onClose: (() -> Void)? = nil) {
-        // Detach the menu only once tracking has ended. When another app is
-        // frontmost, performClick returns before the menu starts tracking, so
-        // clearing `statusItem.menu` right away pulled the menu out from
-        // under itself — it flashed open and shut.
-        var token: NSObjectProtocol?
-        token = NotificationCenter.default.addObserver(forName: NSMenu.didEndTrackingNotification, object: menu, queue: .main) { [weak self] _ in
-            if let token { NotificationCenter.default.removeObserver(token) }
-            self?.statusItem.menu = nil
-            onClose?()
-        }
-        statusItem.menu = menu
-        statusItem.button?.performClick(nil)
+        // Run the menu directly under the button. NSMenu.popUp tracks the
+        // press that is already in progress (the action fires on mouse down),
+        // so hold-slide-release selects an item, and nothing else can pull
+        // the menu out from under itself. The earlier performClick route
+        // fought the button's own tracking and flashed shut.
+        guard let button = statusItem.button else { return }
+        button.highlight(true)
+        let origin = NSPoint(x: 0, y: button.bounds.maxY + 5)
+        menu.popUp(positioning: nil, at: origin, in: button)
+        button.highlight(false)
+        onClose?()
     }
 
     public func start() {
