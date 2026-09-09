@@ -157,9 +157,9 @@ public enum CharacterIcon {
 
     // KEYLIGHT: a keycap with sunglasses; rays around it light up clockwise with the backlight level.
     public static func key(level: CGFloat, active: Bool = true) -> NSImage {
-        // Drawn on the 18pt grid, shown 10% larger; the rays already reach the edges.
-        canvas(width: 20, height: 20) { ctx in
-            let scale = NSAffineTransform(); scale.scale(by: 20.0 / 18.0); scale.concat()
+        // Drawn on the 18pt grid, shown at the bar's full 22pt height; the rays already reach the edges.
+        canvas(width: 22, height: 22) { ctx in
+            let scale = NSAffineTransform(); scale.scale(by: 22.0 / 18.0); scale.concat()
             // Any backlight at all lights the first ray (1% must not read as off);
             // the rest follow the level in eighths.
             let f = max(0, min(1, level))

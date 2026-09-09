@@ -7,7 +7,7 @@ final class CharacterIconTests: XCTestCase {
         let owl = CharacterIcon.owl(session: 0.5, weekly: 0.3)
         XCTAssertEqual(owl.size, NSSize(width: 32, height: 22))
         XCTAssertEqual(CharacterIcon.chameleon(color: .systemGreen, tail: true, tongue: true).size, NSSize(width: 26, height: 22))
-        XCTAssertEqual(CharacterIcon.key(level: 0.5).size, NSSize(width: 20, height: 20))
+        XCTAssertEqual(CharacterIcon.key(level: 0.5).size, NSSize(width: 22, height: 22))
         XCTAssertFalse(owl.isTemplate)
     }
 
