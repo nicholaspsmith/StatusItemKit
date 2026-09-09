@@ -58,7 +58,7 @@ the way:
 | `setTitle(_:warn:)` / `setIcon(_:)` | The render funnel — mutually-exclusive text vs. image paths, so you never get stray title spacing. |
 | `MenuBuilder` | `labelWidth(...)` and a view-based `textView(...)` that escapes NSMenu's keyboard-shortcut column reservation (uses explicit frames, not auto-layout). |
 | `MeterIcon` | Custom-drawn, full-color status glyphs: `dot`, and the proportional `gauge` / `arc` / `pie` / `wedge` meters (take a `0...1` fraction + color). |
-| `CharacterIcon` | The Menubarn mascots as status glyphs that still carry the data: an owl whose eyelids droop with usage, a chameleon that changes colour and grows a tail or tongue per connection, an octopus that grows arms and heats up with load, a keycap whose rays light with the backlight, a rocket whose flame is the level, a raccoon, a bin, a camcorder. Each app pairs one with `MeterStyle.character` in the shared Icon picker. |
+| `CharacterIcon` | The Menubarn mascots as status glyphs that still carry the data: an owl whose eyelids droop with usage, a chameleon that changes colour and grows a tail or tongue per connection, an octopus that grows arms and heats up with load, a keycap whose rays light with the backlight, an Apollo Twin face whose tick ring is the level, a raccoon, a bin, a camcorder. Each app pairs one with `MeterStyle.character` in the shared Icon picker. |
 | `Severity` | `level(pct:warnPct:)` → `.normal` / `.elevated` / `.high`, with a `.color`. |
 | `MeterStyle` | The meter shapes as a value: `.arc` / `.gauge` / `.pie` / `.wedge` / `.dot`, plus `MeterIcon.image(style:fraction:color:)`. |
 | `MeterColor` | Named presets and the `#RRGGBB` round-trip used to persist a colour, plus `swatch(_:)` for menu-item images. |
