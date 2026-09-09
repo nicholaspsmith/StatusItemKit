@@ -59,4 +59,13 @@ final class CharacterIconTests: XCTestCase {
         _ = CharacterIcon.chameleon(color: .red, tail: false, tongue: false)
         _ = CharacterIcon.key(level: 3)
     }
+
+    func testContrastingIsTheRGBComplement() {
+        let c = CharacterIcon.contrasting(NSColor(red: 0.72, green: 0.10, blue: 0.10, alpha: 1)).usingColorSpace(.sRGB)!
+        XCTAssertEqual(c.redComponent, 0.28, accuracy: 0.01)
+        XCTAssertEqual(c.greenComponent, 0.90, accuracy: 0.01)
+        XCTAssertEqual(c.blueComponent, 0.90, accuracy: 0.01)
+        let w = CharacterIcon.contrasting(.black).usingColorSpace(.sRGB)!
+        XCTAssertEqual(w.redComponent, 1, accuracy: 0.001)
+    }
 }

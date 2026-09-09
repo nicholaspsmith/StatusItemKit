@@ -37,6 +37,14 @@ public enum CharacterIcon {
         ctx.compositingOperation = .sourceOver
     }
 
+    /// The colour with the maximum contrast to `color`: its RGB complement
+    /// (each channel inverted), i.e. the point farthest from it in RGB space.
+    /// The owl's eye "whites" use this so the fill always stands out.
+    public static func contrasting(_ color: NSColor) -> NSColor {
+        let c = color.usingColorSpace(.sRGB) ?? color
+        return NSColor(red: 1 - c.redComponent, green: 1 - c.greenComponent, blue: 1 - c.blueComponent, alpha: 1)
+    }
+
     // OWL v2: squarer head using the full height, soft ear bumps, big eyes bulging past the sides.
     public static func owl(session: CGFloat, weekly: CGFloat, sessionColor: NSColor, weeklyColor: NSColor) -> NSImage {
         canvas(width: 32, height: 22) { ctx in
@@ -51,12 +59,12 @@ public enum CharacterIcon {
             let beak = NSBezierPath()
             beak.move(to: NSPoint(x: 14.2, y: 6.8)); beak.line(to: NSPoint(x: 17.8, y: 6.8)); beak.line(to: NSPoint(x: 16, y: 3.4)); beak.close()
             cut(ctx, beak)
-            // Eyes: two big pie meters on white, bulging past the sides of the head.
+            // Eyes: two big pie meters on the fill's complement, bulging past the sides of the head.
             for (cx, frac, color) in [(CGFloat(8.6), session, sessionColor), (CGFloat(23.4), weekly, weeklyColor)] {
                 let c = NSPoint(x: cx, y: 11); let r: CGFloat = 7.4
                 cut(ctx, NSBezierPath(ovalIn: NSRect(x: c.x - r - 1, y: c.y - r - 1, width: (r + 1) * 2, height: (r + 1) * 2)))
                 body.set(); NSBezierPath(ovalIn: NSRect(x: c.x - r - 0.8, y: c.y - r - 0.8, width: (r + 0.8) * 2, height: (r + 0.8) * 2)).fill()
-                NSColor.white.set(); NSBezierPath(ovalIn: NSRect(x: c.x - r, y: c.y - r, width: r * 2, height: r * 2)).fill()
+                contrasting(color).set(); NSBezierPath(ovalIn: NSRect(x: c.x - r, y: c.y - r, width: r * 2, height: r * 2)).fill()
                 let pie = NSBezierPath(); pie.move(to: c)
                 pie.appendArc(withCenter: c, radius: r, startAngle: 90, endAngle: 90 - 360 * max(0.02, min(1, frac)), clockwise: true)
                 pie.close(); color.set(); pie.fill()
