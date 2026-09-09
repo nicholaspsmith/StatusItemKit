@@ -189,17 +189,15 @@ public enum CharacterIcon {
     /// Mullvad is.
     /// The chameleon's stick, and its colour when nothing is connected.
     static let stick = NSColor(red: 0.45, green: 0.28, blue: 0.14, alpha: 1)
-    /// Its colour while Mullvad is up (#ddca01).
-    static let mullvadYellow = NSColor(red: 0xdd / 255.0, green: 0xca / 255.0, blue: 0x01 / 255.0, alpha: 1)
 
     /// A chameleon hanging onto a brown stick. Brown like the stick when
-    /// nothing is connected, with a short straight tail. Tailscale: dark spots
-    /// (its icon is dots) and the tail curls. Mullvad: yellow with its tongue
-    /// out under a yellow hard hat. Both: yellow, spotted, hat, tongue and curled
-    /// tail. `alert` overrides
+    /// nothing is connected, with a short straight tail; green whenever
+    /// something is. Tailscale: dark spots (its icon is dots) and the tail
+    /// curls. Mullvad: a yellow hard hat and its tongue out. Both: green,
+    /// spotted, hat, tongue and curled tail. `alert` overrides
     /// the body colour for Mullvad's in-between states (connecting, blocked).
     public static func chameleon(tailscale: Bool, mullvad: Bool, alert: NSColor? = nil) -> NSImage {
-        let color = alert ?? (mullvad ? mullvadYellow : stick)
+        let color = alert ?? ((mullvad || tailscale) ? NSColor.systemGreen : stick)
         return chameleon(color: color, tail: tailscale, tongue: mullvad, spots: tailscale)
     }
 
@@ -256,9 +254,12 @@ public enum CharacterIcon {
             NSBezierPath(rect: NSRect(x: 5.6, y: 1.6, width: 1.9, height: 3.6)).fill()
             NSBezierPath(rect: NSRect(x: 10, y: 1.6, width: 1.9, height: 3.6)).fill()
             if !tail {
-                // a short straight tail, tapering off the rump
-                let st = NSBezierPath(); st.move(to: NSPoint(x: 12.9, y: 6.5)); st.line(to: NSPoint(x: 16.4, y: 5.4))
-                st.lineWidth = 1.4; st.lineCapStyle = .round; st.stroke()
+                // the resting tail: long and thin, sweeping out behind and curling
+                // upward without closing the loop
+                let st = NSBezierPath(); st.move(to: NSPoint(x: 12.9, y: 6.5))
+                st.curve(to: NSPoint(x: 17.2, y: 8.6), controlPoint1: NSPoint(x: 16.4, y: 5.2), controlPoint2: NSPoint(x: 18.6, y: 6.2))
+                st.curve(to: NSPoint(x: 15.6, y: 9.0), controlPoint1: NSPoint(x: 16.6, y: 9.6), controlPoint2: NSPoint(x: 15.9, y: 9.6))
+                st.lineWidth = 1.1; st.lineCapStyle = .round; st.stroke()
             } else {
                 // a long sweep down from the rump that ends in a smooth curl: the sweep
                 // lands on the top of the curl circle, tangent to it

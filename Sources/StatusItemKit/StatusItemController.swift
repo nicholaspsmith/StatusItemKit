@@ -154,4 +154,23 @@ public final class StatusItemController: NSObject, NSMenuDelegate {
         menu.removeAllItems()
         onBuildMenu(menu)
     }
+
+    /// Fired around the item's own attached menu, so an app can react to it
+    /// opening and closing (Barn opens its doors while its menu is up).
+    public var onMenuWillOpen: (() -> Void)?
+    public var onMenuDidClose: (() -> Void)?
+
+    public func menuWillOpen(_ menu: NSMenu) { onMenuWillOpen?() }
+    public func menuDidClose(_ menu: NSMenu) { onMenuDidClose?() }
+
+    /// True while the click that is opening the menu is a right click or a
+    /// control-click. Read it from `onBuildMenu` to build a different menu
+    /// for the secondary button while keeping AppKit's native tracking for
+    /// both — a quick click leaves the menu open, a held click selects on
+    /// release — which a hand-popped menu cannot fully reproduce.
+    public static var isSecondaryClick: Bool {
+        guard let event = NSApp.currentEvent else { return false }
+        return event.type == .rightMouseDown || event.type == .rightMouseUp
+            || event.modifierFlags.contains(.control)
+    }
 }
