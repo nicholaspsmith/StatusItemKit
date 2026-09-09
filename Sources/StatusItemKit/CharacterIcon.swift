@@ -15,7 +15,13 @@ public enum CharacterIcon {
     static let body = NSColor(white: 0.62, alpha: 1)
 
     static func canvas(_ draw: @escaping (NSGraphicsContext) -> Void) -> NSImage {
-        let image = NSImage(size: NSSize(width: 18, height: 18), flipped: false) { _ in
+        canvas(width: 18, height: 18, draw)
+    }
+
+    /// The menu bar gives an item 22pt of height and any width it asks for, so a
+    /// character that needs the room (the owl's eyes, a wide battery) can take it.
+    static func canvas(width: CGFloat, height: CGFloat, _ draw: @escaping (NSGraphicsContext) -> Void) -> NSImage {
+        let image = NSImage(size: NSSize(width: width, height: height), flipped: false) { _ in
             guard let ctx = NSGraphicsContext.current else { return false }
             draw(ctx)
             return true
@@ -33,27 +39,31 @@ public enum CharacterIcon {
 
     // OWL v2: squarer head using the full height, soft ear bumps, big eyes bulging past the sides.
     public static func owl(session: CGFloat, weekly: CGFloat, sessionColor: NSColor, weeklyColor: NSColor) -> NSImage {
-        canvas { ctx in
+        canvas(width: 32, height: 22) { ctx in
             body.set()
-            let head = NSBezierPath(roundedRect: NSRect(x: 3, y: 1.5, width: 12, height: 13.5), xRadius: 4.5, yRadius: 4.5)
-            // ear bumps
+            // Head: a wide rounded block with soft ear tufts at the top corners.
+            let head = NSBezierPath(roundedRect: NSRect(x: 3, y: 1, width: 26, height: 18), xRadius: 7, yRadius: 7)
             let ears = NSBezierPath()
-            ears.move(to: NSPoint(x: 3, y: 11.5)); ears.curve(to: NSPoint(x: 3.6, y: 17.2), controlPoint1: NSPoint(x: 2.6, y: 14), controlPoint2: NSPoint(x: 2.8, y: 16.6)); ears.curve(to: NSPoint(x: 8.2, y: 14.4), controlPoint1: NSPoint(x: 5, y: 16.2), controlPoint2: NSPoint(x: 6.8, y: 15)); ears.close()
-            ears.move(to: NSPoint(x: 15, y: 11.5)); ears.curve(to: NSPoint(x: 14.4, y: 17.2), controlPoint1: NSPoint(x: 15.4, y: 14), controlPoint2: NSPoint(x: 15.2, y: 16.6)); ears.curve(to: NSPoint(x: 9.8, y: 14.4), controlPoint1: NSPoint(x: 13, y: 16.2), controlPoint2: NSPoint(x: 11.2, y: 15)); ears.close()
-            head.append(ears)
-            head.windingRule = .nonZero; head.fill()
-            let beak = NSBezierPath(); beak.move(to: NSPoint(x: 7.8, y: 5.6)); beak.line(to: NSPoint(x: 10.2, y: 5.6)); beak.line(to: NSPoint(x: 9, y: 3.2)); beak.close(); cut(ctx, beak)
-            for (cx, frac, col) in [(CGFloat(5.2), session, sessionColor), (CGFloat(12.8), weekly, weeklyColor)] {
-                let c = NSPoint(x: cx, y: 8.8); let r: CGFloat = 3.7
-                cut(ctx, NSBezierPath(ovalIn: NSRect(x: c.x - r - 0.7, y: c.y - r - 0.7, width: (r + 0.7) * 2, height: (r + 0.7) * 2)))
-                body.set(); NSBezierPath(ovalIn: NSRect(x: c.x - r - 0.5, y: c.y - r - 0.5, width: (r + 0.5) * 2, height: (r + 0.5) * 2)).fill() // eye rim
-                NSColor(white: 1, alpha: 0.28).set(); NSBezierPath(ovalIn: NSRect(x: c.x - r, y: c.y - r, width: r * 2, height: r * 2)).fill()
-                let pie = NSBezierPath(); pie.move(to: c); pie.appendArc(withCenter: c, radius: r, startAngle: 90, endAngle: 90 - 360 * max(0.02, min(1, frac)), clockwise: true); pie.close(); col.set(); pie.fill()
+            ears.move(to: NSPoint(x: 4, y: 13)); ears.curve(to: NSPoint(x: 5, y: 21.5), controlPoint1: NSPoint(x: 3.2, y: 17), controlPoint2: NSPoint(x: 3.6, y: 20.6)); ears.curve(to: NSPoint(x: 12, y: 17.5), controlPoint1: NSPoint(x: 7.4, y: 20.2), controlPoint2: NSPoint(x: 10, y: 18.6)); ears.close()
+            ears.move(to: NSPoint(x: 28, y: 13)); ears.curve(to: NSPoint(x: 27, y: 21.5), controlPoint1: NSPoint(x: 28.8, y: 17), controlPoint2: NSPoint(x: 28.4, y: 20.6)); ears.curve(to: NSPoint(x: 20, y: 17.5), controlPoint1: NSPoint(x: 24.6, y: 20.2), controlPoint2: NSPoint(x: 22, y: 18.6)); ears.close()
+            head.append(ears); head.windingRule = .nonZero
+            head.fill()
+            let beak = NSBezierPath()
+            beak.move(to: NSPoint(x: 14.2, y: 6.8)); beak.line(to: NSPoint(x: 17.8, y: 6.8)); beak.line(to: NSPoint(x: 16, y: 3.4)); beak.close()
+            cut(ctx, beak)
+            // Eyes: two big pie meters on white, bulging past the sides of the head.
+            for (cx, frac, color) in [(CGFloat(8.6), session, sessionColor), (CGFloat(23.4), weekly, weeklyColor)] {
+                let c = NSPoint(x: cx, y: 11); let r: CGFloat = 7.4
+                cut(ctx, NSBezierPath(ovalIn: NSRect(x: c.x - r - 1, y: c.y - r - 1, width: (r + 1) * 2, height: (r + 1) * 2)))
+                body.set(); NSBezierPath(ovalIn: NSRect(x: c.x - r - 0.8, y: c.y - r - 0.8, width: (r + 0.8) * 2, height: (r + 0.8) * 2)).fill()
+                NSColor.white.set(); NSBezierPath(ovalIn: NSRect(x: c.x - r, y: c.y - r, width: r * 2, height: r * 2)).fill()
+                let pie = NSBezierPath(); pie.move(to: c)
+                pie.appendArc(withCenter: c, radius: r, startAngle: 90, endAngle: 90 - 360 * max(0.02, min(1, frac)), clockwise: true)
+                pie.close(); color.set(); pie.fill()
             }
         }
     }
-    // OCTOPUS v2: mantle dome, brow, four tentacles curling outward; tentacles light up by quarter.
-    /// Green to 25%, yellow above, orange above 50%, red above 75%.
+
     /// A pale blue while nearly idle (below 15%), green from there, orange above
     /// 50%, red above 75%.
     public static func octopusColor(_ f: CGFloat) -> NSColor {
@@ -88,7 +98,8 @@ public enum CharacterIcon {
     }
     // CHAMELEON with 0/1/2 tails
     public static func chameleon(color: NSColor, tails: Int) -> NSImage {
-        canvas { ctx in
+        canvas(width: 20, height: 20) { ctx in
+            let scale = NSAffineTransform(); scale.scale(by: 20.0 / 18.0); scale.concat()
             color.set()
             let p = NSBezierPath()
             p.move(to: NSPoint(x: 2, y: 7))
