@@ -238,16 +238,30 @@ public enum CharacterIcon {
             cut(ctx, face); ctx.compositingOperation = .destinationOut; smile.stroke(); ctx.compositingOperation = .sourceOver
         }
     }
-    // CAMCORDER: body + lens + viewfinder; a red light when recording.
+    // CAMCORDER: a camcorder with a face — one big lens-eye on the body looking
+    // towards its snout of a lens hood, a small smile, a viewfinder for a hat,
+    // and the record light on top that comes on while recording.
     public static func camcorder(recording: Bool) -> NSImage {
-        canvas { ctx in
+        canvas(width: 24, height: 22) { ctx in
             body.set()
-            NSBezierPath(roundedRect: NSRect(x: 1.5, y: 4, width: 11, height: 8.5), xRadius: 2, yRadius: 2).fill()
-            let lens = NSBezierPath(); lens.move(to: NSPoint(x: 12.5, y: 6.5)); lens.line(to: NSPoint(x: 17, y: 4.5)); lens.line(to: NSPoint(x: 17, y: 12)); lens.line(to: NSPoint(x: 12.5, y: 10)); lens.close(); lens.fill()
-            NSBezierPath(roundedRect: NSRect(x: 3, y: 12.3, width: 6, height: 2.6), xRadius: 1, yRadius: 1).fill() // viewfinder/handle
-            cut(ctx, NSBezierPath(ovalIn: NSRect(x: 4.2, y: 6.2, width: 4.2, height: 4.2)))
-            body.set(); NSBezierPath(ovalIn: NSRect(x: 5.5, y: 7.5, width: 1.6, height: 1.6)).fill()
-            if recording { NSColor.systemRed.set(); NSBezierPath(ovalIn: NSRect(x: 9.3, y: 9.6, width: 2.2, height: 2.2)).fill() }
+            // body and lens hood
+            NSBezierPath(roundedRect: NSRect(x: 1.5, y: 3, width: 14.5, height: 14), xRadius: 2.6, yRadius: 2.6).fill()
+            let hood = NSBezierPath(); hood.move(to: NSPoint(x: 16, y: 7)); hood.line(to: NSPoint(x: 22.5, y: 4.4)); hood.line(to: NSPoint(x: 22.5, y: 15.6)); hood.line(to: NSPoint(x: 16, y: 13)); hood.close(); hood.fill()
+            // viewfinder hat
+            NSBezierPath(roundedRect: NSRect(x: 3.5, y: 16.6, width: 7, height: 3), xRadius: 1.1, yRadius: 1.1).fill()
+            // the eye: a big lens looking towards the hood
+            let ec = NSPoint(x: 8.6, y: 11), er: CGFloat = 3.9
+            cut(ctx, NSBezierPath(ovalIn: NSRect(x: ec.x - er - 0.6, y: ec.y - er - 0.6, width: (er + 0.6) * 2, height: (er + 0.6) * 2)))
+            NSColor.white.set(); NSBezierPath(ovalIn: NSRect(x: ec.x - er, y: ec.y - er, width: er * 2, height: er * 2)).fill()
+            NSColor.black.set(); NSBezierPath(ovalIn: NSRect(x: ec.x - 1.1, y: ec.y - 2.1, width: 3.8, height: 3.8)).fill()
+            // smile under the eye
+            let smile = NSBezierPath()
+            smile.appendArc(withCenter: NSPoint(x: 8.6, y: 6.2), radius: 1.9, startAngle: 215, endAngle: 325, clockwise: false)
+            smile.lineWidth = 0.9; smile.lineCapStyle = .round
+            ctx.compositingOperation = .destinationOut; smile.stroke(); ctx.compositingOperation = .sourceOver
+            // record light on the hat: red while recording, a dark socket otherwise
+            (recording ? NSColor.systemRed : NSColor(white: 0.35, alpha: 1)).set()
+            NSBezierPath(ovalIn: NSRect(x: 11.4, y: 17.2, width: 2.6, height: 2.6)).fill()
         }
     }
     // APOLLO: an Apollo Twin's face — the monitor knob with its tick arc is

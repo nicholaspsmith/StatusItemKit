@@ -9,13 +9,13 @@ final class CharacterIconTests: XCTestCase {
         XCTAssertEqual(CharacterIcon.chameleon(color: .systemGreen, tail: true, tongue: true).size, NSSize(width: 30, height: 22))
         XCTAssertEqual(CharacterIcon.key(level: 0.5).size, NSSize(width: 22, height: 22))
         XCTAssertEqual(CharacterIcon.apollo(level: 0.5, online: true).size, NSSize(width: 22, height: 22))
+        XCTAssertEqual(CharacterIcon.camcorder(recording: true).size, NSSize(width: 24, height: 22))
         XCTAssertFalse(owl.isTemplate)
     }
 
     func testCharactersAreNonTemplate18pt() {
         for img in [
             CharacterIcon.battery(charge: 0.7, color: .systemGreen),
-            CharacterIcon.camcorder(recording: true),
             CharacterIcon.raccoon(active: false), CharacterIcon.bin(active: true),
         ] {
             XCTAssertFalse(img.isTemplate)
