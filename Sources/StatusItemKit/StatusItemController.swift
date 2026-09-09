@@ -48,7 +48,11 @@ public final class StatusItemController: NSObject, NSMenuDelegate {
             // button's action never runs.
             statusItem.button?.target = self
             statusItem.button?.action = #selector(handleClick)
-            statusItem.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
+            // Act on mouse *down*, like a native status menu: the menu that the
+            // handler pops then owns the rest of the press, so holding the
+            // button, sliding onto an item and releasing selects it — and a
+            // menu opened on mouse-up cannot be dismissed by its own release.
+            statusItem.button?.sendAction(on: [.leftMouseDown, .rightMouseDown])
         }
     }
 
@@ -56,7 +60,7 @@ public final class StatusItemController: NSObject, NSMenuDelegate {
 
     @objc private func handleClick() {
         let event = NSApp.currentEvent
-        let isSecondary = event?.type == .rightMouseUp
+        let isSecondary = event?.type == .rightMouseDown || event?.type == .rightMouseUp
             || event?.modifierFlags.contains(.control) == true
         if isSecondary {
             showMenu()
