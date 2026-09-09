@@ -59,4 +59,18 @@ final class CharacterIconTests: XCTestCase {
         _ = CharacterIcon.chameleon(color: .red, tail: false, tongue: false)
         _ = CharacterIcon.key(level: 3)
     }
+
+    func testKeyLightsAtOnePercent() throws {
+        // At 1% the key must already be yellow: sample the key body's colour.
+        func isYellowish(_ img: NSImage) -> Bool {
+            let rep = NSBitmapImageRep(data: img.tiffRepresentation!)!
+            for x in 0..<rep.pixelsWide { for y in 0..<rep.pixelsHigh {
+                if let c = rep.colorAt(x: x, y: y)?.usingColorSpace(.sRGB), c.alphaComponent > 0.9,
+                   c.redComponent > 0.8, c.greenComponent > 0.6, c.blueComponent < 0.4 { return true }
+            } }
+            return false
+        }
+        XCTAssertTrue(isYellowish(CharacterIcon.key(level: 0.01)))
+        XCTAssertFalse(isYellowish(CharacterIcon.key(level: 0)))
+    }
 }

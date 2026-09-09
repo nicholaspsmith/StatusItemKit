@@ -160,7 +160,10 @@ public enum CharacterIcon {
         // Drawn on the 18pt grid, shown 10% larger; the rays already reach the edges.
         canvas(width: 20, height: 20) { ctx in
             let scale = NSAffineTransform(); scale.scale(by: 20.0 / 18.0); scale.concat()
-            let lit = active ? Int((max(0, min(1, level)) * 8).rounded()) : 0
+            // Any backlight at all lights the first ray (1% must not read as off);
+            // the rest follow the level in eighths.
+            let f = max(0, min(1, level))
+            let lit = active && f > 0 ? max(1, Int((f * 8).rounded())) : 0
             for i in 0..<8 {
                 let a = CGFloat(90 - i * 45) * .pi / 180
                 let r = NSBezierPath(); r.move(to: NSPoint(x: 9 + cos(a) * 6.3, y: 9 + sin(a) * 6.3)); r.line(to: NSPoint(x: 9 + cos(a) * 8.6, y: 9 + sin(a) * 8.6))
