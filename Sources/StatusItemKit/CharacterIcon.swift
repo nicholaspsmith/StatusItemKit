@@ -8,7 +8,7 @@ import AppKit
 /// pictogram — and the number lives in something the character *does*: the
 /// owl's eyes are pie meters, the chameleon changes colour and grows a tail per
 /// connection, the octopus grows and heats from four green arms to eight red ones, the key's rays light
-/// with the backlight, the rocket's flame is the level, the raccoon's eyes
+/// with the backlight, the Apollo's volume arc is the level, the raccoon's eyes
 /// close when paused, the bin's lid lifts when active.
 public enum CharacterIcon {
     /// A mid grey that survives both light and dark menu bars.
@@ -250,22 +250,38 @@ public enum CharacterIcon {
             if recording { NSColor.systemRed.set(); NSBezierPath(ovalIn: NSRect(x: 9.3, y: 9.6, width: 2.2, height: 2.2)).fill() }
         }
     }
-    // ROCKET: the exhaust flame is the level bar; grey body when offline.
-    public static func rocket(level: CGFloat, online: Bool) -> NSImage {
-        canvas { ctx in
-            (online ? body : NSColor(white: 0.45, alpha: 1)).set()
-            let r = NSBezierPath(); r.move(to: NSPoint(x: 9, y: 17.5))
-            r.curve(to: NSPoint(x: 12.2, y: 8), controlPoint1: NSPoint(x: 12, y: 15), controlPoint2: NSPoint(x: 12.2, y: 11))
-            r.line(to: NSPoint(x: 12.2, y: 6.5)); r.line(to: NSPoint(x: 5.8, y: 6.5)); r.line(to: NSPoint(x: 5.8, y: 8))
-            r.curve(to: NSPoint(x: 9, y: 17.5), controlPoint1: NSPoint(x: 5.8, y: 11), controlPoint2: NSPoint(x: 6, y: 15)); r.close(); r.fill()
-            NSBezierPath(rect: NSRect(x: 3.2, y: 6.5, width: 3, height: 3.8)).fill(); NSBezierPath(rect: NSRect(x: 11.8, y: 6.5, width: 3, height: 3.8)).fill()
-            cut(ctx, NSBezierPath(ovalIn: NSRect(x: 7.7, y: 10.6, width: 2.6, height: 2.6)))
-            if online {
-                let h = 1 + 5 * max(0, min(1, level))
-                let f = NSBezierPath(); f.move(to: NSPoint(x: 6.6, y: 6.2)); f.line(to: NSPoint(x: 11.4, y: 6.2)); f.line(to: NSPoint(x: 9, y: 6.2 - h)); f.close()
-                NSColor.systemOrange.set(); f.fill()
-                let f2 = NSBezierPath(); f2.move(to: NSPoint(x: 7.8, y: 6.2)); f2.line(to: NSPoint(x: 10.2, y: 6.2)); f2.line(to: NSPoint(x: 9, y: 6.2 - h * 0.55)); f2.close()
-                NSColor.systemYellow.set(); f2.fill()
+    // APOLLO: an Apollo Twin's face — the monitor knob with its tick arc is
+    // the mouth, and two squircle buttons above it are the eyes. The arc runs
+    // from bottom-left over the top to bottom-right, ticks lighting green with
+    // the level. Everything dims when the level cannot be changed.
+    public static func apollo(level: CGFloat, online: Bool) -> NSImage {
+        canvas(width: 22, height: 22) { ctx in
+            let grey = online ? body : NSColor(white: 0.45, alpha: 1)
+            let dim = NSColor(white: 0.62, alpha: 0.35)
+            let lit = online ? NSColor.systemGreen : NSColor(white: 0.55, alpha: 1)
+            let c = NSPoint(x: 11, y: 8)
+            // volume ticks: 13 of them across 270°, starting bottom-left
+            let ticks = 13
+            let litCount = online ? Int((max(0, min(1, level)) * CGFloat(ticks)).rounded()) : 0
+            for i in 0..<ticks {
+                let a = (225 - CGFloat(i) * 270 / CGFloat(ticks - 1)) * .pi / 180
+                let t = NSBezierPath()
+                t.move(to: NSPoint(x: c.x + cos(a) * 5.6, y: c.y + sin(a) * 5.6))
+                t.line(to: NSPoint(x: c.x + cos(a) * 7.6, y: c.y + sin(a) * 7.6))
+                t.lineWidth = 1.5; t.lineCapStyle = .round
+                (i < litCount ? lit : dim).set(); t.stroke()
+            }
+            // the knob, with a lighter cap so it reads as a dome
+            grey.set(); NSBezierPath(ovalIn: NSRect(x: c.x - 4, y: c.y - 4, width: 8, height: 8)).fill()
+            NSColor(white: 1, alpha: online ? 0.28 : 0.12).set()
+            NSBezierPath(ovalIn: NSRect(x: c.x - 2.9, y: c.y - 2.9, width: 5.8, height: 5.8)).fill()
+            // eyes: two low, wide squircle buttons with small dark pupils
+            for x in [CGFloat(3.4), CGFloat(13.4)] {
+                grey.set()
+                NSBezierPath(roundedRect: NSRect(x: x, y: 18, width: 5.2, height: 2.8), xRadius: 1.3, yRadius: 1.3).fill()
+                cut(ctx, NSBezierPath(ovalIn: NSRect(x: x + 1.95, y: 18.75, width: 1.3, height: 1.3)))
+                NSColor.black.withAlphaComponent(online ? 1 : 0.5).set()
+                NSBezierPath(ovalIn: NSRect(x: x + 1.95, y: 18.75, width: 1.3, height: 1.3)).fill()
             }
         }
     }
