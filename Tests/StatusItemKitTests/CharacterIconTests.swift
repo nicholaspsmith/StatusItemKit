@@ -13,7 +13,6 @@ final class CharacterIconTests: XCTestCase {
 
     func testCharactersAreNonTemplate18pt() {
         for img in [
-            CharacterIcon.octopus(fraction: 0.6),
             CharacterIcon.battery(charge: 0.7, color: .systemGreen),
             CharacterIcon.camcorder(recording: true), CharacterIcon.rocket(level: 0.4, online: true),
             CharacterIcon.raccoon(active: false), CharacterIcon.bin(active: true),
@@ -24,33 +23,27 @@ final class CharacterIconTests: XCTestCase {
         }
     }
 
-    func testOctopusColourSteps() {
-        XCTAssertNotEqual(CharacterIcon.octopusColor(0.1), .systemGreen)   // pale blue while idle
-        XCTAssertEqual(CharacterIcon.octopusColor(0.2), .systemGreen)
-        XCTAssertEqual(CharacterIcon.octopusColor(0.6), .systemOrange)
-        XCTAssertEqual(CharacterIcon.octopusColor(0.8), .systemRed)
+    func testSeaStagesByQuarter() {
+        XCTAssertEqual(CharacterIcon.seaStage(0), .squid)
+        XCTAssertEqual(CharacterIcon.seaStage(0.24), .squid)
+        XCTAssertEqual(CharacterIcon.seaStage(0.25), .octopus)
+        XCTAssertEqual(CharacterIcon.seaStage(0.5), .bigOctopus)
+        XCTAssertEqual(CharacterIcon.seaStage(0.75), .redOctopus)
+        XCTAssertEqual(CharacterIcon.seaStage(1), .redOctopus)
     }
 
-    func testOctopusFillGrowsWithTheFraction() throws {
-        func inked(_ img: NSImage, color: NSColor) -> Int {
-            let rep = NSBitmapImageRep(data: img.tiffRepresentation!)!
-            var n = 0
-            for x in 0..<rep.pixelsWide { for y in 0..<rep.pixelsHigh {
-                if let c = rep.colorAt(x: x, y: y)?.usingColorSpace(.deviceRGB), c.alphaComponent > 0.5, c.greenComponent > 0.6, c.redComponent < 0.5 { n += 1 }
-            } }
-            return n
+    func testSeaStagesHeatUp() {
+        XCTAssertEqual(CharacterIcon.SeaStage.squid.color, .systemGreen)
+        XCTAssertEqual(CharacterIcon.SeaStage.octopus.color, .systemYellow)
+        XCTAssertEqual(CharacterIcon.SeaStage.bigOctopus.color, .systemOrange)
+        XCTAssertEqual(CharacterIcon.SeaStage.redOctopus.color, .systemRed)
+    }
+
+    func testSeaStagesShareOneCanvas() {
+        for stage in CharacterIcon.SeaStage.allCases {
+            XCTAssertEqual(CharacterIcon.octopus(stage: stage).size, NSSize(width: 28, height: 22))
         }
-        // one lit tentacle at 20%, four (in red) at 100%: count red ink instead
-        func red(_ img: NSImage) -> Int {
-            let rep = NSBitmapImageRep(data: img.tiffRepresentation!)!
-            var n = 0
-            for x in 0..<rep.pixelsWide { for y in 0..<rep.pixelsHigh {
-                if let c = rep.colorAt(x: x, y: y)?.usingColorSpace(.deviceRGB), c.alphaComponent > 0.5, c.redComponent > 0.7, c.greenComponent < 0.5 { n += 1 }
-            } }
-            return n
-        }
-        XCTAssertGreaterThan(red(CharacterIcon.octopus(fraction: 1.0)), red(CharacterIcon.octopus(fraction: 0.8)))
-        XCTAssertGreaterThan(inked(CharacterIcon.octopus(fraction: 0.2), color: .systemGreen), 0)
+        XCTAssertEqual(CharacterIcon.octopus(fraction: 0.3).size, NSSize(width: 28, height: 22))
     }
 
     func testFractionExtremesDoNotCrash() {

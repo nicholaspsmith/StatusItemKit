@@ -7,7 +7,7 @@ import AppKit
 /// silhouette is hand-drawn as a path — at this size a mascot has to become a
 /// pictogram — and the number lives in something the character *does*: the
 /// owl's eyes are pie meters, the chameleon changes colour and grows a tail per
-/// connection, the octopus lights a tentacle per quarter, the key's rays light
+/// connection, the octopus grows and heats from a green squid to eight red arms, the key's rays light
 /// with the backlight, the rocket's flame is the level, the raccoon's eyes
 /// close when paused, the bin's lid lifts when active.
 public enum CharacterIcon {
@@ -82,38 +82,112 @@ public enum CharacterIcon {
         }
     }
 
-    /// A pale blue while nearly idle (below 15%), green from there, orange above
-    /// 50%, red above 75%.
-    public static func octopusColor(_ f: CGFloat) -> NSColor {
-        if f > 0.75 { return .systemRed }
-        if f > 0.5 { return .systemOrange }
-        if f >= 0.15 { return .systemGreen }
-        return NSColor(red: 0.62, green: 0.84, blue: 1.0, alpha: 1)
-    }
+    /// Which sea creature stands for a load fraction: a green squid below a
+    /// quarter, a yellow four-armed octopus below half, an orange eight-armed
+    /// one below three quarters, and a red eight-armed one above that.
+    public enum SeaStage: Int, CaseIterable, Sendable {
+        case squid, octopus, bigOctopus, redOctopus
 
-    public static func octopus(fraction: CGFloat) -> NSImage {
-        canvas { ctx in
-            // One tentacle per quarter, but never none: the colour is part of the reading.
-            let lit = max(1, Int((max(0, min(1, fraction)) * 4).rounded())); let col = Self.octopusColor(fraction)
-            // tentacles first (behind the head): each a thick stroke from under the head, down, curling outward
-            let arms: [(NSPoint, NSPoint, NSPoint, NSPoint)] = [   // start, c1, c2, end
-                (NSPoint(x: 5.2, y: 8.5), NSPoint(x: 3.6, y: 5.5), NSPoint(x: 0.8, y: 2.6), NSPoint(x: 3.2, y: 2.4)),
-                (NSPoint(x: 7.6, y: 8),   NSPoint(x: 7.2, y: 4.5), NSPoint(x: 4.6, y: 1.4), NSPoint(x: 6.6, y: 1.6)),
-                (NSPoint(x: 10.4, y: 8),  NSPoint(x: 10.8, y: 4.5), NSPoint(x: 13.4, y: 1.4), NSPoint(x: 11.4, y: 1.6)),
-                (NSPoint(x: 12.8, y: 8.5), NSPoint(x: 14.4, y: 5.5), NSPoint(x: 17.2, y: 2.6), NSPoint(x: 14.8, y: 2.4)),
-            ]
-            for (i, a) in arms.enumerated() {
-                let t = NSBezierPath(); t.move(to: a.0); t.curve(to: a.3, controlPoint1: a.1, controlPoint2: a.2)
-                t.lineWidth = 2.3; t.lineCapStyle = .round
-                (i < lit ? col : body).set(); t.stroke()
+        public var color: NSColor {
+            switch self {
+            case .squid: return .systemGreen
+            case .octopus: return .systemYellow
+            case .bigOctopus: return .systemOrange
+            case .redOctopus: return .systemRed
             }
-            // round head, wider than tall, sitting on the arms
-            body.set(); NSBezierPath(ovalIn: NSRect(x: 2.8, y: 6.2, width: 12.4, height: 11.2)).fill()
-            // eyes low on the head, like the emoji
-            cut(ctx, NSBezierPath(ovalIn: NSRect(x: 5.7, y: 8.6, width: 2.6, height: 2.6)))
-            cut(ctx, NSBezierPath(ovalIn: NSRect(x: 9.7, y: 8.6, width: 2.6, height: 2.6)))
         }
     }
+
+    public static func seaStage(_ f: CGFloat) -> SeaStage {
+        if f >= 0.75 { return .redOctopus }
+        if f >= 0.5 { return .bigOctopus }
+        if f >= 0.25 { return .octopus }
+        return .squid
+    }
+
+    // OCTOPUS: escalates by shape and colour. Every stage shares one 28x22
+    // canvas so the bar never shifts as the load moves between stages.
+    public static func octopus(fraction: CGFloat) -> NSImage {
+        octopus(stage: seaStage(max(0, min(1, fraction))))
+    }
+
+    public static func octopus(stage: SeaStage) -> NSImage {
+        canvas(width: 28, height: 22) { ctx in
+            stage.color.set()
+            switch stage {
+            case .squid:
+                let t = NSAffineTransform(); t.translateX(by: 5, yBy: 0); t.scale(by: 22.0 / 18.0); t.concat()
+                squid(ctx)
+            case .octopus:
+                let t = NSAffineTransform(); t.translateX(by: 3, yBy: 0); t.scale(by: 22.0 / 18.0); t.concat()
+                smallOctopus(ctx)
+            case .bigOctopus, .redOctopus:
+                let t = NSAffineTransform(); t.translateX(by: 2, yBy: 0); t.scale(by: 22.0 / 18.0); t.concat()
+                bigOctopus(ctx)
+            }
+        }
+    }
+
+    /// A thick, round-capped stroke through a cubic curve: one tentacle.
+    private static func arm(_ a: NSPoint, _ c1: NSPoint, _ c2: NSPoint, _ b: NSPoint, width: CGFloat) {
+        let t = NSBezierPath(); t.move(to: a); t.curve(to: b, controlPoint1: c1, controlPoint2: c2)
+        t.lineWidth = width; t.lineCapStyle = .round; t.stroke()
+    }
+
+    /// Squid on the 18 grid: a tapered mantle with fins, two long tentacles.
+    private static func squid(_ ctx: NSGraphicsContext) {
+        // two tentacles trailing down with clubs at the tips
+        arm(NSPoint(x: 7.2, y: 7), NSPoint(x: 6.6, y: 4), NSPoint(x: 4.4, y: 2.6), NSPoint(x: 4.6, y: 1.2), width: 1.5)
+        arm(NSPoint(x: 10.8, y: 7), NSPoint(x: 11.4, y: 4), NSPoint(x: 13.6, y: 2.6), NSPoint(x: 13.4, y: 1.2), width: 1.5)
+        NSBezierPath(ovalIn: NSRect(x: 3.5, y: 0.2, width: 2.2, height: 2.2)).fill()
+        NSBezierPath(ovalIn: NSRect(x: 12.3, y: 0.2, width: 2.2, height: 2.2)).fill()
+        // mantle: a long torpedo, pointed at the top, rounded at the bottom
+        let m = NSBezierPath()
+        m.move(to: NSPoint(x: 9, y: 18))
+        m.curve(to: NSPoint(x: 11.9, y: 9), controlPoint1: NSPoint(x: 11.2, y: 15.5), controlPoint2: NSPoint(x: 11.9, y: 12))
+        m.curve(to: NSPoint(x: 9, y: 5.6), controlPoint1: NSPoint(x: 11.9, y: 7.2), controlPoint2: NSPoint(x: 10.7, y: 5.6))
+        m.curve(to: NSPoint(x: 6.1, y: 9), controlPoint1: NSPoint(x: 7.3, y: 5.6), controlPoint2: NSPoint(x: 6.1, y: 7.2))
+        m.curve(to: NSPoint(x: 9, y: 18), controlPoint1: NSPoint(x: 6.1, y: 12), controlPoint2: NSPoint(x: 6.8, y: 15.5))
+        m.close(); m.fill()
+        // small swept fins near the tip
+        let f = NSBezierPath()
+        f.move(to: NSPoint(x: 8.2, y: 16.6)); f.line(to: NSPoint(x: 5.2, y: 12.4)); f.line(to: NSPoint(x: 7.2, y: 11.4)); f.close()
+        f.move(to: NSPoint(x: 9.8, y: 16.6)); f.line(to: NSPoint(x: 12.8, y: 12.4)); f.line(to: NSPoint(x: 10.8, y: 11.4)); f.close()
+        f.fill()
+        cut(ctx, NSBezierPath(ovalIn: NSRect(x: 6.6, y: 8, width: 2, height: 2)))
+        cut(ctx, NSBezierPath(ovalIn: NSRect(x: 9.4, y: 8, width: 2, height: 2)))
+    }
+
+    private static func octopusHead(_ ctx: NSGraphicsContext) {
+        // round head, wider than tall, sitting on the arms; eyes low like the emoji
+        NSBezierPath(ovalIn: NSRect(x: 2.8, y: 6.2, width: 12.4, height: 11.2)).fill()
+        cut(ctx, NSBezierPath(ovalIn: NSRect(x: 5.7, y: 8.6, width: 2.6, height: 2.6)))
+        cut(ctx, NSBezierPath(ovalIn: NSRect(x: 9.7, y: 8.6, width: 2.6, height: 2.6)))
+    }
+
+    /// The original four-armed octopus.
+    private static func smallOctopus(_ ctx: NSGraphicsContext) {
+        arm(NSPoint(x: 5.2, y: 8.5), NSPoint(x: 3.6, y: 5.5), NSPoint(x: 0.8, y: 2.6), NSPoint(x: 3.2, y: 2.4), width: 2.3)
+        arm(NSPoint(x: 7.6, y: 8), NSPoint(x: 7.2, y: 4.5), NSPoint(x: 4.6, y: 1.4), NSPoint(x: 6.6, y: 1.6), width: 2.3)
+        arm(NSPoint(x: 10.4, y: 8), NSPoint(x: 10.8, y: 4.5), NSPoint(x: 13.4, y: 1.4), NSPoint(x: 11.4, y: 1.6), width: 2.3)
+        arm(NSPoint(x: 12.8, y: 8.5), NSPoint(x: 14.4, y: 5.5), NSPoint(x: 17.2, y: 2.6), NSPoint(x: 14.8, y: 2.4), width: 2.3)
+        octopusHead(ctx)
+    }
+
+    /// Eight arms fanned evenly under the head, the outer ones reaching wide.
+    private static func bigOctopus(_ ctx: NSGraphicsContext) {
+        let w: CGFloat = 1.6
+        arm(NSPoint(x: 3.8, y: 9.5), NSPoint(x: 1.6, y: 8.6), NSPoint(x: -0.6, y: 6), NSPoint(x: 1, y: 4.4), width: w)
+        arm(NSPoint(x: 5, y: 8.4), NSPoint(x: 3.4, y: 5.8), NSPoint(x: 1.2, y: 3), NSPoint(x: 3.2, y: 2.2), width: w)
+        arm(NSPoint(x: 6.8, y: 7.8), NSPoint(x: 6, y: 5), NSPoint(x: 3.8, y: 1.6), NSPoint(x: 5.8, y: 1), width: w)
+        arm(NSPoint(x: 8.4, y: 7.6), NSPoint(x: 8.2, y: 4.6), NSPoint(x: 6.8, y: 1.2), NSPoint(x: 8.2, y: 0.8), width: w)
+        arm(NSPoint(x: 9.6, y: 7.6), NSPoint(x: 9.8, y: 4.6), NSPoint(x: 11.2, y: 1.2), NSPoint(x: 9.8, y: 0.8), width: w)
+        arm(NSPoint(x: 11.2, y: 7.8), NSPoint(x: 12, y: 5), NSPoint(x: 14.2, y: 1.6), NSPoint(x: 12.2, y: 1), width: w)
+        arm(NSPoint(x: 13, y: 8.4), NSPoint(x: 14.6, y: 5.8), NSPoint(x: 16.8, y: 3), NSPoint(x: 14.8, y: 2.2), width: w)
+        arm(NSPoint(x: 14.2, y: 9.5), NSPoint(x: 16.4, y: 8.6), NSPoint(x: 18.6, y: 6), NSPoint(x: 17, y: 4.4), width: w)
+        octopusHead(ctx)
+    }
+
     // CHAMELEON
 /// A chameleon climbing at an incline, painted the state colour. Its tail
     /// hangs down when Tailscale is connected; its tongue flicks out when
