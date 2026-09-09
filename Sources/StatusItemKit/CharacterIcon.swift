@@ -193,16 +193,16 @@ public enum CharacterIcon {
     static let mullvadYellow = NSColor(red: 0xdd / 255.0, green: 0xca / 255.0, blue: 0x01 / 255.0, alpha: 1)
 
     /// A chameleon hanging onto a brown stick. Brown like the stick when
-    /// nothing is connected; green with its tail out for Tailscale; yellow
-    /// with its tongue out for Mullvad; yellow with green splotches, tongue
-    /// and tail when both are up. `alert` overrides the body colour for
-    /// Mullvad's in-between states (connecting, blocked).
+    /// nothing is connected, with a short straight tail. Tailscale: dark spots
+    /// (its icon is dots) and the tail curls. Mullvad: yellow with its tongue
+    /// out. Both: yellow, spotted, tongue and curled tail. `alert` overrides
+    /// the body colour for Mullvad's in-between states (connecting, blocked).
     public static func chameleon(tailscale: Bool, mullvad: Bool, alert: NSColor? = nil) -> NSImage {
-        let color = alert ?? (mullvad ? mullvadYellow : tailscale ? NSColor.systemGreen : stick)
-        return chameleon(color: color, tail: tailscale, tongue: mullvad, splotches: mullvad && tailscale)
+        let color = alert ?? (mullvad ? mullvadYellow : stick)
+        return chameleon(color: color, tail: tailscale, tongue: mullvad, spots: tailscale)
     }
 
-    public static func chameleon(color: NSColor, tail: Bool, tongue: Bool, splotches: Bool = false) -> NSImage {
+    public static func chameleon(color: NSColor, tail: Bool, tongue: Bool, spots: Bool = false) -> NSImage {
             canvas(width: 30, height: 22) { ctx in
             // body on an 18-grid, tilted nose-up ~35° like it is climbing; room on the left for the tongue
             let t = NSAffineTransform(); t.translateX(by: 18, yBy: 13); t.rotate(byDegrees: -35); t.scale(by: 1.25); t.translateX(by: -9, yBy: -7.5); t.concat()
@@ -225,9 +225,9 @@ public enum CharacterIcon {
             p.curve(to: NSPoint(x: 8.5, y: 4.3), controlPoint1: NSPoint(x: 12.4, y: 4.8), controlPoint2: NSPoint(x: 11, y: 4.1))
             p.curve(to: NSPoint(x: 1.5, y: 7), controlPoint1: NSPoint(x: 6, y: 4.3), controlPoint2: NSPoint(x: 3, y: 5))
             p.close(); p.fill()
-            if splotches {
+            if spots {
                 ctx.saveGraphicsState(); p.addClip()
-                NSColor.systemGreen.set()
+                NSColor(white: 0.16, alpha: 1).set()
                 for (x, y, w, h) in [(CGFloat(5.6), CGFloat(9.8), CGFloat(2.4), CGFloat(1.9)), (8.6, 6.6, 2.2, 1.8), (10.4, 9.4, 1.9, 1.6), (7.2, 11.0, 1.7, 1.3), (11.8, 6.8, 1.3, 1.2), (3.2, 6.2, 1.5, 1.2)] {
                     NSBezierPath(ovalIn: NSRect(x: x - w / 2, y: y - h / 2, width: w, height: h)).fill()
                 }
@@ -236,7 +236,11 @@ public enum CharacterIcon {
             // feet, gripping the stick
             NSBezierPath(rect: NSRect(x: 5.6, y: 1.6, width: 1.9, height: 3.6)).fill()
             NSBezierPath(rect: NSRect(x: 10, y: 1.6, width: 1.9, height: 3.6)).fill()
-            if tail {
+            if !tail {
+                // a short straight tail, tapering off the rump
+                let st = NSBezierPath(); st.move(to: NSPoint(x: 12.9, y: 6.5)); st.line(to: NSPoint(x: 16.4, y: 5.4))
+                st.lineWidth = 1.4; st.lineCapStyle = .round; st.stroke()
+            } else {
                 // a long sweep down from the rump that ends in a smooth curl: the sweep
                 // lands on the top of the curl circle, tangent to it
                 // (trailing out behind the rump in body space, so it hangs down-right once tilted)
