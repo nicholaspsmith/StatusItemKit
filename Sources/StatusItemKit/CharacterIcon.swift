@@ -37,16 +37,12 @@ public enum CharacterIcon {
         ctx.compositingOperation = .sourceOver
     }
 
-    /// The colour with the maximum contrast to `color`: its RGB complement
-    /// (each channel inverted), i.e. the point farthest from it in RGB space.
-    /// The owl's eye "whites" use this so the fill always stands out.
-    public static func contrasting(_ color: NSColor) -> NSColor {
-        let c = color.usingColorSpace(.sRGB) ?? color
-        return NSColor(red: 1 - c.redComponent, green: 1 - c.greenComponent, blue: 1 - c.blueComponent, alpha: 1)
-    }
+    static let eyelid = NSColor(red: 0.45, green: 0.28, blue: 0.14, alpha: 1)
 
     // OWL v2: squarer head using the full height, soft ear bumps, big eyes bulging past the sides.
-    public static func owl(session: CGFloat, weekly: CGFloat, sessionColor: NSColor, weeklyColor: NSColor) -> NSImage {
+    /// Each eye is a real eye: white, black pupil, and a brown eyelid that
+    /// drops as usage rises — wide open at 0, half closed at 0.5, shut at 1.
+    public static func owl(session: CGFloat, weekly: CGFloat) -> NSImage {
         canvas(width: 32, height: 22) { ctx in
             body.set()
             // Head: a wide rounded block with soft ear tufts at the top corners.
@@ -59,15 +55,30 @@ public enum CharacterIcon {
             let beak = NSBezierPath()
             beak.move(to: NSPoint(x: 14.2, y: 6.8)); beak.line(to: NSPoint(x: 17.8, y: 6.8)); beak.line(to: NSPoint(x: 16, y: 3.4)); beak.close()
             cut(ctx, beak)
-            // Eyes: two big pie meters on the fill's complement, bulging past the sides of the head.
-            for (cx, frac, color) in [(CGFloat(8.6), session, sessionColor), (CGFloat(23.4), weekly, weeklyColor)] {
+            // Eyes: two big eyes bulging past the sides of the head.
+            for (cx, frac) in [(CGFloat(8.6), session), (CGFloat(23.4), weekly)] {
                 let c = NSPoint(x: cx, y: 11); let r: CGFloat = 7.4
+                let closed = max(0, min(1, frac))
                 cut(ctx, NSBezierPath(ovalIn: NSRect(x: c.x - r - 1, y: c.y - r - 1, width: (r + 1) * 2, height: (r + 1) * 2)))
                 body.set(); NSBezierPath(ovalIn: NSRect(x: c.x - r - 0.8, y: c.y - r - 0.8, width: (r + 0.8) * 2, height: (r + 0.8) * 2)).fill()
-                contrasting(color).set(); NSBezierPath(ovalIn: NSRect(x: c.x - r, y: c.y - r, width: r * 2, height: r * 2)).fill()
-                let pie = NSBezierPath(); pie.move(to: c)
-                pie.appendArc(withCenter: c, radius: r, startAngle: 90, endAngle: 90 - 360 * max(0.02, min(1, frac)), clockwise: true)
-                pie.close(); color.set(); pie.fill()
+                let eye = NSBezierPath(ovalIn: NSRect(x: c.x - r, y: c.y - r, width: r * 2, height: r * 2))
+                NSColor.white.set(); eye.fill()
+                // Pupil, with a glint.
+                let pr: CGFloat = 3.1
+                NSColor.black.set(); NSBezierPath(ovalIn: NSRect(x: c.x - pr, y: c.y - pr, width: pr * 2, height: pr * 2)).fill()
+                NSColor.white.set(); NSBezierPath(ovalIn: NSRect(x: c.x + 0.6, y: c.y + 0.8, width: 1.4, height: 1.4)).fill()
+                // Eyelid: brown, sliding down from the top by `closed` of the eye's height.
+                ctx.saveGraphicsState()
+                eye.addClip()
+                let lidBottom = c.y + r - closed * r * 2
+                eyelid.set()
+                NSBezierPath(rect: NSRect(x: c.x - r - 1, y: lidBottom, width: r * 2 + 2, height: r * 2 + 1)).fill()
+                if closed > 0.02 && closed < 0.98 {
+                    let edge = NSBezierPath()
+                    edge.move(to: NSPoint(x: c.x - r - 1, y: lidBottom)); edge.line(to: NSPoint(x: c.x + r + 1, y: lidBottom))
+                    edge.lineWidth = 0.8; NSColor(red: 0.28, green: 0.16, blue: 0.07, alpha: 1).set(); edge.stroke()
+                }
+                ctx.restoreGraphicsState()
             }
         }
     }

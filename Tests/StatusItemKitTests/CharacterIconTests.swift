@@ -4,7 +4,7 @@ import AppKit
 
 final class CharacterIconTests: XCTestCase {
     func testWideCharactersUseTheRoomTheBarGives() {
-        let owl = CharacterIcon.owl(session: 0.5, weekly: 0.3, sessionColor: .black, weeklyColor: .black)
+        let owl = CharacterIcon.owl(session: 0.5, weekly: 0.3)
         XCTAssertEqual(owl.size, NSSize(width: 32, height: 22))
         XCTAssertEqual(CharacterIcon.chameleon(color: .systemGreen, tail: true, tongue: true).size, NSSize(width: 26, height: 22))
         XCTAssertEqual(CharacterIcon.key(level: 0.5).size, NSSize(width: 20, height: 20))
@@ -54,18 +54,9 @@ final class CharacterIconTests: XCTestCase {
     }
 
     func testFractionExtremesDoNotCrash() {
-        _ = CharacterIcon.owl(session: -1, weekly: 2, sessionColor: .red, weeklyColor: .blue)
+        _ = CharacterIcon.owl(session: -1, weekly: 2)
         _ = CharacterIcon.octopus(fraction: 5)
         _ = CharacterIcon.chameleon(color: .red, tail: false, tongue: false)
         _ = CharacterIcon.key(level: 3)
-    }
-
-    func testContrastingIsTheRGBComplement() {
-        let c = CharacterIcon.contrasting(NSColor(red: 0.72, green: 0.10, blue: 0.10, alpha: 1)).usingColorSpace(.sRGB)!
-        XCTAssertEqual(c.redComponent, 0.28, accuracy: 0.01)
-        XCTAssertEqual(c.greenComponent, 0.90, accuracy: 0.01)
-        XCTAssertEqual(c.blueComponent, 0.90, accuracy: 0.01)
-        let w = CharacterIcon.contrasting(.black).usingColorSpace(.sRGB)!
-        XCTAssertEqual(w.redComponent, 1, accuracy: 0.001)
     }
 }
