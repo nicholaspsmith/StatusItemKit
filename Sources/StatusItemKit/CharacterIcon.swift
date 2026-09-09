@@ -138,19 +138,19 @@ public enum CharacterIcon {
     private static func happyOctopus(_ ctx: NSGraphicsContext) {
         arm(NSPoint(x: 6.4, y: 8.2), NSPoint(x: 5.6, y: 5), NSPoint(x: 2.6, y: 2.2), NSPoint(x: 4.4, y: 1.6), width: 2.3)
         arm(NSPoint(x: 11.6, y: 8.2), NSPoint(x: 12.4, y: 5), NSPoint(x: 15.4, y: 2.2), NSPoint(x: 13.6, y: 1.6), width: 2.3)
-        octopusHead(ctx)
-        // a smile under the eyes
+        // face sits higher than the others' so the smile has room
+        octopusHead(ctx, eyeY: 10.4)
         let smile = NSBezierPath()
-        smile.appendArc(withCenter: NSPoint(x: 9, y: 9.4), radius: 2.6, startAngle: 215, endAngle: 325, clockwise: false)
+        smile.appendArc(withCenter: NSPoint(x: 9, y: 11.2), radius: 2.6, startAngle: 215, endAngle: 325, clockwise: false)
         smile.lineWidth = 1.1; smile.lineCapStyle = .round
         ctx.compositingOperation = .destinationOut; smile.stroke(); ctx.compositingOperation = .sourceOver
     }
 
-    private static func octopusHead(_ ctx: NSGraphicsContext) {
+    private static func octopusHead(_ ctx: NSGraphicsContext, eyeY: CGFloat = 8.6) {
         // round head, wider than tall, sitting on the arms; eyes low like the emoji
         NSBezierPath(ovalIn: NSRect(x: 2.8, y: 6.2, width: 12.4, height: 11.2)).fill()
-        cut(ctx, NSBezierPath(ovalIn: NSRect(x: 5.7, y: 8.6, width: 2.6, height: 2.6)))
-        cut(ctx, NSBezierPath(ovalIn: NSRect(x: 9.7, y: 8.6, width: 2.6, height: 2.6)))
+        cut(ctx, NSBezierPath(ovalIn: NSRect(x: 5.7, y: eyeY, width: 2.6, height: 2.6)))
+        cut(ctx, NSBezierPath(ovalIn: NSRect(x: 9.7, y: eyeY, width: 2.6, height: 2.6)))
     }
 
     /// The original four-armed octopus.
