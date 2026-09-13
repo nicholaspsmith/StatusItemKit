@@ -136,8 +136,18 @@ final class CharacterIconTests: XCTestCase {
         XCTAssertGreaterThan(amberTop.greenComponent, 0.5); XCTAssertLessThan(amberTop.greenComponent, 0.75)
         XCTAssertLessThan(amberTop.blueComponent, 0.35)
 
-        let greyTop = sample(bright, midX, topY)
-        XCTAssertLessThan(abs(greyTop.redComponent - greyTop.greenComponent), 0.05)
-        XCTAssertLessThan(abs(greyTop.greenComponent - greyTop.blueComponent), 0.05)
+        // Without Night Shift the fill is KeyLight's yellow (systemYellow), not grey.
+        let yellowTop = sample(bright, midX, topY)
+        XCTAssertGreaterThan(yellowTop.redComponent, 0.9)
+        XCTAssertGreaterThan(yellowTop.greenComponent, 0.7)
+        XCTAssertLessThan(yellowTop.blueComponent, 0.25)
+
+        // The lizard is tan, a different colour from the grey monitor: sample the head
+        // (x 10...19.6, y 15...19) away from its spots and eye, and the bezel below it.
+        let head = sample(bright, 14.8, 18.4)
+        XCTAssertGreaterThan(head.alphaComponent, 0.9)
+        XCTAssertGreaterThan(head.redComponent - head.blueComponent, 0.3, "head is tan, not grey")
+        let bezel = sample(bright, 2.7, 10)
+        XCTAssertLessThan(abs(bezel.redComponent - bezel.blueComponent), 0.05, "bezel stays grey")
     }
 }

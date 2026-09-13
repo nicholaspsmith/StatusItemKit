@@ -419,41 +419,53 @@ public enum CharacterIcon {
 
     static let amber = NSColor(red: 1, green: 0.62, blue: 0.2, alpha: 1)
 
-    // MONITOR LIZARD: the screen is the lizard's body, a stout head rises from the top bezel, a tail curls
-    // out of the stand. The screen fills bottom-up with the main display's brightness; Night Shift turns
-    // the fill amber; a forked tongue flicks after a DDC write.
+    static let lizardTan = NSColor(red: 0.85, green: 0.68, blue: 0.38, alpha: 1)
+    static let lizardSpot = NSColor(red: 0.35, green: 0.22, blue: 0.08, alpha: 1)
+
+    // MONITOR LIZARD: a grey monitor is the lizard's body; a stout tan, spotted head rises from the top
+    // bezel and a spotted tail curls out of the stand. The screen fills bottom-up in KeyLight's yellow
+    // with the main display's brightness; Night Shift turns the fill amber; a forked tongue flicks after
+    // a DDC write.
     public static func monitorLizard(brightness: CGFloat, nightShift: Bool, tongue: Bool = false) -> NSImage {
         let level = max(0, min(1, brightness))
         return canvas(width: 24, height: 20) { ctx in
+            // Tail first so the stand's foot overlaps its root: out of the stand's right side, curling up and away.
+            let tail = NSBezierPath()
+            let t0 = NSPoint(x: 13.5, y: 3), t1 = NSPoint(x: 18, y: 2.2), t2 = NSPoint(x: 21.5, y: 3.5), t3 = NSPoint(x: 22.5, y: 6.5)
+            tail.move(to: t0); tail.curve(to: t3, controlPoint1: t1, controlPoint2: t2)
+            tail.lineWidth = 2.0; tail.lineCapStyle = .round; lizardTan.set(); tail.stroke()
+            lizardSpot.set()
+            for t in [0.3, 0.58, 0.84] as [CGFloat] {
+                let u = 1 - t
+                let x = u*u*u*t0.x + 3*u*u*t*t1.x + 3*u*t*t*t2.x + t*t*t*t3.x
+                let y = u*u*u*t0.y + 3*u*u*t*t1.y + 3*u*t*t*t2.y + t*t*t*t3.y
+                NSBezierPath(ovalIn: NSRect(x: x - 0.45, y: y - 0.45, width: 0.9, height: 0.9)).fill()
+            }
+            // Monitor: bezel 15 wide, 10 tall, on a stand — all mid grey.
             body.set()
-            // Bezel: a rounded rect 15 wide, 10 tall, sitting on a stand.
             let bezel = NSRect(x: 2, y: 5.5, width: 15, height: 10)
             NSBezierPath(roundedRect: bezel, xRadius: 1.6, yRadius: 1.6).fill()
             NSBezierPath(rect: NSRect(x: 8, y: 3.4, width: 3, height: 2.4)).fill()          // neck of the stand
             NSBezierPath(roundedRect: NSRect(x: 5, y: 2.2, width: 9, height: 1.6), xRadius: 0.8, yRadius: 0.8).fill() // foot
-            // Head: stout, rising from the top bezel, offset right, with a blunt snout to the right
-            // (a flat-ish crown and a short jaw so it reads as a lizard, not a bird).
+            // Head: stout, rising from the top bezel, offset right, blunt snout to the right.
             let head = NSBezierPath()
             head.move(to: NSPoint(x: 10.2, y: 15))
             head.curve(to: NSPoint(x: 10, y: 19), controlPoint1: NSPoint(x: 9.9, y: 16.6), controlPoint2: NSPoint(x: 9.9, y: 18))
             head.curve(to: NSPoint(x: 16.2, y: 19.2), controlPoint1: NSPoint(x: 12.6, y: 19.7), controlPoint2: NSPoint(x: 14.6, y: 19.7))
             head.curve(to: NSPoint(x: 19.6, y: 16.7), controlPoint1: NSPoint(x: 17.8, y: 18.8), controlPoint2: NSPoint(x: 19.1, y: 17.9))
             head.curve(to: NSPoint(x: 19.6, y: 15), controlPoint1: NSPoint(x: 20, y: 16), controlPoint2: NSPoint(x: 19.9, y: 15.4))
-            head.close(); head.fill()
-            // Tail: out of the stand's right side, curling up and away.
-            let tail = NSBezierPath()
-            tail.move(to: NSPoint(x: 13.5, y: 3))
-            tail.curve(to: NSPoint(x: 22.5, y: 6.5), controlPoint1: NSPoint(x: 18, y: 2.2), controlPoint2: NSPoint(x: 21.5, y: 3.5))
-            tail.lineWidth = 1.7; tail.lineCapStyle = .round; tail.stroke()
-            // Screen: cut out, then filled to the brightness level.
+            head.close(); lizardTan.set(); head.fill()
+            lizardSpot.set()
+            NSBezierPath(ovalIn: NSRect(x: 11.6, y: 17.4, width: 1.1, height: 1.1)).fill()   // spots on the crown
+            NSBezierPath(ovalIn: NSRect(x: 13.4, y: 15.6, width: 0.9, height: 0.9)).fill()
+            NSBezierPath(ovalIn: NSRect(x: 16.3, y: 16.9, width: 1.5, height: 1.5)).fill()   // eye
+            // Screen: cut out of the bezel, then filled to the brightness level.
             let screen = NSRect(x: 3.4, y: 6.9, width: 12.2, height: 7.2)
             cut(ctx, NSBezierPath(rect: screen))
             if level > 0.02 {
-                (nightShift ? amber : body).set()
+                (nightShift ? amber : NSColor.systemYellow).set()
                 NSBezierPath(rect: NSRect(x: screen.minX, y: screen.minY, width: screen.width, height: screen.height * level)).fill()
             }
-            // Eye.
-            cut(ctx, NSBezierPath(ovalIn: NSRect(x: 16.2, y: 17, width: 1.5, height: 1.5)))
             if tongue {
                 NSColor(red: 0.96, green: 0.42, blue: 0.56, alpha: 1).set()
                 let t = NSBezierPath(); t.move(to: NSPoint(x: 19.6, y: 15.9)); t.line(to: NSPoint(x: 22.4, y: 15.6))
