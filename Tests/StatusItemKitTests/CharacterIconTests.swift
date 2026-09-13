@@ -103,4 +103,41 @@ final class CharacterIconTests: XCTestCase {
         XCTAssertNotEqual(bright.tiffRepresentation, amber.tiffRepresentation, "Night Shift tints the screen")
         XCTAssertNotEqual(bright.tiffRepresentation, CharacterIcon.monitorLizard(brightness: 1.0, nightShift: false, tongue: true).tiffRepresentation)
     }
+
+    func testMonitorLizardScreenFillsBottomUpAndTintsAmber() throws {
+        // The screen rect in the implementation is x: 3.4...15.6, y: 6.9...14.1
+        // on the 24x20 canvas. Sample near its top and bottom, a little in from
+        // each edge so antialiasing at the boundary can't flip the result.
+        let midX: CGFloat = 9.5, topY: CGFloat = 13.8, bottomY: CGFloat = 7.2
+
+        func sample(_ img: NSImage, _ x: CGFloat, _ y: CGFloat) -> NSColor {
+            let rep = NSBitmapImageRep(data: img.tiffRepresentation!)!
+            let scale = CGFloat(rep.pixelsWide) / img.size.width
+            // Bitmap rows run top-down; the canvas is drawn bottom-up.
+            return rep.colorAt(x: Int(x * scale), y: Int((img.size.height - y) * scale))!.usingColorSpace(.sRGB)!
+        }
+
+        let dim = CharacterIcon.monitorLizard(brightness: 0.25, nightShift: false)
+        let bright = CharacterIcon.monitorLizard(brightness: 1.0, nightShift: false)
+        let amber = CharacterIcon.monitorLizard(brightness: 1.0, nightShift: true)
+
+        // The fill grows bottom-up: at low brightness the bottom of the screen
+        // is already lit but the top is still empty (transparent, since the
+        // screen was cut out of the bezel); at full brightness both are lit.
+        XCTAssertLessThan(sample(dim, midX, topY).alphaComponent, 0.1, "dim: top of screen still unlit")
+        XCTAssertGreaterThan(sample(dim, midX, bottomY).alphaComponent, 0.5, "dim: bottom of screen already lit")
+        XCTAssertGreaterThan(sample(bright, midX, topY).alphaComponent, 0.5, "bright: top of screen lit")
+        XCTAssertGreaterThan(sample(bright, midX, bottomY).alphaComponent, 0.5, "bright: bottom of screen lit")
+
+        // Night Shift tints the fill amber; without it the fill is the same
+        // neutral grey as the rest of the body.
+        let amberTop = sample(amber, midX, topY)
+        XCTAssertGreaterThan(amberTop.redComponent, 0.9)
+        XCTAssertGreaterThan(amberTop.greenComponent, 0.5); XCTAssertLessThan(amberTop.greenComponent, 0.75)
+        XCTAssertLessThan(amberTop.blueComponent, 0.35)
+
+        let greyTop = sample(bright, midX, topY)
+        XCTAssertLessThan(abs(greyTop.redComponent - greyTop.greenComponent), 0.05)
+        XCTAssertLessThan(abs(greyTop.greenComponent - greyTop.blueComponent), 0.05)
+    }
 }
