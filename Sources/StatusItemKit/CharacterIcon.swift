@@ -9,7 +9,8 @@ import AppKit
 /// owl's eyes are pie meters, the chameleon changes colour and grows a tail per
 /// connection, the octopus grows and heats from four green arms to eight red ones, the key's rays light
 /// with the backlight, the Apollo's volume arc is the level, the raccoon's eyes
-/// close when paused, the bin's lid lifts when active.
+/// close when paused, the bin's lid lifts when active, the monitor lizard's
+/// screen fills with the brightness.
 public enum CharacterIcon {
     /// A mid grey that survives both light and dark menu bars.
     static let body = NSColor(white: 0.62, alpha: 1)
@@ -414,4 +415,52 @@ public enum CharacterIcon {
             let ribs = NSBezierPath(); for x in [7.0, 9.0, 11.0] { ribs.move(to: NSPoint(x: x, y: 3.5)); ribs.line(to: NSPoint(x: x, y: 10)) }; ribs.lineWidth = 0.9
             ctx.compositingOperation = .destinationOut; ribs.stroke(); ctx.compositingOperation = .sourceOver
         }
-    }}
+    }
+
+    static let amber = NSColor(red: 1, green: 0.62, blue: 0.2, alpha: 1)
+
+    // MONITOR LIZARD: the screen is the lizard's body, a stout head rises from the top bezel, a tail curls
+    // out of the stand. The screen fills bottom-up with the main display's brightness; Night Shift turns
+    // the fill amber; a forked tongue flicks after a DDC write.
+    public static func monitorLizard(brightness: CGFloat, nightShift: Bool, tongue: Bool = false) -> NSImage {
+        let level = max(0, min(1, brightness))
+        return canvas(width: 24, height: 20) { ctx in
+            body.set()
+            // Bezel: a rounded rect 15 wide, 10 tall, sitting on a stand.
+            let bezel = NSRect(x: 2, y: 5.5, width: 15, height: 10)
+            NSBezierPath(roundedRect: bezel, xRadius: 1.6, yRadius: 1.6).fill()
+            NSBezierPath(rect: NSRect(x: 8, y: 3.4, width: 3, height: 2.4)).fill()          // neck of the stand
+            NSBezierPath(roundedRect: NSRect(x: 5, y: 2.2, width: 9, height: 1.6), xRadius: 0.8, yRadius: 0.8).fill() // foot
+            // Head: stout, rising from the top bezel, offset right, with a blunt snout to the right
+            // (a flat-ish crown and a short jaw so it reads as a lizard, not a bird).
+            let head = NSBezierPath()
+            head.move(to: NSPoint(x: 10.2, y: 15))
+            head.curve(to: NSPoint(x: 10, y: 19), controlPoint1: NSPoint(x: 9.9, y: 16.6), controlPoint2: NSPoint(x: 9.9, y: 18))
+            head.curve(to: NSPoint(x: 16.2, y: 19.2), controlPoint1: NSPoint(x: 12.6, y: 19.7), controlPoint2: NSPoint(x: 14.6, y: 19.7))
+            head.curve(to: NSPoint(x: 19.6, y: 16.7), controlPoint1: NSPoint(x: 17.8, y: 18.8), controlPoint2: NSPoint(x: 19.1, y: 17.9))
+            head.curve(to: NSPoint(x: 19.6, y: 15), controlPoint1: NSPoint(x: 20, y: 16), controlPoint2: NSPoint(x: 19.9, y: 15.4))
+            head.close(); head.fill()
+            // Tail: out of the stand's right side, curling up and away.
+            let tail = NSBezierPath()
+            tail.move(to: NSPoint(x: 13.5, y: 3))
+            tail.curve(to: NSPoint(x: 22.5, y: 6.5), controlPoint1: NSPoint(x: 18, y: 2.2), controlPoint2: NSPoint(x: 21.5, y: 3.5))
+            tail.lineWidth = 1.7; tail.lineCapStyle = .round; tail.stroke()
+            // Screen: cut out, then filled to the brightness level.
+            let screen = NSRect(x: 3.4, y: 6.9, width: 12.2, height: 7.2)
+            cut(ctx, NSBezierPath(rect: screen))
+            if level > 0.02 {
+                (nightShift ? amber : body).set()
+                NSBezierPath(rect: NSRect(x: screen.minX, y: screen.minY, width: screen.width, height: screen.height * level)).fill()
+            }
+            // Eye.
+            cut(ctx, NSBezierPath(ovalIn: NSRect(x: 16.2, y: 17, width: 1.5, height: 1.5)))
+            if tongue {
+                NSColor(red: 0.96, green: 0.42, blue: 0.56, alpha: 1).set()
+                let t = NSBezierPath(); t.move(to: NSPoint(x: 19.6, y: 15.9)); t.line(to: NSPoint(x: 22.4, y: 15.6))
+                t.move(to: NSPoint(x: 22.4, y: 15.6)); t.line(to: NSPoint(x: 23.6, y: 16.3))
+                t.move(to: NSPoint(x: 22.4, y: 15.6)); t.line(to: NSPoint(x: 23.6, y: 14.9))
+                t.lineWidth = 0.8; t.lineCapStyle = .round; t.stroke()
+            }
+        }
+    }
+}

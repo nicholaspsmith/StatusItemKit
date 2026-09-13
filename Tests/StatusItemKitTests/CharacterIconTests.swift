@@ -92,4 +92,15 @@ final class CharacterIconTests: XCTestCase {
         let c = rep.colorAt(x: Int(8.6 * scale), y: Int((owl.size.height - 11) * scale))!.usingColorSpace(.sRGB)!
         XCTAssertLessThan(c.redComponent + c.greenComponent + c.blueComponent, 0.1)
     }
+
+    func testMonitorLizardIsWideNonTemplateAndVariesWithState() {
+        let dim = CharacterIcon.monitorLizard(brightness: 0.1, nightShift: false)
+        XCTAssertEqual(dim.size, NSSize(width: 24, height: 20))
+        XCTAssertFalse(dim.isTemplate)
+        let bright = CharacterIcon.monitorLizard(brightness: 1.0, nightShift: false)
+        let amber = CharacterIcon.monitorLizard(brightness: 1.0, nightShift: true)
+        XCTAssertNotEqual(dim.tiffRepresentation, bright.tiffRepresentation, "the screen fill tracks brightness")
+        XCTAssertNotEqual(bright.tiffRepresentation, amber.tiffRepresentation, "Night Shift tints the screen")
+        XCTAssertNotEqual(bright.tiffRepresentation, CharacterIcon.monitorLizard(brightness: 1.0, nightShift: false, tongue: true).tiffRepresentation)
+    }
 }
