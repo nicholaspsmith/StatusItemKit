@@ -63,7 +63,7 @@ the way:
 | `MeterStyle` | The meter shapes as a value: `.arc` / `.gauge` / `.pie` / `.wedge` / `.dot`, plus `MeterIcon.image(style:fraction:color:)`. |
 | `MeterColor` | Named presets and the `#RRGGBB` round-trip used to persist a colour, plus `swatch(_:)` for menu-item images. |
 | `MeterAppearance` | The user's chosen shape and colour, persisted in the app's own defaults (`MeterStyle`, `MeterColorHex`). |
-| `AppearanceMenu` | The shared **Icon** submenu: shapes, colour presets, and the system colour picker. |
+| `AppearanceMenu` | The shared **Icon** submenu: shapes, colour presets, and the system colour picker — or, via `colorItems:`, an app's own colour block in their place. |
 | `LoginItem` | `SMAppService.mainApp` register/unregister + the "must live in /Applications" alert. |
 | `Notifier` | `UNUserNotificationCenter` authorization + `post(title:body:)`. |
 
@@ -262,6 +262,11 @@ Notes:
 - **Treat `appearance.color` as the resting colour.** If your app escalates
   (`Severity`), keep your warning colours for the upper bands: a meter that
   looks identical at 5% and 95% has stopped saying the thing it exists to say.
+- **An app whose colour is not one number can supply its own colour block.**
+  Pass `colorItems: { submenu in ... }` and it is called after the shapes and
+  their separator instead of the presets and the panel; the app owns those
+  items' persistence and redraw. Claude Usage uses it for a session/weekly
+  colour pair, one per owl pupil.
 - **The default colour is the Green preset, not `NSColor.systemGreen`.** The
   system colour is dynamic and resolves to a different hex in dark mode, so it
   would never match a preset and a fresh install would show "Custom Colour…"

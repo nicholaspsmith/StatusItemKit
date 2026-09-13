@@ -67,4 +67,29 @@ final class CharacterIconTests: XCTestCase {
         XCTAssertTrue(isYellowish(CharacterIcon.key(level: 0.01)))
         XCTAssertFalse(isYellowish(CharacterIcon.key(level: 0)))
     }
+
+    func testOwlPupilsTakeTheirWindowsColours() throws {
+        // Left eye is the session window, right the weekly: each pupil takes
+        // the colour of its bar so the two can be told apart at a glance.
+        let blue = NSColor(srgbRed: 0, green: 0, blue: 1, alpha: 1)
+        let red = NSColor(srgbRed: 1, green: 0, blue: 0, alpha: 1)
+        let owl = CharacterIcon.owl(session: 0, weekly: 0, sessionPupil: blue, weeklyPupil: red)
+        let rep = NSBitmapImageRep(data: owl.tiffRepresentation!)!
+        let scale = CGFloat(rep.pixelsWide) / owl.size.width
+        func sample(_ x: CGFloat, _ y: CGFloat) -> NSColor {
+            // Bitmap rows run top-down; the canvas is drawn bottom-up.
+            rep.colorAt(x: Int(x * scale), y: Int((owl.size.height - y) * scale))!.usingColorSpace(.sRGB)!
+        }
+        let left = sample(8.6, 11), right = sample(23.4, 11)
+        XCTAssertGreaterThan(left.blueComponent, 0.9); XCTAssertLessThan(left.redComponent, 0.1)
+        XCTAssertGreaterThan(right.redComponent, 0.9); XCTAssertLessThan(right.blueComponent, 0.1)
+    }
+
+    func testOwlPupilsDefaultToBlack() throws {
+        let owl = CharacterIcon.owl(session: 0, weekly: 0)
+        let rep = NSBitmapImageRep(data: owl.tiffRepresentation!)!
+        let scale = CGFloat(rep.pixelsWide) / owl.size.width
+        let c = rep.colorAt(x: Int(8.6 * scale), y: Int((owl.size.height - 11) * scale))!.usingColorSpace(.sRGB)!
+        XCTAssertLessThan(c.redComponent + c.greenComponent + c.blueComponent, 0.1)
+    }
 }

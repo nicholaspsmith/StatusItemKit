@@ -42,7 +42,10 @@ public enum CharacterIcon {
     // OWL v2: squarer head using the full height, soft ear bumps, big eyes bulging past the sides.
     /// The owl is eyelid-brown all over. Each eye is a real eye: white, black pupil, and a brown eyelid that
     /// drops as usage rises — wide open at 0, half closed at 0.5, shut at 1.
-    public static func owl(session: CGFloat, weekly: CGFloat) -> NSImage {
+    /// The pupils can take a colour each — the left eye's for the session window, the right's for the
+    /// weekly — so an app can tie each eye to the bar it stands for.
+    public static func owl(session: CGFloat, weekly: CGFloat,
+                           sessionPupil: NSColor = .black, weeklyPupil: NSColor = .black) -> NSImage {
         canvas(width: 32, height: 22) { ctx in
             eyelid.set()
             // Head: a wide rounded block with soft ear tufts at the top corners.
@@ -57,7 +60,7 @@ public enum CharacterIcon {
             beak.move(to: NSPoint(x: 12.6, y: 9.2)); beak.line(to: NSPoint(x: 19.4, y: 9.2)); beak.line(to: NSPoint(x: 16, y: 0.3)); beak.close()
             cut(ctx, beak); NSColor.black.set(); beak.fill()
             // Eyes: two big eyes bulging past the sides of the head.
-            for (cx, frac) in [(CGFloat(8.6), session), (CGFloat(23.4), weekly)] {
+            for (cx, frac, pupil) in [(CGFloat(8.6), session, sessionPupil), (CGFloat(23.4), weekly, weeklyPupil)] {
                 let c = NSPoint(x: cx, y: 11); let r: CGFloat = 7.4
                 let closed = max(0, min(1, frac))
                 cut(ctx, NSBezierPath(ovalIn: NSRect(x: c.x - r - 1, y: c.y - r - 1, width: (r + 1) * 2, height: (r + 1) * 2)))
@@ -87,7 +90,7 @@ public enum CharacterIcon {
                     ctx.restoreGraphicsState()
                 }
                 // Pupil.
-                NSColor.black.set(); NSBezierPath(ovalIn: NSRect(x: c.x - pr, y: c.y - pr, width: pr * 2, height: pr * 2)).fill()
+                pupil.set(); NSBezierPath(ovalIn: NSRect(x: c.x - pr, y: c.y - pr, width: pr * 2, height: pr * 2)).fill()
                 // Eyelid: brown, sliding down from the top by `closed` of the eye's height.
                 ctx.saveGraphicsState()
                 eye.addClip()

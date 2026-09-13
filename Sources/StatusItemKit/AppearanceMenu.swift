@@ -9,6 +9,7 @@ public final class AppearanceMenu: NSObject, NSWindowDelegate {
     private let appearance: MeterAppearance
     private let styles: [MeterStyle]
     private let characterTitle: String?
+    private let colorItems: ((NSMenu) -> Void)?
     private let onChange: () -> Void
 
     /// - Parameter styles: which shapes to offer. Defaults to the proportional
@@ -16,13 +17,19 @@ public final class AppearanceMenu: NSObject, NSWindowDelegate {
     ///   rather than a fraction.
     /// - Parameter characterTitle: what to call `.character` in the menu when
     ///   it is offered — "Owl", "Octopus" — since "Character" says nothing.
+    /// - Parameter colorItems: builds the colour block in place of the shared
+    ///   presets and the colour panel, for an app whose colour is not one
+    ///   number — a pair, a palette. It is handed the submenu after the shapes
+    ///   and their separator, and owns persistence and redraw for its items.
     public init(appearance: MeterAppearance,
                 styles: [MeterStyle] = MeterStyle.proportional,
                 characterTitle: String? = nil,
+                colorItems: ((NSMenu) -> Void)? = nil,
                 onChange: @escaping () -> Void) {
         self.appearance = appearance
         self.styles = styles
         self.characterTitle = characterTitle
+        self.colorItems = colorItems
         self.onChange = onChange
         super.init()
     }
@@ -42,6 +49,12 @@ public final class AppearanceMenu: NSObject, NSWindowDelegate {
         }
 
         submenu.addItem(.separator())
+
+        if let colorItems {
+            colorItems(submenu)
+            item.submenu = submenu
+            return item
+        }
 
         let currentHex = appearance.colorHex.uppercased()
         var matchedPreset = false
