@@ -105,10 +105,10 @@ final class CharacterIconTests: XCTestCase {
     }
 
     func testMonitorLizardScreenFillsBottomUpAndTintsAmber() throws {
-        // The screen rect in the implementation is x: 3.4...15.6, y: 6.9...14.1
+        // The screen rect in the implementation is x: 2.6...17.4, y: 6.1...14.5
         // on the 24x20 canvas. Sample near its top and bottom, a little in from
         // each edge so antialiasing at the boundary can't flip the result.
-        let midX: CGFloat = 9.5, topY: CGFloat = 13.8, bottomY: CGFloat = 7.2
+        let midX: CGFloat = 9.5, topY: CGFloat = 13.7, bottomY: CGFloat = 6.7
 
         func sample(_ img: NSImage, _ x: CGFloat, _ y: CGFloat) -> NSColor {
             let rep = NSBitmapImageRep(data: img.tiffRepresentation!)!
@@ -142,12 +142,13 @@ final class CharacterIconTests: XCTestCase {
         XCTAssertGreaterThan(yellowTop.greenComponent, 0.7)
         XCTAssertLessThan(yellowTop.blueComponent, 0.25)
 
-        // The lizard is tan, a different colour from the grey monitor: sample the head
-        // (x 10...19.6, y 15...19) away from its spots and eye, and the bezel below it.
-        let head = sample(bright, 14.8, 18.4)
+        // The lizard is dark green, a different colour from the grey monitor: sample the
+        // head (x 10.5...19.8, y 15.6...19.5) away from its spots and eye, and the bezel.
+        let head = sample(bright, 15.2, 18.6)
         XCTAssertGreaterThan(head.alphaComponent, 0.9)
-        XCTAssertGreaterThan(head.redComponent - head.blueComponent, 0.3, "head is tan, not grey")
-        let bezel = sample(bright, 2.7, 10)
+        XCTAssertGreaterThan(head.greenComponent - head.redComponent, 0.15, "head is green, not grey")
+        XCTAssertGreaterThan(head.greenComponent - head.blueComponent, 0.15)
+        let bezel = sample(bright, 9.5, 5.5)   // the bottom bezel strip, y 5...6.1
         XCTAssertLessThan(abs(bezel.redComponent - bezel.blueComponent), 0.05, "bezel stays grey")
     }
 }
