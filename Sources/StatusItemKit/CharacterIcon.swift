@@ -68,11 +68,12 @@ public enum CharacterIcon {
                 eyelid.set(); NSBezierPath(ovalIn: NSRect(x: c.x - r - 0.8, y: c.y - r - 0.8, width: (r + 0.8) * 2, height: (r + 0.8) * 2)).fill()
                 let eye = NSBezierPath(ovalIn: NSRect(x: c.x - r, y: c.y - r, width: r * 2, height: r * 2))
                 // Tiredness: once the eye is less than three-quarters open the
-                // white picks up a faint pink and short red veins appear, both
-                // reddening as the lid comes down.
+                // white picks up a pink that deepens as the lid comes down —
+                // a cartoon's bloodshot sleepy eye, light pink (#FFB3B3) by the
+                // time it is shut, never red — and short red veins appear.
                 let tired = max(0, min(1, (closed - 0.25) / 0.75))
                 let pr: CGFloat = 3.1
-                NSColor(red: 1, green: 1 - 0.18 * tired, blue: 1 - 0.18 * tired, alpha: 1).set(); eye.fill()
+                NSColor(srgbRed: 1, green: 1 - 0.3 * tired, blue: 1 - 0.3 * tired, alpha: 1).set(); eye.fill()
                 if tired > 0 {
                     ctx.saveGraphicsState(); eye.addClip()
                     NSColor(red: 0.95, green: 0.12, blue: 0.12, alpha: 0.3 + 0.7 * tired).set()

@@ -151,4 +151,33 @@ final class CharacterIconTests: XCTestCase {
         let bezel = sample(bright, 9.5, 5.5)   // the bottom bezel strip, y 5...6.1
         XCTAssertLessThan(abs(bezel.redComponent - bezel.blueComponent), 0.05, "bezel stays grey")
     }
+
+    // The whites go pinker as the lid comes down: pure white while the eye is
+    // at least three-quarters open, a clear light pink when nearly shut.
+    func testOwlWhitesRedden() throws {
+        // The brightest white-ish pixel is the eye white itself: the lid is
+        // brown, the pupil black and the veins red, and anti-aliasing only
+        // ever blends towards those.
+        func whitest(_ img: NSImage) -> NSColor {
+            let rep = NSBitmapImageRep(data: img.tiffRepresentation!)!
+            var best = NSColor(srgbRed: 0, green: 0, blue: 0, alpha: 1)
+            for x in 0..<rep.pixelsWide { for y in 0..<rep.pixelsHigh {
+                guard let c = rep.colorAt(x: x, y: y)?.usingColorSpace(.sRGB), c.alphaComponent > 0.99,
+                      c.redComponent > 0.95 else { continue }
+                if c.greenComponent > best.greenComponent { best = c }
+            } }
+            return best
+        }
+        let open = whitest(CharacterIcon.owl(session: 0.2, weekly: 0.2))
+        XCTAssertGreaterThan(open.greenComponent, 0.99)
+        // Three-quarters shut: enough white still showing to sample cleanly.
+        // The read-back is not colour-managed like the screen (a 0.80 fill
+        // samples as ~0.84), so the bounds are loose: clearly pinker than the
+        // old faint ramp (~0.90 here), clearly not red.
+        let tired = whitest(CharacterIcon.owl(session: 0.75, weekly: 0.75))
+        XCTAssertGreaterThan(tired.redComponent, 0.95)
+        XCTAssertLessThan(tired.greenComponent, 0.87)
+        XCTAssertGreaterThan(tired.greenComponent, 0.7)
+        XCTAssertEqual(tired.greenComponent, tired.blueComponent, accuracy: 0.02)
+    }
 }
