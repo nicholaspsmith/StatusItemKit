@@ -477,4 +477,80 @@ public enum CharacterIcon {
             }
         }
     }
+
+    /// Homestead's house: the windows are the lights, and the right one gets a
+    /// fan when one is running. Deliberately chimney-free — a chimney reads as
+    /// heating, which this app does not control.
+    public static func house(lightsOn: Int, fanOn: Bool, reachable: Bool, configured: Bool) -> NSImage {
+        canvas(width: 22, height: 22) { ctx in
+            let outline = NSBezierPath()
+            outline.move(to: NSPoint(x: 1.6, y: 11))
+            outline.line(to: NSPoint(x: 11, y: 20))
+            outline.line(to: NSPoint(x: 20.4, y: 11))
+            outline.line(to: NSPoint(x: 17.6, y: 11))
+            outline.line(to: NSPoint(x: 17.6, y: 2.4))
+            outline.line(to: NSPoint(x: 4.4, y: 2.4))
+            outline.line(to: NSPoint(x: 4.4, y: 11))
+            outline.close()
+            outline.lineWidth = 1.6
+            outline.lineJoinStyle = .round
+
+            let lit = NSColor(red: 1, green: 0.82, blue: 0.34, alpha: 1)
+            let dark = NSColor(white: 0.34, alpha: 1)
+
+            if !configured {
+                // Nothing to say yet: grey, but solid — dashes mean "lost", and
+                // an app that has never been pointed at a server has lost nothing.
+                NSColor(white: 0.45, alpha: 1).set()
+            } else if !reachable {
+                NSColor(white: 0.45, alpha: 1).set()
+                outline.setLineDash([2.2, 1.8], count: 2, phase: 0)
+            } else {
+                body.set()
+            }
+            outline.stroke()
+
+            // Door, so the silhouette still reads as a house at 22pt.
+            let door = NSBezierPath(rect: NSRect(x: 9.7, y: 2.4, width: 2.6, height: 4.0))
+            door.fill()
+
+            let showLights = configured && reachable
+            let left = NSRect(x: 6.1, y: 7.6, width: 3.4, height: 3.4)
+            let right = NSRect(x: 12.5, y: 7.6, width: 3.4, height: 3.4)
+            let leftLit = showLights && lightsOn >= 1
+            let rightLit = showLights && lightsOn >= 2
+
+            (leftLit ? lit : dark).set()
+            NSBezierPath(rect: left).fill()
+            (rightLit ? lit : dark).set()
+            NSBezierPath(rect: right).fill()
+
+            guard showLights, fanOn else { return }
+            // Three curved blades around a hub, contrasting with the window
+            // behind them. At this size a fan has to be a pinwheel silhouette;
+            // straight wedges read as a hazard symbol instead.
+            (rightLit ? dark : lit).set()
+            let centre = NSPoint(x: right.midX, y: right.midY)
+            let radius: CGFloat = 1.75
+            for index in 0..<3 {
+                let angle = Double(index) * 2 * Double.pi / 3 + 0.3
+                let tip = NSPoint(x: centre.x + CGFloat(cos(angle)) * radius,
+                                  y: centre.y + CGFloat(sin(angle)) * radius)
+                let blade = NSBezierPath()
+                blade.move(to: centre)
+                blade.curve(to: tip,
+                            controlPoint1: NSPoint(x: centre.x + CGFloat(cos(angle - 0.9)) * radius * 0.9,
+                                                   y: centre.y + CGFloat(sin(angle - 0.9)) * radius * 0.9),
+                            controlPoint2: NSPoint(x: centre.x + CGFloat(cos(angle - 0.3)) * radius,
+                                                   y: centre.y + CGFloat(sin(angle - 0.3)) * radius))
+                blade.curve(to: centre,
+                            controlPoint1: NSPoint(x: centre.x + CGFloat(cos(angle + 0.35)) * radius * 0.85,
+                                                   y: centre.y + CGFloat(sin(angle + 0.35)) * radius * 0.85),
+                            controlPoint2: NSPoint(x: centre.x + CGFloat(cos(angle + 0.5)) * radius * 0.4,
+                                                   y: centre.y + CGFloat(sin(angle + 0.5)) * radius * 0.4))
+                blade.close()
+                blade.fill()
+            }
+        }
+    }
 }
