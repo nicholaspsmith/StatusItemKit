@@ -65,6 +65,8 @@ the way:
 | `MeterAppearance` | The user's chosen shape and colour, persisted in the app's own defaults (`MeterStyle`, `MeterColorHex`). |
 | `AppearanceMenu` | The shared **Icon** submenu: shapes, colour presets, and the system colour picker — or, via `colorItems:`, an app's own colour block in their place. |
 | `LoginItem` | `SMAppService.mainApp` register/unregister + the "must live in /Applications" alert. |
+| `LoginRequest` | Parses `--login [on\|off\|status]` off a command line. Pure and unit-tested; a bare flag or `status` reports rather than registers, so an incomplete or mistyped command can never silently change Start at Login. |
+| `LoginCLI` | `runIfRequested()` — acts on that flag and exits, or returns when it is absent. One line at the top of `main` gives an app a scriptable Start at Login, which is the only way an installer can turn it on: `SMAppService` registers the calling process's own bundle and nothing else. |
 | `Notifier` | `UNUserNotificationCenter` authorization + `post(title:body:)`. |
 
 ## Using it
