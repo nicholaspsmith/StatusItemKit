@@ -548,57 +548,73 @@ public enum CharacterIcon {
     /// Homestead's house: the windows are the lights, and the right one gets a
     /// fan when one is running. Deliberately chimney-free — a chimney reads as
     /// heating, which this app does not control.
+    ///
+    /// Drawn as a solid silhouette with the windows punched out of it, rather
+    /// than as an outline. A 1.5pt stroke is the first thing to go soft on a
+    /// non-Retina bar, and the menu bar's own icons are solid for the same
+    /// reason; a filled shape holds its edges at 22pt whatever the display.
     public static func house(lightsOn: Int, fanOn: Bool, reachable: Bool, configured: Bool) -> NSImage {
         canvas(width: 22, height: 22) { ctx in
-            let outline = NSBezierPath()
-            outline.move(to: NSPoint(x: 1.6, y: 11))
-            outline.line(to: NSPoint(x: 11, y: 20))
-            outline.line(to: NSPoint(x: 20.4, y: 11))
-            outline.line(to: NSPoint(x: 17.6, y: 11))
-            outline.line(to: NSPoint(x: 17.6, y: 2.4))
-            outline.line(to: NSPoint(x: 4.4, y: 2.4))
-            outline.line(to: NSPoint(x: 4.4, y: 11))
-            outline.close()
-            outline.lineWidth = 1.6
-            outline.lineJoinStyle = .round
+            let silhouette = NSBezierPath()
+            let eaves: CGFloat = 11.2, wallHalf: CGFloat = 7.2
+            silhouette.move(to: NSPoint(x: 11 - wallHalf, y: 2.6))
+            silhouette.line(to: NSPoint(x: 11 - wallHalf, y: eaves))
+            silhouette.line(to: NSPoint(x: 1.4, y: eaves))
+            silhouette.line(to: NSPoint(x: 10.2, y: 19.6))
+            silhouette.curve(to: NSPoint(x: 11.8, y: 19.6),
+                             controlPoint1: NSPoint(x: 10.7, y: 20.1), controlPoint2: NSPoint(x: 11.3, y: 20.1))
+            silhouette.line(to: NSPoint(x: 20.6, y: eaves))
+            silhouette.line(to: NSPoint(x: 11 + wallHalf, y: eaves))
+            silhouette.line(to: NSPoint(x: 11 + wallHalf, y: 2.6))
+            silhouette.close()
 
-            let lit = NSColor(red: 1, green: 0.82, blue: 0.34, alpha: 1)
-            let dark = NSColor(white: 0.34, alpha: 1)
+            let lit = NSColor(red: 1, green: 0.79, blue: 0.29, alpha: 1)
 
             if !configured {
-                // Nothing to say yet: grey, but solid — dashes mean "lost", and
-                // an app that has never been pointed at a server has lost nothing.
-                NSColor(white: 0.45, alpha: 1).set()
-            } else if !reachable {
-                NSColor(white: 0.45, alpha: 1).set()
-                outline.setLineDash([2.2, 1.8], count: 2, phase: 0)
-            } else {
-                body.set()
+                NSColor(white: 0.62, alpha: 0.55).set()
+                silhouette.fill()
+                return
             }
-            outline.stroke()
+            if !reachable {
+                // Hollow, not dashed: dashes turn to noise at this size, while
+                // an empty house reads instantly as "nobody home".
+                NSColor(white: 0.62, alpha: 0.9).set()
+                silhouette.lineWidth = 1.7
+                silhouette.lineJoinStyle = .round
+                silhouette.stroke()
+                return
+            }
 
-            // Door, so the silhouette still reads as a house at 22pt.
-            let door = NSBezierPath(rect: NSRect(x: 9.7, y: 2.4, width: 2.6, height: 4.0))
-            door.fill()
+            body.set()
+            silhouette.fill()
 
-            let showLights = configured && reachable
-            let left = NSRect(x: 6.1, y: 7.6, width: 3.4, height: 3.4)
-            let right = NSRect(x: 12.5, y: 7.6, width: 3.4, height: 3.4)
-            let leftLit = showLights && lightsOn >= 1
-            let rightLit = showLights && lightsOn >= 2
+            // Windows, punched out of the wall so they are sharp-edged holes.
+            let left = NSRect(x: 6.2, y: 5.4, width: 3.6, height: 3.6)
+            let right = NSRect(x: 12.2, y: 5.4, width: 3.6, height: 3.6)
+            let leftPath = NSBezierPath(roundedRect: left, xRadius: 0.6, yRadius: 0.6)
+            let rightPath = NSBezierPath(roundedRect: right, xRadius: 0.6, yRadius: 0.6)
+            cut(ctx, leftPath)
+            cut(ctx, rightPath)
 
-            (leftLit ? lit : dark).set()
-            NSBezierPath(rect: left).fill()
-            (rightLit ? lit : dark).set()
-            NSBezierPath(rect: right).fill()
+            // A door, punched the same way, so the silhouette still reads as a
+            // house when every light is off.
+            let door = NSBezierPath()
+            door.move(to: NSPoint(x: 9.7, y: 2.6))
+            door.line(to: NSPoint(x: 9.7, y: 4.4))
+            door.curve(to: NSPoint(x: 12.3, y: 4.4),
+                       controlPoint1: NSPoint(x: 9.7, y: 5.6), controlPoint2: NSPoint(x: 12.3, y: 5.6))
+            door.line(to: NSPoint(x: 12.3, y: 2.6))
+            door.close()
+            cut(ctx, door)
 
-            guard showLights, fanOn else { return }
-            // Three curved blades around a hub, contrasting with the window
-            // behind them. At this size a fan has to be a pinwheel silhouette;
-            // straight wedges read as a hazard symbol instead.
-            (rightLit ? dark : lit).set()
+            if lightsOn >= 1 { lit.set(); leftPath.fill() }
+            if lightsOn >= 2 { lit.set(); rightPath.fill() }
+
+            guard fanOn else { return }
+            // Blades in the right window: dark on a lit window, lit on a dark one.
+            (lightsOn >= 2 ? body : lit).set()
             let centre = NSPoint(x: right.midX, y: right.midY)
-            let radius: CGFloat = 1.75
+            let radius: CGFloat = 1.55
             for index in 0..<3 {
                 let angle = Double(index) * 2 * Double.pi / 3 + 0.3
                 let tip = NSPoint(x: centre.x + CGFloat(cos(angle)) * radius,
