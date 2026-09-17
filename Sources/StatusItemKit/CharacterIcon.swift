@@ -545,76 +545,147 @@ public enum CharacterIcon {
         }
     }
 
-    /// Homestead's house: the windows are the lights, and the right one gets a
-    /// fan when one is running. Deliberately chimney-free — a chimney reads as
-    /// heating, which this app does not control.
+    /// Homestead's house: a cottage whose windows are the lights, with a fan
+    /// turning in one of them when a fan is running. Deliberately chimney-free —
+    /// a chimney reads as heating, which this app does not control.
     ///
-    /// Drawn as a solid silhouette with the windows punched out of it, rather
-    /// than as an outline. A 1.5pt stroke is the first thing to go soft on a
-    /// non-Retina bar, and the menu bar's own icons are solid for the same
-    /// reason; a filled shape holds its edges at 22pt whatever the display.
+    /// Drawn at the owl's level of detail, and on the same assumption: a Retina
+    /// bar. Half-point sills, mullions and shingle courses land on half pixels
+    /// at 2x and hold. Anyone on a non-Retina display can pick the plain Dot in
+    /// Icon ▸, which is what it is there for.
     public static func house(lightsOn: Int, fanOn: Bool, reachable: Bool, configured: Bool) -> NSImage {
-        canvas(width: 22, height: 22) { ctx in
+        canvas(width: 26, height: 22) { ctx in
+            let wallLight = NSColor(srgbRed: 0.96, green: 0.93, blue: 0.86, alpha: 1)
+            let wallShade = NSColor(srgbRed: 0.85, green: 0.81, blue: 0.72, alpha: 1)
+            let roofColor = NSColor(srgbRed: 0.33, green: 0.42, blue: 0.64, alpha: 1)
+            let roofShade = NSColor(srgbRed: 0.24, green: 0.31, blue: 0.51, alpha: 1)
+            let frame = NSColor(srgbRed: 0.28, green: 0.33, blue: 0.45, alpha: 1)
+            let glassLit = NSColor(srgbRed: 1, green: 0.79, blue: 0.29, alpha: 1)
+            let glassLitTop = NSColor(srgbRed: 1, green: 0.90, blue: 0.62, alpha: 1)
+            let glassDark = NSColor(srgbRed: 0.27, green: 0.31, blue: 0.42, alpha: 1)
+            let doorColor = NSColor(srgbRed: 0.52, green: 0.35, blue: 0.20, alpha: 1)
+            let knob = NSColor(srgbRed: 1, green: 0.84, blue: 0.47, alpha: 1)
+            let dim = NSColor(white: 0.62, alpha: 1)
+
+            let wall = NSRect(x: 5.0, y: 2.4, width: 16.0, height: 9.8)
+            let eaves = wall.maxY
+            let apex = NSPoint(x: 13, y: 20.0)
+
+            let roof = NSBezierPath()
+            roof.move(to: NSPoint(x: 2.2, y: eaves))
+            roof.line(to: NSPoint(x: apex.x - 0.9, y: apex.y - 0.5))
+            roof.curve(to: NSPoint(x: apex.x + 0.9, y: apex.y - 0.5),
+                       controlPoint1: NSPoint(x: 12.6, y: apex.y + 0.4),
+                       controlPoint2: NSPoint(x: 13.4, y: apex.y + 0.4))
+            roof.line(to: NSPoint(x: 23.8, y: eaves))
+            roof.close()
+
             let silhouette = NSBezierPath()
-            let eaves: CGFloat = 11.2, wallHalf: CGFloat = 7.2
-            silhouette.move(to: NSPoint(x: 11 - wallHalf, y: 2.6))
-            silhouette.line(to: NSPoint(x: 11 - wallHalf, y: eaves))
-            silhouette.line(to: NSPoint(x: 1.4, y: eaves))
-            silhouette.line(to: NSPoint(x: 10.2, y: 19.6))
-            silhouette.curve(to: NSPoint(x: 11.8, y: 19.6),
-                             controlPoint1: NSPoint(x: 10.7, y: 20.1), controlPoint2: NSPoint(x: 11.3, y: 20.1))
-            silhouette.line(to: NSPoint(x: 20.6, y: eaves))
-            silhouette.line(to: NSPoint(x: 11 + wallHalf, y: eaves))
-            silhouette.line(to: NSPoint(x: 11 + wallHalf, y: 2.6))
-            silhouette.close()
+            silhouette.appendRect(wall)
+            silhouette.append(roof)
+            silhouette.windingRule = .nonZero
 
-            let lit = NSColor(red: 1, green: 0.79, blue: 0.29, alpha: 1)
-
-            if !configured {
-                NSColor(white: 0.62, alpha: 0.55).set()
+            // Unconfigured or unreachable: one flat statement, no detail to read.
+            guard configured else {
+                dim.withAlphaComponent(0.5).set()
                 silhouette.fill()
                 return
             }
-            if !reachable {
-                // Hollow, not dashed: dashes turn to noise at this size, while
-                // an empty house reads instantly as "nobody home".
-                NSColor(white: 0.62, alpha: 0.9).set()
-                silhouette.lineWidth = 1.7
+            guard reachable else {
+                // Hollow, not dashed: an empty house reads instantly as
+                // "nobody home", where dashes turn to noise at this size.
+                dim.withAlphaComponent(0.9).set()
+                silhouette.lineWidth = 1.6
                 silhouette.lineJoinStyle = .round
                 silhouette.stroke()
                 return
             }
 
-            body.set()
-            silhouette.fill()
+            // Walls, lit from above.
+            wallLight.set()
+            NSBezierPath(rect: wall).fill()
+            wallShade.set()
+            NSBezierPath(rect: NSRect(x: wall.minX, y: wall.minY, width: wall.width, height: 2.2)).fill()
 
-            // Windows, punched out of the wall so they are sharp-edged holes.
-            let left = NSRect(x: 6.2, y: 5.4, width: 3.6, height: 3.6)
-            let right = NSRect(x: 12.2, y: 5.4, width: 3.6, height: 3.6)
-            let leftPath = NSBezierPath(roundedRect: left, xRadius: 0.6, yRadius: 0.6)
-            let rightPath = NSBezierPath(roundedRect: right, xRadius: 0.6, yRadius: 0.6)
-            cut(ctx, leftPath)
-            cut(ctx, rightPath)
+            // Roof, with a lighter sunward face and two shingle courses.
+            roofColor.set()
+            roof.fill()
+            ctx.saveGraphicsState()
+            roof.addClip()
+            roofShade.set()
+            NSBezierPath(rect: NSRect(x: 13, y: eaves, width: 11, height: 9)).fill()
+            NSColor(white: 1, alpha: 0.16).set()
+            for course in [CGFloat(2.6), 5.2] {
+                let line = NSBezierPath()
+                line.move(to: NSPoint(x: 2, y: eaves + course))
+                line.line(to: NSPoint(x: 24, y: eaves + course))
+                line.lineWidth = 0.5
+                line.stroke()
+            }
+            ctx.restoreGraphicsState()
 
-            // A door, punched the same way, so the silhouette still reads as a
-            // house when every light is off.
-            let door = NSBezierPath()
-            door.move(to: NSPoint(x: 9.7, y: 2.6))
-            door.line(to: NSPoint(x: 9.7, y: 4.4))
-            door.curve(to: NSPoint(x: 12.3, y: 4.4),
-                       controlPoint1: NSPoint(x: 9.7, y: 5.6), controlPoint2: NSPoint(x: 12.3, y: 5.6))
-            door.line(to: NSPoint(x: 12.3, y: 2.6))
-            door.close()
-            cut(ctx, door)
+            // The eaves line, which is what makes the roof sit *on* the wall.
+            roofShade.set()
+            NSBezierPath(rect: NSRect(x: 2.2, y: eaves - 0.5, width: 21.6, height: 0.9)).fill()
 
-            if lightsOn >= 1 { lit.set(); leftPath.fill() }
-            if lightsOn >= 2 { lit.set(); rightPath.fill() }
+            // Windows: frame, glass, a sill, and a mullion cross.
+            let windows = [NSRect(x: 6.4, y: 6.6, width: 4.6, height: 4.4),
+                           NSRect(x: 15.0, y: 6.6, width: 4.6, height: 4.4)]
+            for (index, window) in windows.enumerated() {
+                let isLit = lightsOn >= index + 1
+                frame.set()
+                NSBezierPath(rect: window.insetBy(dx: -0.5, dy: -0.5)).fill()
+
+                let glass = window
+                (isLit ? glassLit : glassDark).set()
+                NSBezierPath(rect: glass).fill()
+                if isLit {
+                    glassLitTop.set()
+                    NSBezierPath(rect: NSRect(x: glass.minX, y: glass.midY, width: glass.width, height: glass.height / 2)).fill()
+                }
+
+                // Mullions — except in the window the fan occupies, where they
+                // would read as more blades and the fan would stop being legible.
+                let holdsFan = fanOn && index == 1
+                (isLit ? frame : NSColor(white: 0.45, alpha: 0.8)).set()
+                if !holdsFan {
+                let cross = NSBezierPath()
+                cross.move(to: NSPoint(x: glass.midX, y: glass.minY)); cross.line(to: NSPoint(x: glass.midX, y: glass.maxY))
+                cross.move(to: NSPoint(x: glass.minX, y: glass.midY)); cross.line(to: NSPoint(x: glass.maxX, y: glass.midY))
+                cross.lineWidth = 0.5
+                cross.stroke()
+                }
+
+                // Sill.
+                wallShade.set()
+                NSBezierPath(rect: NSRect(x: window.minX - 1.0, y: window.minY - 1.1, width: window.width + 2.0, height: 0.6)).fill()
+            }
+
+            // Door: a panelled slab with a step and a knob.
+            let door = NSRect(x: 11.4, y: 2.4, width: 3.2, height: 5.0)
+            doorColor.set()
+            let doorPath = NSBezierPath()
+            doorPath.move(to: NSPoint(x: door.minX, y: door.minY))
+            doorPath.line(to: NSPoint(x: door.minX, y: door.maxY - 0.9))
+            doorPath.curve(to: NSPoint(x: door.maxX, y: door.maxY - 0.9),
+                           controlPoint1: NSPoint(x: door.minX, y: door.maxY + 0.5),
+                           controlPoint2: NSPoint(x: door.maxX, y: door.maxY + 0.5))
+            doorPath.line(to: NSPoint(x: door.maxX, y: door.minY))
+            doorPath.close()
+            doorPath.fill()
+            NSColor(white: 0, alpha: 0.18).set()
+            NSBezierPath(rect: NSRect(x: door.midX - 0.25, y: door.minY + 0.6, width: 0.5, height: 3.2)).fill()
+            knob.set()
+            NSBezierPath(ovalIn: NSRect(x: door.maxX - 1.1, y: door.minY + 2.1, width: 0.7, height: 0.7)).fill()
+            wallShade.set()
+            NSBezierPath(rect: NSRect(x: door.minX - 0.9, y: wall.minY - 0.5, width: door.width + 1.8, height: 0.6)).fill()
 
             guard fanOn else { return }
-            // Blades in the right window: dark on a lit window, lit on a dark one.
-            (lightsOn >= 2 ? body : lit).set()
+            // Blades in the right window, contrasting with the glass behind them.
+            (lightsOn >= 2 ? frame : glassLit).set()
+            let right = windows[1]
             let centre = NSPoint(x: right.midX, y: right.midY)
-            let radius: CGFloat = 1.55
+            let radius: CGFloat = 2.0
             for index in 0..<3 {
                 let angle = Double(index) * 2 * Double.pi / 3 + 0.3
                 let tip = NSPoint(x: centre.x + CGFloat(cos(angle)) * radius,
@@ -634,6 +705,8 @@ public enum CharacterIcon {
                 blade.close()
                 blade.fill()
             }
+            // Hub, so the three blades read as one spinning thing.
+            NSBezierPath(ovalIn: NSRect(x: centre.x - 0.45, y: centre.y - 0.45, width: 0.9, height: 0.9)).fill()
         }
     }
 }
