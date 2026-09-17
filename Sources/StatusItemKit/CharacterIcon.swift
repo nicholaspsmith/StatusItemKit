@@ -420,60 +420,127 @@ public enum CharacterIcon {
 
     static let amber = NSColor(red: 1, green: 0.62, blue: 0.2, alpha: 1)
 
-    static let lizardGreen = NSColor(red: 0.16, green: 0.42, blue: 0.20, alpha: 1)
-    static let lizardSpot = NSColor(red: 0.62, green: 0.82, blue: 0.45, alpha: 1)
+    static let lizardSand = NSColor(red: 0.95, green: 0.78, blue: 0.38, alpha: 1)
+    static let lizardSpot = NSColor(red: 0.30, green: 0.18, blue: 0.07, alpha: 1)
+    static let screenBlue = NSColor(red: 0.36, green: 0.72, blue: 0.98, alpha: 1)
 
-    // MONITOR LIZARD: a grey monitor is the lizard's body; a stout dark-green, spotted head rises from
-    // the top bezel and a spotted tail curls out of the stand. The screen fills bottom-up in KeyLight's
-    // yellow with the main display's brightness; Night Shift turns the fill amber; a forked tongue
-    // flicks after a DDC write.
+    /// A tapering ribbon along a cubic: width `w0` at the start shrinking to `w1` at the end.
+    /// A stroked path is one width end to end and reads as a cable; a taper reads as a tail.
+    static func taper(_ p0: NSPoint, _ p1: NSPoint, _ p2: NSPoint, _ p3: NSPoint, from w0: CGFloat, to w1: CGFloat) -> NSBezierPath {
+        func at(_ t: CGFloat) -> (NSPoint, NSPoint) {
+            let u = 1 - t
+            let x = u*u*u*p0.x + 3*u*u*t*p1.x + 3*u*t*t*p2.x + t*t*t*p3.x
+            let y = u*u*u*p0.y + 3*u*u*t*p1.y + 3*u*t*t*p2.y + t*t*t*p3.y
+            let dx = 3*u*u*(p1.x-p0.x) + 6*u*t*(p2.x-p1.x) + 3*t*t*(p3.x-p2.x)
+            let dy = 3*u*u*(p1.y-p0.y) + 6*u*t*(p2.y-p1.y) + 3*t*t*(p3.y-p2.y)
+            let len = max(0.001, (dx*dx + dy*dy).squareRoot())
+            return (NSPoint(x: x, y: y), NSPoint(x: -dy/len, y: dx/len))
+        }
+        let n = 24
+        var left: [NSPoint] = [], right: [NSPoint] = []
+        for i in 0...n {
+            let t = CGFloat(i) / CGFloat(n)
+            let (c, nrm) = at(t)
+            let w = (w0 + (w1 - w0) * t) / 2
+            left.append(NSPoint(x: c.x + nrm.x*w, y: c.y + nrm.y*w))
+            right.append(NSPoint(x: c.x - nrm.x*w, y: c.y - nrm.y*w))
+        }
+        let path = NSBezierPath()
+        path.move(to: left[0])
+        for q in left.dropFirst() { path.line(to: q) }
+        path.appendArc(withCenter: at(1).0, radius: w1/2, startAngle: 0, endAngle: 360)
+        for q in right.reversed() { path.line(to: q) }
+        path.close()
+        return path
+    }
+
+    // MONITOR LIZARD: a leopard gecko hugging a grey monitor, like the mascot. Its big head peers over
+    // the top-right corner of the screen, two paws grip the top bezel, and a fat spotted tail comes out
+    // from behind the stand, sweeps under the foot and curls up over the bottom-left of the screen. The
+    // screen fills bottom-up in sky blue with the main display's brightness; Night Shift turns the fill
+    // amber; a forked tongue flicks after a DDC write.
     public static func monitorLizard(brightness: CGFloat, nightShift: Bool, tongue: Bool = false) -> NSImage {
         let level = max(0, min(1, brightness))
-        return canvas(width: 24, height: 20) { ctx in
-            // Tail first so the stand's foot overlaps its root: out of the stand's right side, curling up and away.
-            let tail = NSBezierPath()
-            let t0 = NSPoint(x: 13.5, y: 2.4), t1 = NSPoint(x: 18, y: 1.6), t2 = NSPoint(x: 21.5, y: 2.9), t3 = NSPoint(x: 22.5, y: 6)
-            tail.move(to: t0); tail.curve(to: t3, controlPoint1: t1, controlPoint2: t2)
-            tail.lineWidth = 2.0; tail.lineCapStyle = .round; lizardGreen.set(); tail.stroke()
-            lizardSpot.set()
-            for t in [0.3, 0.58, 0.84] as [CGFloat] {
-                let u = 1 - t
-                let x = u*u*u*t0.x + 3*u*u*t*t1.x + 3*u*t*t*t2.x + t*t*t*t3.x
-                let y = u*u*u*t0.y + 3*u*u*t*t1.y + 3*u*t*t*t2.y + t*t*t*t3.y
-                NSBezierPath(ovalIn: NSRect(x: x - 0.45, y: y - 0.45, width: 0.9, height: 0.9)).fill()
+        return canvas(width: 25, height: 22) { ctx in
+            let outline = lizardSpot
+            // Tail: root behind the stand, sweeping down-left under the foot, then a second segment
+            // curling up over the screen. Drawn whole here (behind the monitor); the curl is redrawn
+            // on top once the screen is filled so the tip sits over the glass.
+            let r0 = NSPoint(x: 13.0, y: 2.4), r1 = NSPoint(x: 8.5, y: 0.9), r2 = NSPoint(x: 1.8, y: 1.0), r3 = NSPoint(x: 1.3, y: 5.0)
+            let c0 = r3, c1 = NSPoint(x: 0.9, y: 8.2), c2 = NSPoint(x: 2.6, y: 10.6), c3 = NSPoint(x: 6.4, y: 9.2)
+            let sweep = taper(r0, r1, r2, r3, from: 3.0, to: 2.0)
+            let curl = taper(c0, c1, c2, c3, from: 2.0, to: 0.9)
+            func drawTail(_ p: NSBezierPath, spots: [(CGFloat, CGFloat)]) {
+                lizardSand.set(); p.fill()
+                p.lineWidth = 0.6; p.lineJoinStyle = .round; outline.set(); p.stroke()
+                lizardSpot.set()
+                for (x, y) in spots { NSBezierPath(ovalIn: NSRect(x: x - 0.5, y: y - 0.5, width: 1.0, height: 1.0)).fill() }
             }
-            // Monitor: bezel 17 wide, 10.6 tall, on a low stand — all mid grey. The screen is most of the glyph.
+            drawTail(sweep, spots: [(5.0, 1.6), (1.8, 3.4)])
+            drawTail(curl, spots: [(2.4, 7.4)])
+            // Monitor: bezel 17 wide on a low stand — all mid grey. The screen is most of the glyph.
             body.set()
-            let bezel = NSRect(x: 1.5, y: 5, width: 17, height: 10.6)
+            let bezel = NSRect(x: 1.5, y: 5.0, width: 17, height: 10.6)
             NSBezierPath(roundedRect: bezel, xRadius: 1.6, yRadius: 1.6).fill()
-            NSBezierPath(rect: NSRect(x: 8.5, y: 2.8, width: 3, height: 2.4)).fill()        // neck of the stand
-            NSBezierPath(roundedRect: NSRect(x: 5.5, y: 1.6, width: 9, height: 1.5), xRadius: 0.75, yRadius: 0.75).fill() // foot
-            // Head: stout, rising from the top bezel, offset right, blunt snout to the right.
-            let head = NSBezierPath()
-            head.move(to: NSPoint(x: 10.7, y: 15.6))
-            head.curve(to: NSPoint(x: 10.5, y: 19.3), controlPoint1: NSPoint(x: 10.4, y: 17), controlPoint2: NSPoint(x: 10.4, y: 18.4))
-            head.curve(to: NSPoint(x: 16.5, y: 19.5), controlPoint1: NSPoint(x: 13, y: 20), controlPoint2: NSPoint(x: 14.9, y: 20))
-            head.curve(to: NSPoint(x: 19.8, y: 17.1), controlPoint1: NSPoint(x: 18.1, y: 19.1), controlPoint2: NSPoint(x: 19.3, y: 18.3))
-            head.curve(to: NSPoint(x: 19.8, y: 15.6), controlPoint1: NSPoint(x: 20.2, y: 16.5), controlPoint2: NSPoint(x: 20.1, y: 15.9))
-            head.close(); lizardGreen.set(); head.fill()
-            lizardSpot.set()
-            NSBezierPath(ovalIn: NSRect(x: 12, y: 17.8, width: 1.1, height: 1.1)).fill()     // spots on the crown
-            NSBezierPath(ovalIn: NSRect(x: 13.8, y: 16.1, width: 0.9, height: 0.9)).fill()
-            NSColor(white: 0.05, alpha: 1).set()
-            NSBezierPath(ovalIn: NSRect(x: 16.6, y: 17.3, width: 1.5, height: 1.5)).fill()   // eye
+            NSBezierPath(rect: NSRect(x: 8.5, y: 2.9, width: 3, height: 2.4)).fill()        // neck of the stand
+            NSBezierPath(roundedRect: NSRect(x: 5.5, y: 1.7, width: 9, height: 1.5), xRadius: 0.75, yRadius: 0.75).fill() // foot
             // Screen: cut out of the bezel, then filled to the brightness level.
             let screen = NSRect(x: 2.6, y: 6.1, width: 14.8, height: 8.4)
             cut(ctx, NSBezierPath(rect: screen))
             if level > 0.02 {
-                (nightShift ? amber : NSColor.systemYellow).set()
+                (nightShift ? amber : screenBlue).set()
                 NSBezierPath(rect: NSRect(x: screen.minX, y: screen.minY, width: screen.width, height: screen.height * level)).fill()
             }
+            // The curl's tip lies over the glass.
+            drawTail(curl, spots: [(2.4, 7.4)])
+            // Paws gripping the top bezel, left of the head, with two toe notches each.
+            for px in [CGFloat(3.6), 7.4] {
+                let paw = NSBezierPath(roundedRect: NSRect(x: px, y: 13.4, width: 3.0, height: 2.8), xRadius: 1.1, yRadius: 1.1)
+                lizardSand.set(); paw.fill()
+                paw.lineWidth = 0.6; outline.set(); paw.stroke()
+                outline.set()
+                for tx in [px + 1.0, px + 2.0] {
+                    let notch = NSBezierPath(); notch.move(to: NSPoint(x: tx, y: 13.4)); notch.line(to: NSPoint(x: tx, y: 14.3))
+                    notch.lineWidth = 0.5; notch.stroke()
+                }
+            }
+            // Head: big, in profile facing right, perched on the top-right corner and dipping below the
+            // bezel line so it peers over the glass. Rounded crown, blunt wedge snout, jaw back to the bezel.
+            let head = NSBezierPath()
+            head.move(to: NSPoint(x: 11.4, y: 15.6))
+            head.curve(to: NSPoint(x: 12.4, y: 20.6), controlPoint1: NSPoint(x: 11.0, y: 17.6), controlPoint2: NSPoint(x: 11.2, y: 19.8))
+            head.curve(to: NSPoint(x: 17.6, y: 21.3), controlPoint1: NSPoint(x: 13.8, y: 21.6), controlPoint2: NSPoint(x: 15.8, y: 21.8))
+            head.curve(to: NSPoint(x: 22.6, y: 18.0), controlPoint1: NSPoint(x: 19.8, y: 20.8), controlPoint2: NSPoint(x: 22.0, y: 19.4))
+            head.curve(to: NSPoint(x: 20.6, y: 15.4), controlPoint1: NSPoint(x: 23.0, y: 16.8), controlPoint2: NSPoint(x: 22.2, y: 15.8))
+            head.curve(to: NSPoint(x: 14.2, y: 13.6), controlPoint1: NSPoint(x: 18.6, y: 14.9), controlPoint2: NSPoint(x: 16.2, y: 13.5))
+            head.curve(to: NSPoint(x: 11.4, y: 15.6), controlPoint1: NSPoint(x: 12.8, y: 13.7), controlPoint2: NSPoint(x: 11.8, y: 14.6))
+            head.close()
+            lizardSand.set(); head.fill()
+            head.lineWidth = 0.6; head.lineJoinStyle = .round; outline.set(); head.stroke()
+            // Crest bumps on the crown.
+            let crest = NSBezierPath()
+            for cx in [CGFloat(13.6), 15.6] {
+                crest.move(to: NSPoint(x: cx - 0.7, y: 21.1)); crest.line(to: NSPoint(x: cx, y: 22.0)); crest.line(to: NSPoint(x: cx + 0.7, y: 21.3))
+            }
+            crest.lineWidth = 0.7; crest.lineJoinStyle = .round; outline.set(); crest.stroke()
+            // Spots on the crown and cheek.
+            lizardSpot.set()
+            NSBezierPath(ovalIn: NSRect(x: 12.6, y: 18.6, width: 1.2, height: 1.2)).fill()
+            NSBezierPath(ovalIn: NSRect(x: 14.6, y: 15.2, width: 1.0, height: 1.0)).fill()
+            // Mouth: a line back from the nose.
+            let mouth = NSBezierPath(); mouth.move(to: NSPoint(x: 22.3, y: 17.2)); mouth.line(to: NSPoint(x: 18.6, y: 16.3))
+            mouth.lineWidth = 0.6; mouth.lineCapStyle = .round; outline.set(); mouth.stroke()
+            // Eye with a highlight.
+            NSColor(white: 0.05, alpha: 1).set()
+            NSBezierPath(ovalIn: NSRect(x: 17.0, y: 17.5, width: 2.4, height: 2.4)).fill()
+            NSColor.white.set()
+            NSBezierPath(ovalIn: NSRect(x: 17.4, y: 18.6, width: 0.9, height: 0.9)).fill()
             if tongue {
                 NSColor(red: 0.96, green: 0.42, blue: 0.56, alpha: 1).set()
-                let t = NSBezierPath(); t.move(to: NSPoint(x: 19.8, y: 16.4)); t.line(to: NSPoint(x: 22.5, y: 16.1))
-                t.move(to: NSPoint(x: 22.5, y: 16.1)); t.line(to: NSPoint(x: 23.6, y: 16.8))
-                t.move(to: NSPoint(x: 22.5, y: 16.1)); t.line(to: NSPoint(x: 23.6, y: 15.4))
-                t.lineWidth = 0.8; t.lineCapStyle = .round; t.stroke()
+                let t = NSBezierPath(); t.move(to: NSPoint(x: 22.4, y: 17.0)); t.line(to: NSPoint(x: 23.9, y: 16.6))
+                t.move(to: NSPoint(x: 23.9, y: 16.6)); t.line(to: NSPoint(x: 24.7, y: 17.2))
+                t.move(to: NSPoint(x: 23.9, y: 16.6)); t.line(to: NSPoint(x: 24.7, y: 15.9))
+                t.lineWidth = 0.9; t.lineCapStyle = .round; t.stroke()
             }
         }
     }

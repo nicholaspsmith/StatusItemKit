@@ -95,7 +95,7 @@ final class CharacterIconTests: XCTestCase {
 
     func testMonitorLizardIsWideNonTemplateAndVariesWithState() {
         let dim = CharacterIcon.monitorLizard(brightness: 0.1, nightShift: false)
-        XCTAssertEqual(dim.size, NSSize(width: 24, height: 20))
+        XCTAssertEqual(dim.size, NSSize(width: 25, height: 22))
         XCTAssertFalse(dim.isTemplate)
         let bright = CharacterIcon.monitorLizard(brightness: 1.0, nightShift: false)
         let amber = CharacterIcon.monitorLizard(brightness: 1.0, nightShift: true)
@@ -106,9 +106,10 @@ final class CharacterIconTests: XCTestCase {
 
     func testMonitorLizardScreenFillsBottomUpAndTintsAmber() throws {
         // The screen rect in the implementation is x: 2.6...17.4, y: 6.1...14.5
-        // on the 24x20 canvas. Sample near its top and bottom, a little in from
-        // each edge so antialiasing at the boundary can't flip the result.
-        let midX: CGFloat = 9.5, topY: CGFloat = 13.7, bottomY: CGFloat = 6.7
+        // on the 25x22 canvas. Sample near its top and bottom, a little in from
+        // each edge so antialiasing at the boundary can't flip the result, and
+        // below the paws (y 13.4 up) that grip the top bezel.
+        let midX: CGFloat = 9.5, topY: CGFloat = 12.8, bottomY: CGFloat = 6.7
 
         func sample(_ img: NSImage, _ x: CGFloat, _ y: CGFloat) -> NSColor {
             let rep = NSBitmapImageRep(data: img.tiffRepresentation!)!
@@ -136,18 +137,19 @@ final class CharacterIconTests: XCTestCase {
         XCTAssertGreaterThan(amberTop.greenComponent, 0.5); XCTAssertLessThan(amberTop.greenComponent, 0.75)
         XCTAssertLessThan(amberTop.blueComponent, 0.35)
 
-        // Without Night Shift the fill is KeyLight's yellow (systemYellow), not grey.
-        let yellowTop = sample(bright, midX, topY)
-        XCTAssertGreaterThan(yellowTop.redComponent, 0.9)
-        XCTAssertGreaterThan(yellowTop.greenComponent, 0.7)
-        XCTAssertLessThan(yellowTop.blueComponent, 0.25)
+        // Without Night Shift the fill is the mascot's sky blue, not grey and not the
+        // lizard's yellow.
+        let blueTop = sample(bright, midX, topY)
+        XCTAssertLessThan(blueTop.redComponent, 0.5)
+        XCTAssertGreaterThan(blueTop.blueComponent, 0.9)
 
-        // The lizard is dark green, a different colour from the grey monitor: sample the
-        // head (x 10.5...19.8, y 15.6...19.5) away from its spots and eye, and the bezel.
+        // The lizard is a sandy leopard gecko, a different colour from the grey monitor
+        // and the blue screen: sample the head (x 11.4...22.6, y 13.6...21.3) away from
+        // its spots and eye, and the bezel.
         let head = sample(bright, 15.2, 18.6)
         XCTAssertGreaterThan(head.alphaComponent, 0.9)
-        XCTAssertGreaterThan(head.greenComponent - head.redComponent, 0.15, "head is green, not grey")
-        XCTAssertGreaterThan(head.greenComponent - head.blueComponent, 0.15)
+        XCTAssertGreaterThan(head.redComponent - head.blueComponent, 0.4, "head is sandy yellow, not grey")
+        XCTAssertGreaterThan(head.greenComponent - head.blueComponent, 0.25)
         let bezel = sample(bright, 9.5, 5.5)   // the bottom bezel strip, y 5...6.1
         XCTAssertLessThan(abs(bezel.redComponent - bezel.blueComponent), 0.05, "bezel stays grey")
     }
