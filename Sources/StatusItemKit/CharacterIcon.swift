@@ -195,6 +195,13 @@ public enum CharacterIcon {
     /// The chameleon's stick, and its colour when nothing is connected.
     static let stick = NSColor(red: 0.45, green: 0.28, blue: 0.14, alpha: 1)
 
+    /// The chameleon at rest. Not the branch's brown, which it used to borrow:
+    /// against wood of the same colour the animal read as a lump on the branch
+    /// rather than an animal. This is the muted olive a veiled chameleon
+    /// actually sits at, far enough from the vivid green of a live connection
+    /// to never be mistaken for one.
+    static let restingSkin = NSColor(srgbRed: 0.588, green: 0.651, blue: 0.416, alpha: 1)
+
     /// A chameleon hanging onto a brown stick. Brown like the stick when
     /// nothing is connected, with a short straight tail; green whenever
     /// something is. Tailscale: dark spots (its icon is dots) and the tail
@@ -213,7 +220,7 @@ public enum CharacterIcon {
     /// carries Mullvad's in-between states, which are the ones worth a glance.
     public static func chameleon(tailscale: Bool, mullvad: Bool, acceptDNS: Bool = false,
                                  alert: NSColor? = nil) -> NSImage {
-        let color = alert ?? ((mullvad || tailscale) ? NSColor.systemGreen : stick)
+        let color = alert ?? ((mullvad || tailscale) ? NSColor.systemGreen : restingSkin)
         return chameleon(color: color, tail: tailscale, tongue: mullvad, eyeGreen: acceptDNS)
     }
 
