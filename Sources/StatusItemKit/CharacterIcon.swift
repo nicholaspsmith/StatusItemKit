@@ -282,23 +282,23 @@ public enum CharacterIcon {
 
             // MARK: the tail, drawn behind the body
 
-            let tailBase = NSPoint(x: 19.4, y: 13.0)
+            let tailBase = NSPoint(x: 21.2, y: 12.6)
             let tailPath = NSBezierPath()
             tailPath.move(to: tailBase)
             if tail {
                 // Down off the rump and round the branch: the curl closes under
                 // it, which is how a prehensile tail actually holds on.
-                let centre = NSPoint(x: 23.6, y: branchY(23.6))
+                let centre = NSPoint(x: 25.0, y: branchY(25.0))
                 tailPath.curve(to: NSPoint(x: centre.x + 2.2, y: centre.y + 1.6),
-                               controlPoint1: NSPoint(x: 22.4, y: 12.4),
-                               controlPoint2: NSPoint(x: 25.6, y: 10.2))
+                               controlPoint1: NSPoint(x: 23.6, y: 12.0),
+                               controlPoint2: NSPoint(x: 26.8, y: 10.0))
                 tailPath.appendArc(withCenter: centre, radius: 2.7, startAngle: 30, endAngle: -260, clockwise: true)
             } else {
                 // At rest a chameleon carries its tail rolled up behind it.
-                let centre = NSPoint(x: 23.4, y: 14.0)
+                let centre = NSPoint(x: 25.0, y: 13.6)
                 tailPath.curve(to: NSPoint(x: centre.x - 0.2, y: centre.y + 2.1),
-                               controlPoint1: NSPoint(x: 21.4, y: 14.4),
-                               controlPoint2: NSPoint(x: 22.6, y: 16.0))
+                               controlPoint1: NSPoint(x: 23.0, y: 13.8),
+                               controlPoint2: NSPoint(x: 24.2, y: 15.6))
                 tailPath.appendArc(withCenter: centre, radius: 2.1, startAngle: 96, endAngle: -150, clockwise: true)
                 tailPath.appendArc(withCenter: NSPoint(x: centre.x + 0.35, y: centre.y - 0.45),
                                    radius: 1.15, startAngle: -150, endAngle: 60, clockwise: false)
@@ -309,9 +309,9 @@ public enum CharacterIcon {
             if tail {
                 // The far side of the curl goes behind the wood, and the tip
                 // comes back over it.
-                branchOver(from: 21.4, to: 26.2)
+                branchOver(from: 22.8, to: 27.6)
                 let tip = NSBezierPath()
-                tip.appendArc(withCenter: NSPoint(x: 23.6, y: branchY(23.6)), radius: 2.7,
+                tip.appendArc(withCenter: NSPoint(x: 25.0, y: branchY(25.0)), radius: 2.7,
                               startAngle: 200, endAngle: 100, clockwise: true)
                 tip.lineWidth = 1.9; tip.lineCapStyle = .round
                 base.set(); tip.stroke()
@@ -337,10 +337,10 @@ public enum CharacterIcon {
                 legColor.set(); grip.stroke()
             }
             // The far pair, in shadow behind the body.
-            leg(hip: NSPoint(x: 17.2, y: 10.4), knee: NSPoint(x: 19.2, y: 7.8),
-                foot: NSPoint(x: 18.4, y: branchY(18.4) + 1.0), thickness: 1.4, color: deep)
-            leg(hip: NSPoint(x: 10.8, y: 9.8), knee: NSPoint(x: 8.8, y: 7.4),
-                foot: NSPoint(x: 9.8, y: branchY(9.8) + 1.0), thickness: 1.4, color: deep)
+            leg(hip: NSPoint(x: 18.6, y: 10.4), knee: NSPoint(x: 20.6, y: 7.8),
+                foot: NSPoint(x: 19.8, y: branchY(19.8) + 1.0), thickness: 1.4, color: deep)
+            leg(hip: NSPoint(x: 10.2, y: 9.8), knee: NSPoint(x: 8.2, y: 7.4),
+                foot: NSPoint(x: 9.2, y: branchY(9.2) + 1.0), thickness: 1.4, color: deep)
 
             // MARK: the body
 
@@ -351,25 +351,28 @@ public enum CharacterIcon {
             // deeper than half its length, carried high off the branch on bent
             // legs — is the whole difference between this and a frog.
             let body = NSBezierPath()
-            body.move(to: NSPoint(x: 2.6, y: 12.8))                        // the snout, blunt and low
-            body.curve(to: NSPoint(x: 5.4, y: 16.2),                       // up the wedge of the face
-                       controlPoint1: NSPoint(x: 3.0, y: 14.6), controlPoint2: NSPoint(x: 4.0, y: 15.6))
+            body.move(to: NSPoint(x: 2.0, y: 12.6))                        // the snout, blunt and low
+            body.curve(to: NSPoint(x: 4.6, y: 15.4),                       // up the wedge of the face
+                       controlPoint1: NSPoint(x: 2.4, y: 14.2), controlPoint2: NSPoint(x: 3.4, y: 14.8))
             // The casque: tall and raked back, but its apex is a rounded ridge
             // rather than a spike — a point turns the animal into a dinosaur.
-            body.line(to: NSPoint(x: 8.4, y: 20.2))
-            body.curve(to: NSPoint(x: 9.8, y: 19.4),
-                       controlPoint1: NSPoint(x: 9.0, y: 20.7), controlPoint2: NSPoint(x: 9.6, y: 20.2))
-            body.line(to: NSPoint(x: 10.8, y: 17.0))                       // a steep drop behind it
-            body.curve(to: NSPoint(x: 15.6, y: 18.4),                      // the neck notch, then the arched back
-                       controlPoint1: NSPoint(x: 12.4, y: 19.2), controlPoint2: NSPoint(x: 14.0, y: 19.4))
-            body.curve(to: NSPoint(x: 19.4, y: 13.0),                      // down to the rump
-                       controlPoint1: NSPoint(x: 17.6, y: 17.4), controlPoint2: NSPoint(x: 19.4, y: 15.4))
-            body.curve(to: NSPoint(x: 12.2, y: 8.4),                       // the deep belly
-                       controlPoint1: NSPoint(x: 19.4, y: 10.0), controlPoint2: NSPoint(x: 16.2, y: 8.2))
-            body.curve(to: NSPoint(x: 6.2, y: 10.4),                       // forward along it
-                       controlPoint1: NSPoint(x: 9.2, y: 8.6), controlPoint2: NSPoint(x: 7.2, y: 9.2))
-            body.curve(to: NSPoint(x: 2.6, y: 12.8),                       // the gular fold under the chin
-                       controlPoint1: NSPoint(x: 5.0, y: 11.6), controlPoint2: NSPoint(x: 3.4, y: 11.6))
+            body.line(to: NSPoint(x: 7.6, y: 19.2))
+            body.curve(to: NSPoint(x: 9.0, y: 18.4),
+                       controlPoint1: NSPoint(x: 8.2, y: 19.7), controlPoint2: NSPoint(x: 8.8, y: 19.2))
+            body.line(to: NSPoint(x: 10.4, y: 16.2))                       // a steep drop behind it
+            // The back: a long shallow arch, not a dome. Chameleons are deep
+            // through the body but they are not round, and at this size an
+            // over-curved back is what reads as a frog.
+            body.curve(to: NSPoint(x: 16.4, y: 16.8),
+                       controlPoint1: NSPoint(x: 12.4, y: 17.6), controlPoint2: NSPoint(x: 14.6, y: 17.5))
+            body.curve(to: NSPoint(x: 21.2, y: 12.6),                      // taper to the rump
+                       controlPoint1: NSPoint(x: 18.8, y: 16.0), controlPoint2: NSPoint(x: 20.8, y: 14.8))
+            body.curve(to: NSPoint(x: 13.2, y: 8.8),                       // the belly, shallow and long
+                       controlPoint1: NSPoint(x: 21.4, y: 10.2), controlPoint2: NSPoint(x: 17.2, y: 8.6))
+            body.curve(to: NSPoint(x: 5.6, y: 10.6),                       // forward along it
+                       controlPoint1: NSPoint(x: 9.6, y: 9.0), controlPoint2: NSPoint(x: 6.8, y: 9.6))
+            body.curve(to: NSPoint(x: 2.0, y: 12.6),                       // the gular fold under the chin
+                       controlPoint1: NSPoint(x: 4.4, y: 11.4), controlPoint2: NSPoint(x: 2.8, y: 11.4))
             body.close()
             base.set(); body.fill()
 
@@ -377,25 +380,25 @@ public enum CharacterIcon {
             ctx.saveGraphicsState(); body.addClip()
             shade.set()
             let belly = NSBezierPath()
-            belly.move(to: NSPoint(x: 3.0, y: 12.2))
-            belly.curve(to: NSPoint(x: 20.4, y: 11.6),
-                        controlPoint1: NSPoint(x: 8.0, y: 8.4), controlPoint2: NSPoint(x: 16.4, y: 8.2))
-            belly.line(to: NSPoint(x: 20.4, y: 7.0)); belly.line(to: NSPoint(x: 3.0, y: 7.0)); belly.close()
+            belly.move(to: NSPoint(x: 2.4, y: 12.0))
+            belly.curve(to: NSPoint(x: 21.6, y: 11.2),
+                        controlPoint1: NSPoint(x: 8.0, y: 8.6), controlPoint2: NSPoint(x: 17.4, y: 8.4))
+            belly.line(to: NSPoint(x: 21.6, y: 7.0)); belly.line(to: NSPoint(x: 2.4, y: 7.0)); belly.close()
             belly.fill()
             // Flank bands, the markings a veiled chameleon actually carries.
             shade.withAlphaComponent(0.55).set()
-            for x in [CGFloat(10.4), 13.2, 16.0, 18.4] {
+            for x in [CGFloat(10.6), 13.4, 16.2, 19.0] {
                 let band = NSBezierPath()
-                band.move(to: NSPoint(x: x, y: 19.2))
-                band.curve(to: NSPoint(x: x - 1.4, y: 9.0),
-                           controlPoint1: NSPoint(x: x - 0.2, y: 15.0), controlPoint2: NSPoint(x: x - 1.6, y: 11.8))
+                band.move(to: NSPoint(x: x, y: 17.4))
+                band.curve(to: NSPoint(x: x - 1.4, y: 9.2),
+                           controlPoint1: NSPoint(x: x - 0.3, y: 14.2), controlPoint2: NSPoint(x: x - 1.6, y: 11.6))
                 band.lineWidth = 1.5; band.lineCapStyle = .round; band.stroke()
             }
             highlight.withAlphaComponent(0.6).set()
             let backLight = NSBezierPath()
-            backLight.move(to: NSPoint(x: 11.4, y: 18.4))
-            backLight.curve(to: NSPoint(x: 18.6, y: 14.4),
-                            controlPoint1: NSPoint(x: 14.0, y: 19.2), controlPoint2: NSPoint(x: 17.2, y: 16.6))
+            backLight.move(to: NSPoint(x: 11.2, y: 16.8))
+            backLight.curve(to: NSPoint(x: 20.0, y: 14.0),
+                            controlPoint1: NSPoint(x: 14.4, y: 17.6), controlPoint2: NSPoint(x: 18.6, y: 16.0))
             backLight.lineWidth = 1.1; backLight.lineCapStyle = .round; backLight.stroke()
             ctx.restoreGraphicsState()
 
@@ -410,10 +413,10 @@ public enum CharacterIcon {
             // off it at the shoulders.
             func backPoint(_ t: CGFloat) -> NSPoint {
                 let segments: [(NSPoint, NSPoint, NSPoint, NSPoint)] = [
-                    (NSPoint(x: 10.8, y: 17.0), NSPoint(x: 12.4, y: 19.2),
-                     NSPoint(x: 14.0, y: 19.4), NSPoint(x: 15.6, y: 18.4)),
-                    (NSPoint(x: 15.6, y: 18.4), NSPoint(x: 17.6, y: 17.4),
-                     NSPoint(x: 19.4, y: 15.4), NSPoint(x: 19.4, y: 13.0)),
+                    (NSPoint(x: 10.4, y: 16.2), NSPoint(x: 12.4, y: 17.6),
+                     NSPoint(x: 14.6, y: 17.5), NSPoint(x: 16.4, y: 16.8)),
+                    (NSPoint(x: 16.4, y: 16.8), NSPoint(x: 18.8, y: 16.0),
+                     NSPoint(x: 20.8, y: 14.8), NSPoint(x: 21.2, y: 12.6)),
                 ]
                 let scaled = t * CGFloat(segments.count)
                 let index = min(Int(scaled), segments.count - 1)
@@ -467,7 +470,7 @@ public enum CharacterIcon {
             // MARK: the head
 
             // The eye turret: a cone of skin with a lid ring, then the eye.
-            let eye = NSPoint(x: 5.8, y: 14.0)
+            let eye = NSPoint(x: 5.2, y: 13.6)
             base.set()
             NSBezierPath(ovalIn: NSRect(x: eye.x - 2.0, y: eye.y - 2.0, width: 4.0, height: 4.0)).fill()
             shade.set()
@@ -489,17 +492,17 @@ public enum CharacterIcon {
             // The near pair of legs, drawn over the body: a chameleon's stance
             // is most of what makes it a chameleon, and behind the belly they
             // were invisible.
-            leg(hip: NSPoint(x: 15.8, y: 9.4), knee: NSPoint(x: 17.4, y: 6.9),
-                foot: NSPoint(x: 16.2, y: branchY(16.2) + 1.0), thickness: 1.7, color: shade)
-            leg(hip: NSPoint(x: 10.0, y: 9.2), knee: NSPoint(x: 8.0, y: 6.9),
-                foot: NSPoint(x: 9.2, y: branchY(9.2) + 1.0), thickness: 1.7, color: shade)
+            leg(hip: NSPoint(x: 17.4, y: 9.4), knee: NSPoint(x: 19.0, y: 6.9),
+                foot: NSPoint(x: 17.8, y: branchY(17.8) + 1.0), thickness: 1.7, color: shade)
+            leg(hip: NSPoint(x: 9.4, y: 9.2), knee: NSPoint(x: 7.4, y: 6.9),
+                foot: NSPoint(x: 8.6, y: branchY(8.6) + 1.0), thickness: 1.7, color: shade)
 
             // Mouth: the long chameleon line from the snout back under the eye.
             deep.withAlphaComponent(0.8).set()
             let mouth = NSBezierPath()
-            mouth.move(to: NSPoint(x: 2.8, y: 12.6))
-            mouth.curve(to: NSPoint(x: 8.8, y: 12.4),
-                        controlPoint1: NSPoint(x: 4.6, y: 11.9), controlPoint2: NSPoint(x: 7.0, y: 11.9))
+            mouth.move(to: NSPoint(x: 2.2, y: 12.4))
+            mouth.curve(to: NSPoint(x: 8.2, y: 12.0),
+                        controlPoint1: NSPoint(x: 4.0, y: 11.6), controlPoint2: NSPoint(x: 6.4, y: 11.5))
             mouth.lineWidth = 0.55; mouth.lineCapStyle = .round; mouth.stroke()
 
             // MARK: the tongue
@@ -512,7 +515,7 @@ public enum CharacterIcon {
             let tongueDeep = NSColor(srgbRed: 0.78, green: 0.24, blue: 0.40, alpha: 1)
 
             let shot = NSBezierPath()
-            shot.move(to: NSPoint(x: 2.7, y: 12.6))
+            shot.move(to: NSPoint(x: 2.1, y: 12.4))
             shot.curve(to: NSPoint(x: catchPoint.x + 1.55, y: catchPoint.y + 0.6),
                        controlPoint1: NSPoint(x: 2.4, y: 11.4), controlPoint2: NSPoint(x: 2.0, y: 9.4))
             shot.appendArc(withCenter: catchPoint, radius: branchThickness / 2 + 0.55,
