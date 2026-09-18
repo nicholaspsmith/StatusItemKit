@@ -389,15 +389,70 @@ public enum CharacterIcon {
             backLight.lineWidth = 1.1; backLight.lineCapStyle = .round; backLight.stroke()
             ctx.restoreGraphicsState()
 
-            // The dorsal crest: small teeth from the casque to the tail base.
-            deep.set()
-            let crest = NSBezierPath()
-            crest.move(to: NSPoint(x: 9.0, y: 18.5))
-            for (x, y) in [(CGFloat(10.6), CGFloat(18.3)), (12.2, 17.8), (13.8, 17.1), (15.4, 16.2), (17.0, 15.1), (18.6, 13.8)] {
-                crest.line(to: NSPoint(x: x - 0.5, y: y + 1.05))
-                crest.line(to: NSPoint(x: x + 0.45, y: y))
+            // The dorsal crest: the raised fin that runs from the casque to the
+            // tail. It is the feature that says "chameleon" more than anything
+            // but the eye, so it is a filled sail in its own value — a line of
+            // teeth in a colour close to the body reads as a rough edge and
+            // nothing more.
+            //
+            // The teeth are set on the actual back curve rather than on a
+            // straight line, so the fin follows the spine instead of floating
+            // off it at the shoulders.
+            func backPoint(_ t: CGFloat) -> NSPoint {
+                let segments: [(NSPoint, NSPoint, NSPoint, NSPoint)] = [
+                    (NSPoint(x: 8.8, y: 18.6), NSPoint(x: 11.0, y: 18.4),
+                     NSPoint(x: 12.6, y: 17.2), NSPoint(x: 14.6, y: 16.4)),
+                    (NSPoint(x: 14.6, y: 16.4), NSPoint(x: 17.4, y: 15.4),
+                     NSPoint(x: 19.8, y: 14.2), NSPoint(x: 20.4, y: 12.4)),
+                ]
+                let scaled = t * CGFloat(segments.count)
+                let index = min(Int(scaled), segments.count - 1)
+                let local = scaled - CGFloat(index)
+                let (p0, c1, c2, p3) = segments[index]
+                let u = 1 - local
+                let x = u * u * u * p0.x + 3 * u * u * local * c1.x + 3 * u * local * local * c2.x + local * local * local * p3.x
+                let y = u * u * u * p0.y + 3 * u * u * local * c1.y + 3 * u * local * local * c2.y + local * local * local * p3.y
+                return NSPoint(x: x, y: y)
             }
-            crest.lineWidth = 0.5; crest.lineJoinStyle = .miter; crest.stroke()
+
+            let teeth = 9
+            let sail = NSBezierPath()
+            sail.move(to: backPoint(0))
+            for tooth in 0..<teeth {
+                let t0 = CGFloat(tooth) / CGFloat(teeth)
+                let t1 = CGFloat(tooth + 1) / CGFloat(teeth)
+                let root = backPoint(t0), next = backPoint(t1)
+                // Taper: tall over the shoulders, shrinking towards the tail,
+                // the way a real crest does.
+                let height = 2.3 - 1.4 * t0
+                let dx = next.x - root.x, dy = next.y - root.y
+                let length = max(sqrt(dx * dx + dy * dy), 0.001)
+                // Perpendicular to the back, raked towards the tail the way a
+                // real crest lies rather than standing straight up.
+                let normal = NSPoint(x: -dy / length, y: dx / length)
+                let mid = NSPoint(x: (root.x + next.x) / 2, y: (root.y + next.y) / 2)
+                sail.line(to: NSPoint(x: mid.x + normal.x * height + dx * 0.16,
+                                      y: mid.y + normal.y * height + dy * 0.16))
+                sail.line(to: next)
+            }
+            // Close back along the spine, just inside the body, so the fin is
+            // attached rather than perched.
+            for tooth in stride(from: teeth, through: 0, by: -1) {
+                let point = backPoint(CGFloat(tooth) / CGFloat(teeth))
+                sail.line(to: NSPoint(x: point.x + 0.25, y: point.y - 1.1))
+            }
+            sail.close()
+
+            highlight.set(); sail.fill()
+            // A shaded root, so the fin reads as standing up off the back.
+            ctx.saveGraphicsState(); sail.addClip()
+            shade.withAlphaComponent(0.85).set()
+            let root = NSBezierPath()
+            root.move(to: backPoint(0))
+            for step in 1...12 { root.line(to: backPoint(CGFloat(step) / 12)) }
+            root.lineWidth = 1.5; root.lineCapStyle = .round; root.stroke()
+            ctx.restoreGraphicsState()
+            deep.set(); sail.lineWidth = 0.4; sail.lineJoinStyle = .round; sail.stroke()
 
             // MARK: the head
 
