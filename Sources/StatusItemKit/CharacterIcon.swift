@@ -202,6 +202,11 @@ public enum CharacterIcon {
     /// to never be mistaken for one.
     static let restingSkin = NSColor(srgbRed: 0.588, green: 0.651, blue: 0.416, alpha: 1)
 
+    /// accept-dns, in the eye and on its menu row's dot. Cyan holds against
+    /// every body the chameleon wears — olive at rest, green connected, red
+    /// blocked — which green did not.
+    public static let dnsCyan = NSColor(srgbRed: 0.24, green: 0.83, blue: 0.93, alpha: 1)
+
     /// A chameleon hanging onto a brown stick. Brown like the stick when
     /// nothing is connected, with a short straight tail; green whenever
     /// something is. Tailscale: dark spots (its icon is dots) and the tail
@@ -213,7 +218,7 @@ public enum CharacterIcon {
     ///
     /// - Tailscale: the tail comes down off the back and wraps the branch.
     /// - Mullvad: the tongue shoots out and wraps the branch ahead of it.
-    /// - accept-dns: the eye turns green.
+    /// - accept-dns: the eye turns cyan.
     ///
     /// Three independent limbs for three independent states, so the glyph can
     /// say all eight combinations at once without a legend. Colour still
@@ -221,10 +226,13 @@ public enum CharacterIcon {
     public static func chameleon(tailscale: Bool, mullvad: Bool, acceptDNS: Bool = false,
                                  alert: NSColor? = nil) -> NSImage {
         let color = alert ?? ((mullvad || tailscale) ? NSColor.systemGreen : restingSkin)
-        return chameleon(color: color, tail: tailscale, tongue: mullvad, eyeGreen: acceptDNS)
+        return chameleon(color: color, tail: tailscale, tongue: mullvad, eyeLit: acceptDNS)
     }
 
-    public static func chameleon(color: NSColor, tail: Bool, tongue: Bool, eyeGreen: Bool = false) -> NSImage {
+    /// - Parameter eyeLit: accept-dns. Cyan rather than green: the body is
+    ///   green whenever either VPN is up, and a green iris inside it was a
+    ///   state you had to hunt for.
+    public static func chameleon(color: NSColor, tail: Bool, tongue: Bool, eyeLit: Bool = false) -> NSImage {
         // Drawn for a Retina bar, like the owl: the crest teeth, toes and tongue
         // are sub-point marks that land on half pixels at 2x. Icon ▸ Dot is
         // there for anyone who wants a flat glyph.
@@ -481,8 +489,8 @@ public enum CharacterIcon {
             // Sclera, iris, pupil, catchlight. The iris is the accept-dns light.
             NSColor(white: 0.97, alpha: 1).set()
             NSBezierPath(ovalIn: NSRect(x: eye.x - 1.18, y: eye.y - 1.18, width: 2.36, height: 2.36)).fill()
-            (eyeGreen ? NSColor(srgbRed: 0.18, green: 0.80, blue: 0.38, alpha: 1)
-                      : NSColor(srgbRed: 0.30, green: 0.34, blue: 0.42, alpha: 1)).set()
+            (eyeLit ? CharacterIcon.dnsCyan
+                    : NSColor(srgbRed: 0.30, green: 0.34, blue: 0.42, alpha: 1)).set()
             NSBezierPath(ovalIn: NSRect(x: eye.x - 0.88, y: eye.y - 0.88, width: 1.76, height: 1.76)).fill()
             NSColor(white: 0.08, alpha: 1).set()
             NSBezierPath(ovalIn: NSRect(x: eye.x - 0.52, y: eye.y - 0.52, width: 1.04, height: 1.04)).fill()
