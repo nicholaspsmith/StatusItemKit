@@ -18,6 +18,9 @@
 #   3. ad-hoc ("-")                      — works, but every rebuild changes the
 #      CDHash and invalidates TCC grants (must re-approve after each rebuild)
 #
+# Version: stamped from the consuming repo's nearest vX.Y.Z tag (required);
+# see "Stamp the version" below and AppVersion.swift.
+#
 # Usage: scripts/make-app.sh <ProductName> [<BundleDisplayName>]
 set -euo pipefail
 
@@ -43,6 +46,37 @@ cp Resources/Info.plist "${APP_BUNDLE}/Contents/Info.plist"
 if [ -d Resources/bundle ]; then
     cp -R Resources/bundle/. "${APP_BUNDLE}/Contents/Resources/"
 fi
+
+# Stamp the version. The nearest vX.Y.Z tag is the release and the commit is
+# the build, so every bundle says exactly what it was built from; whatever
+# Resources/Info.plist says is overwritten. No semver tag, no build.
+SEMVER_RE='^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?$'
+if ! DESCRIBE="$(git describe --tags --long --match 'v[0-9]*.[0-9]*.[0-9]*' 2>/dev/null)"; then
+    echo "No vX.Y.Z tag reachable from HEAD. Tag a release first, e.g.:" >&2
+    echo "    git tag -a v1.0.0 -m 1.0.0 && git push origin v1.0.0" >&2
+    exit 1
+fi
+TAG="${DESCRIBE%-*-*}"                  # v1.2.0 (prerelease hyphens survive)
+DISTANCE="${DESCRIBE#"$TAG"-}"
+HASH="${DISTANCE#*-g}"
+DISTANCE="${DISTANCE%%-*}"
+if [[ ! "$TAG" =~ $SEMVER_RE ]]; then
+    echo "Nearest tag '$TAG' is not semver (vMAJOR.MINOR.PATCH[-prerelease])." >&2
+    exit 1
+fi
+VERSION="${TAG#v}"
+DIRTY=""
+git diff --quiet HEAD -- || DIRTY=".dirty"
+if [ "$DISTANCE" != 0 ] || [ -n "$DIRTY" ]; then
+    VERSION="${VERSION}+${DISTANCE}.g${HASH}${DIRTY}"
+fi
+PLIST="${APP_BUNDLE}/Contents/Info.plist"
+# Finder and LaunchServices want bare MAJOR.MINOR.PATCH here; the full
+# semver, prerelease and build metadata included, goes in StatusItemKitVersion.
+plutil -replace CFBundleShortVersionString -string "$(echo "${TAG#v}" | cut -d- -f1)" "$PLIST"
+plutil -replace CFBundleVersion -string "${HASH}${DIRTY}" "$PLIST"
+plutil -replace StatusItemKitVersion -string "$VERSION" "$PLIST"
+echo "==> Version ${VERSION}"
 
 # Resolve the signing identity (see header). Prefer a stable self-signed
 # identity so TCC grants survive rebuilds; fall back to ad-hoc.

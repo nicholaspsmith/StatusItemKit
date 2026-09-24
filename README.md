@@ -190,6 +190,27 @@ scripts/make-app.sh StatusItemKitDemo
 scripts/make-app.sh BatteryTime "Battery Time"
 ```
 
+### Versioning
+
+The version comes from git, not `Info.plist`: `make-app.sh` stamps the
+consuming repo's nearest `vMAJOR.MINOR.PATCH[-prerelease]` tag into the bundle
+and **refuses to build without one**. Release by tagging:
+
+```sh
+git tag -a v1.2.0 -m 1.2.0 && git push origin v1.2.0
+```
+
+| Key | Tagged, clean build | 3 commits past the tag, uncommitted edits |
+|---|---|---|
+| `CFBundleShortVersionString` | `1.2.0` | `1.2.0` |
+| `CFBundleVersion` | `abc1234` | `abc1234.dirty` |
+| `StatusItemKitVersion` | `1.2.0` | `1.2.0+3.gabc1234.dirty` |
+
+`menu.addItem(AppVersion.menuItem())` adds a disabled "Version …" row showing
+`StatusItemKitVersion`, so any two builds can be told apart from the menu.
+Bump MAJOR for a breaking change in behaviour or settings, MINOR for a
+feature, PATCH for a fix.
+
 > **The `codesign` step is mandatory, not cosmetic.**
 > `UNUserNotificationCenter` silently drops notification requests from unsigned
 > bundles — threshold/alert notifications will appear to "not fire" if the
