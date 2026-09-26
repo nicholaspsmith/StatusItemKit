@@ -1,9 +1,21 @@
 # Changelog
 
-Every push to `main` is a release. Add a `## [X.Y.Z] - YYYY-MM-DD` section at
-the top (minor for features, patch for fixes); GitHub tags it and publishes
-the section as the release notes. Versions follow [Semantic
-Versioning](https://semver.org/).
+Every push to `main` is a release. Before pushing, add a `## [X.Y.Z] - YYYY-MM-DD`
+section at the top with `- ` entries (minor for features, patch for fixes); if an
+`## [Unreleased]` section is waiting, turn it into that section. GitHub tags it
+and publishes the section as the release notes; a push without one is refused.
+Versions follow [Semantic Versioning](https://semver.org/). The full rule:
+[StatusItemKit — Releases](https://github.com/nicholaspsmith/StatusItemKit#releases-every-push-is-one).
+
+## [0.6.0] - 2026-09-26
+### Added
+- `scripts/release/adopt.sh --hooks-only` re-arms the pre-push hook in every
+  Menubarn repo cloned here, without touching files; the apps' `install.sh`
+  and the macOS setup suite run it.
+- HotkeyKit joins the release rule.
+### Changed
+- README: "Things to know" for releases — `[no release]`, `[Unreleased]`
+  sections, never tagging by hand, the per-repo hook, pushing over SSH.
 
 ## [0.5.0] - 2026-09-26
 ### Added
