@@ -1,0 +1,56 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# Copyright (c) 2026 Nicholas Smith
+
+# Menubarn release, called by each app's .github/workflows/release.yml on every
+# push to main. Every push is a release: the pushed CHANGELOG.md must open with
+# a new "## [X.Y.Z] - date" section (scripts/release/check-release.sh), which
+# this tags vX.Y.Z on the pushed commit and publishes as a GitHub Release with
+# that section as its notes. A push that breaks the rule fails loudly, so it
+# cannot slip by. A merged branch whose tip commit says [no release] is skipped.
+name: Menubarn release
+
+on:
+  workflow_call:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          repository: nicholaspsmith/StatusItemKit
+          path: .menubarn-kit
+          sparse-checkout: scripts/release
+      - name: Tag and publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # A merge's second parent is the branch that was merged; its tip
+          # is where [no release] would be written.
+          tip="$(git rev-parse -q --verify HEAD^2 || git rev-parse HEAD)"
+          if git log -1 --format=%B "$tip" | grep -qF '[no release]'; then
+            echo "::notice::[no release] — nothing to tag."
+            exit 0
+          fi
+          if ! version="$(.menubarn-kit/scripts/release/check-release.sh HEAD 2>err.txt)"; then
+            echo "::error::$(head -1 err.txt)"
+            cat err.txt
+            exit 1
+          fi
+          awk -v v="$version" '/^## \[/ { inside = (index($0, "## [" v "]") == 1); next } inside' \
+            CHANGELOG.md > notes.md
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "v$version" -m "v$version" HEAD
+          git push origin "v$version"
+          gh release create "v$version" --verify-tag --title "v$version" --notes-file notes.md
+          echo "::notice::Released v$version"
