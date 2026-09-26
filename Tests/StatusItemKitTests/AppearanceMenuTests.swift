@@ -39,4 +39,15 @@ final class AppearanceMenuTests: XCTestCase {
         XCTAssertEqual(titles.first, MeterStyle.proportional[0].title)
         XCTAssertTrue(menu.items.contains(where: \.isSeparatorItem))
     }
+
+    // An app whose colours are all decided by its data offers no colour
+    // block: shapes only, and no dangling separator after them.
+    func testNoColourBlockLeavesShapesOnly() {
+        let menu = AppearanceMenu(appearance: appearance(), offersColour: false) {}.menuItem().submenu!
+        let titles = menu.items.map(\.title)
+        XCTAssertFalse(titles.contains("Custom Colour…"))
+        for preset in MeterColor.presets { XCTAssertFalse(titles.contains(preset.name)) }
+        XCTAssertEqual(titles, MeterStyle.proportional.map(\.title))
+        XCTAssertFalse(menu.items.contains(where: \.isSeparatorItem))
+    }
 }

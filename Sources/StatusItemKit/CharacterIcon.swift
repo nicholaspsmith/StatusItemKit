@@ -47,12 +47,11 @@ public enum CharacterIcon {
     static let eyelid = NSColor(red: 0.45, green: 0.28, blue: 0.14, alpha: 1)
 
     // OWL v2: squarer head using the full height, soft ear bumps, big eyes bulging past the sides.
-    /// The owl is eyelid-brown all over. Each eye is a real eye: white, black pupil, and a brown eyelid that
-    /// drops as usage rises — wide open at 0, half closed at 0.5, shut at 1.
-    /// The pupils can take a colour each — the left eye's for the session window, the right's for the
-    /// weekly — so an app can tie each eye to the bar it stands for.
-    public static func owl(session: CGFloat, weekly: CGFloat,
-                           sessionPupil: NSColor = .black, weeklyPupil: NSColor = .black) -> NSImage {
+    /// The owl is eyelid-brown all over, and its two eyes always match. Each is a real eye: white,
+    /// pupil, and a brown eyelid. The lids drop with the `session` fraction — wide open at 0, half
+    /// closed at 0.5, shut at 1. The `weekly` fraction is the owl's health: the whites go bloodshot
+    /// past a quarter used, and both pupils run `MeterColor.usage` from cyan at 0 to red at 1.
+    public static func owl(session: CGFloat, weekly: CGFloat) -> NSImage {
         canvas(width: 32, height: 22) { ctx in
             eyelid.set()
             // Head: a wide rounded block with soft ear tufts at the top corners.
@@ -67,17 +66,19 @@ public enum CharacterIcon {
             beak.move(to: NSPoint(x: 12.6, y: 9.2)); beak.line(to: NSPoint(x: 19.4, y: 9.2)); beak.line(to: NSPoint(x: 16, y: 0.3)); beak.close()
             cut(ctx, beak); NSColor.black.set(); beak.fill()
             // Eyes: two big eyes bulging past the sides of the head.
-            for (cx, frac, pupil) in [(CGFloat(8.6), session, sessionPupil), (CGFloat(23.4), weekly, weeklyPupil)] {
+            let closed = max(0, min(1, session))
+            let health = max(0, min(1, weekly))
+            let pupil = MeterColor.usage(health)
+            for cx in [CGFloat(8.6), 23.4] {
                 let c = NSPoint(x: cx, y: 11); let r: CGFloat = 7.4
-                let closed = max(0, min(1, frac))
                 cut(ctx, NSBezierPath(ovalIn: NSRect(x: c.x - r - 1, y: c.y - r - 1, width: (r + 1) * 2, height: (r + 1) * 2)))
                 eyelid.set(); NSBezierPath(ovalIn: NSRect(x: c.x - r - 0.8, y: c.y - r - 0.8, width: (r + 0.8) * 2, height: (r + 0.8) * 2)).fill()
                 let eye = NSBezierPath(ovalIn: NSRect(x: c.x - r, y: c.y - r, width: r * 2, height: r * 2))
-                // Tiredness: once the eye is less than three-quarters open the
-                // white picks up a pink that deepens as the lid comes down —
-                // a cartoon's bloodshot sleepy eye, light pink (#FFB3B3) by the
-                // time it is shut, never red — and short red veins appear.
-                let tired = max(0, min(1, (closed - 0.25) / 0.75))
+                // Tiredness: past a quarter of the week used the white picks
+                // up a pink that deepens as the week is spent — a cartoon's
+                // bloodshot sleepy eye, light pink (#FFB3B3) at 100%, never
+                // red — and short red veins appear.
+                let tired = max(0, min(1, (health - 0.25) / 0.75))
                 let pr: CGFloat = 3.1
                 NSColor(srgbRed: 1, green: 1 - 0.3 * tired, blue: 1 - 0.3 * tired, alpha: 1).set(); eye.fill()
                 if tired > 0 {
