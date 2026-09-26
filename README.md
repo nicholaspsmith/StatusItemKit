@@ -259,6 +259,14 @@ running [`scripts/release/check-release.sh`](scripts/release/check-release.sh)
   every push to `main` — merged PR or direct push, from any machine — and does
   the tagging. A push without a new version fails the run, so nothing slips by.
 - **A `pre-push` hook** refuses the push locally, before GitHub sees it.
+- **Pull requests** run the same check: a PR whose `CHANGELOG.md` has no new,
+  correctly formatted version fails before it can be merged.
+
+**One naming convention.** Versions are `vX.Y.Z` tags, changelog sections are
+`## [X.Y.Z] - YYYY-MM-DD`, and a GitHub Release is titled with its tag,
+`vX.Y.Z` — never "AppName X.Y.Z". Releases are only ever made by the workflow;
+if one is created by hand, the workflow retitles it to its tag and fails the
+run so it is noticed.
 
 Set a repo up with `scripts/release/adopt.sh` (no arguments: every Menubarn
 app in `~/Code`, StatusItemKit and HotkeyKit; or pass repo paths). It
