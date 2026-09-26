@@ -74,29 +74,49 @@ final class CharacterIconTests: XCTestCase {
         XCTAssertFalse(isYellowish(CharacterIcon.key(level: 0)))
     }
 
-    func testOwlPupilsTakeTheirWindowsColours() throws {
-        // Left eye is the session window, right the weekly: each pupil takes
-        // the colour of its bar so the two can be told apart at a glance.
-        let blue = NSColor(srgbRed: 0, green: 0, blue: 1, alpha: 1)
-        let red = NSColor(srgbRed: 1, green: 0, blue: 0, alpha: 1)
-        let owl = CharacterIcon.owl(session: 0, weekly: 0, sessionPupil: blue, weeklyPupil: red)
-        let rep = NSBitmapImageRep(data: owl.tiffRepresentation!)!
-        let scale = CGFloat(rep.pixelsWide) / owl.size.width
-        func sample(_ x: CGFloat, _ y: CGFloat) -> NSColor {
-            // Bitmap rows run top-down; the canvas is drawn bottom-up.
-            rep.colorAt(x: Int(x * scale), y: Int((owl.size.height - y) * scale))!.usingColorSpace(.sRGB)!
-        }
-        let left = sample(8.6, 11), right = sample(23.4, 11)
-        XCTAssertGreaterThan(left.blueComponent, 0.9); XCTAssertLessThan(left.redComponent, 0.1)
-        XCTAssertGreaterThan(right.redComponent, 0.9); XCTAssertLessThan(right.blueComponent, 0.1)
+    private func sample(_ img: NSImage, _ x: CGFloat, _ y: CGFloat) -> NSColor {
+        let rep = NSBitmapImageRep(data: img.tiffRepresentation!)!
+        let scale = CGFloat(rep.pixelsWide) / img.size.width
+        // Bitmap rows run top-down; the canvas is drawn bottom-up.
+        return rep.colorAt(x: Int(x * scale), y: Int((img.size.height - y) * scale))!.usingColorSpace(.sRGB)!
     }
 
-    func testOwlPupilsDefaultToBlack() throws {
-        let owl = CharacterIcon.owl(session: 0, weekly: 0)
-        let rep = NSBitmapImageRep(data: owl.tiffRepresentation!)!
-        let scale = CGFloat(rep.pixelsWide) / owl.size.width
-        let c = rep.colorAt(x: Int(8.6 * scale), y: Int((owl.size.height - 11) * scale))!.usingColorSpace(.sRGB)!
-        XCTAssertLessThan(c.redComponent + c.greenComponent + c.blueComponent, 0.1)
+    // Both pupils are one colour: cyan with the weekly window untouched,
+    // red when it is spent, and the two eyes always match.
+    func testOwlPupilsRunCyanToRedWithTheWeeklyWindow() {
+        let fresh = CharacterIcon.owl(session: 0, weekly: 0)
+        for x in [CGFloat(8.6), 23.4] {
+            let c = sample(fresh, x, 11)
+            XCTAssertLessThan(c.redComponent, 0.3, "fresh pupil is not red")
+            XCTAssertGreaterThan(c.greenComponent, 0.6, "fresh pupil is cyan")
+            XCTAssertGreaterThan(c.blueComponent, 0.7, "fresh pupil is cyan")
+        }
+        let spent = CharacterIcon.owl(session: 0, weekly: 1)
+        for x in [CGFloat(8.6), 23.4] {
+            let c = sample(spent, x, 11)
+            XCTAssertGreaterThan(c.redComponent, 0.8, "spent pupil is red")
+            XCTAssertLessThan(c.greenComponent, 0.3); XCTAssertLessThan(c.blueComponent, 0.3)
+        }
+        // The session window does not touch the pupil.
+        let busy = sample(CharacterIcon.owl(session: 0.4, weekly: 0), 8.6, 11)
+        let idle = sample(fresh, 8.6, 11)
+        XCTAssertEqual(busy.redComponent, idle.redComponent, accuracy: 0.02)
+        XCTAssertEqual(busy.blueComponent, idle.blueComponent, accuracy: 0.02)
+    }
+
+    // Both lids droop together with the session window, whatever the weekly is.
+    func testOwlLidsFollowTheSessionWindowInBothEyes() {
+        // A point in the upper half of each eye: white when open, brown once
+        // the lid has come half way down.
+        let open = CharacterIcon.owl(session: 0, weekly: 1)
+        let half = CharacterIcon.owl(session: 0.5, weekly: 0)
+        for x in [CGFloat(8.6), 23.4] {
+            let o = sample(open, x, 15.5)
+            XCTAssertGreaterThan(o.greenComponent, 0.7, "eye open at 0 session")
+            let h = sample(half, x, 15.5)
+            XCTAssertLessThan(h.greenComponent, 0.4, "lid covers the upper half at 0.5 session")
+            XCTAssertGreaterThan(h.redComponent, h.blueComponent, "the lid is brown")
+        }
     }
 
     func testMonitorLizardIsWideNonTemplateAndVariesWithState() {
@@ -160,9 +180,9 @@ final class CharacterIconTests: XCTestCase {
         XCTAssertLessThan(abs(bezel.redComponent - bezel.blueComponent), 0.05, "bezel stays grey")
     }
 
-    // The whites go pinker as the lid comes down: pure white while the eye is
-    // at least three-quarters open, a clear light pink when nearly shut.
-    func testOwlWhitesRedden() throws {
+    // The whites go pinker as the weekly window fills: pure white below a
+    // quarter used, a clear light pink when it is nearly spent.
+    func testOwlWhitesReddenWithTheWeeklyWindow() throws {
         // The brightest white-ish pixel is the eye white itself: the lid is
         // brown, the pupil black and the veins red, and anti-aliasing only
         // ever blends towards those.
@@ -176,16 +196,19 @@ final class CharacterIconTests: XCTestCase {
             } }
             return best
         }
-        let open = whitest(CharacterIcon.owl(session: 0.2, weekly: 0.2))
+        let open = whitest(CharacterIcon.owl(session: 0, weekly: 0.2))
         XCTAssertGreaterThan(open.greenComponent, 0.99)
-        // Three-quarters shut: enough white still showing to sample cleanly.
+        // Three-quarters of the week spent, lids open so the white is easy to sample.
         // The read-back is not colour-managed like the screen (a 0.80 fill
         // samples as ~0.84), so the bounds are loose: clearly pinker than the
         // old faint ramp (~0.90 here), clearly not red.
-        let tired = whitest(CharacterIcon.owl(session: 0.75, weekly: 0.75))
+        let tired = whitest(CharacterIcon.owl(session: 0, weekly: 0.75))
         XCTAssertGreaterThan(tired.redComponent, 0.95)
         XCTAssertLessThan(tired.greenComponent, 0.87)
         XCTAssertGreaterThan(tired.greenComponent, 0.7)
         XCTAssertEqual(tired.greenComponent, tired.blueComponent, accuracy: 0.02)
+        // A heavy session with a fresh week keeps the whites white.
+        let session = whitest(CharacterIcon.owl(session: 0.6, weekly: 0))
+        XCTAssertGreaterThan(session.greenComponent, 0.99)
     }
 }

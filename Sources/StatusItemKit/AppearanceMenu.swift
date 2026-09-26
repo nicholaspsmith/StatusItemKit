@@ -16,6 +16,7 @@ public final class AppearanceMenu: NSObject, NSWindowDelegate {
     private let styles: [MeterStyle]
     private let characterTitle: String?
     private let colorItems: ((NSMenu) -> Void)?
+    private let offersColour: Bool
     private let onChange: () -> Void
 
     /// - Parameter styles: which shapes to offer. Defaults to the proportional
@@ -27,15 +28,20 @@ public final class AppearanceMenu: NSObject, NSWindowDelegate {
     ///   presets and the colour panel, for an app whose colour is not one
     ///   number — a pair, a palette. It is handed the submenu after the shapes
     ///   and their separator, and owns persistence and redraw for its items.
+    /// - Parameter offersColour: `false` for an app whose colours are all
+    ///   decided by its data — the submenu is then shapes only, with no
+    ///   separator, no presets and no panel. Ignored when `colorItems` is set.
     public init(appearance: MeterAppearance,
                 styles: [MeterStyle] = MeterStyle.proportional,
                 characterTitle: String? = nil,
                 colorItems: ((NSMenu) -> Void)? = nil,
+                offersColour: Bool = true,
                 onChange: @escaping () -> Void) {
         self.appearance = appearance
         self.styles = styles
         self.characterTitle = characterTitle
         self.colorItems = colorItems
+        self.offersColour = offersColour
         self.onChange = onChange
         super.init()
     }
@@ -54,13 +60,17 @@ public final class AppearanceMenu: NSObject, NSWindowDelegate {
             submenu.addItem(choice)
         }
 
-        submenu.addItem(.separator())
-
         if let colorItems {
+            submenu.addItem(.separator())
             colorItems(submenu)
             item.submenu = submenu
             return item
         }
+        guard offersColour else {
+            item.submenu = submenu
+            return item
+        }
+        submenu.addItem(.separator())
 
         let currentHex = appearance.colorHex.uppercased()
         var matchedPreset = false

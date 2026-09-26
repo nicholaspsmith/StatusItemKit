@@ -58,6 +58,29 @@ final class MeterColorTests: XCTestCase {
     func testGreenIsFirstPreset() {
         XCTAssertEqual(MeterColor.presets.first?.name, "Green")
     }
+
+    private func rgb(_ c: NSColor) -> (r: CGFloat, g: CGFloat, b: CGFloat) {
+        let s = c.usingColorSpace(.sRGB)!
+        return (s.redComponent, s.greenComponent, s.blueComponent)
+    }
+
+    // The usage ramp: cyan when nothing is used, red when everything is, and
+    // the hue swings through blue and magenta on the way rather than fading
+    // through grey.
+    func testUsageRampRunsCyanThroughBlueToRed() {
+        let start = rgb(MeterColor.usage(0))
+        XCTAssertLessThan(start.r, 0.3); XCTAssertGreaterThan(start.g, 0.6); XCTAssertGreaterThan(start.b, 0.7)
+        let end = rgb(MeterColor.usage(1))
+        XCTAssertGreaterThan(end.r, 0.8); XCTAssertLessThan(end.g, 0.3); XCTAssertLessThan(end.b, 0.3)
+        let mid = rgb(MeterColor.usage(0.5))
+        XCTAssertGreaterThan(mid.b, mid.g, "half way is on the blue side, not green or grey")
+        XCTAssertGreaterThan(max(mid.r, mid.g, mid.b) - min(mid.r, mid.g, mid.b), 0.5, "still saturated half way")
+    }
+
+    func testUsageRampClampsOutOfRangeFractions() {
+        XCTAssertEqual(MeterColor.hex(from: MeterColor.usage(-1)), MeterColor.hex(from: MeterColor.usage(0)))
+        XCTAssertEqual(MeterColor.hex(from: MeterColor.usage(2)), MeterColor.hex(from: MeterColor.usage(1)))
+    }
 }
 
 final class MeterAppearanceTests: XCTestCase {

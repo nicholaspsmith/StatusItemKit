@@ -32,6 +32,22 @@ public struct MeterColor: Equatable, Sendable {
         MeterColor(name: "Grey",   hex: "#98989D"),
     ]
 
+    // MARK: - Usage ramp
+
+    /// The colour of a usage fraction: cyan at 0, red at 1. The hue swings the
+    /// long way round, through blue and magenta, because blending cyan
+    /// straight into red passes through a muddy grey; this way every stop is
+    /// as saturated as the ends. An app that colours by how much is used
+    /// rather than by which thing it is (Claude Usage's owl pupils and bars)
+    /// draws with this, so icon and menu agree without a preference.
+    public static func usage(_ fraction: CGFloat) -> NSColor {
+        let f = max(0, min(1, fraction))
+        // Hue 180° (cyan) rising to 360° (red), eased so the first tenth or
+        // so stays recognisably cyan rather than turning sky blue at once.
+        let hue = (180 + 180 * pow(f, 1.4)) / 360
+        return NSColor(hue: hue, saturation: 0.85, brightness: 0.92, alpha: 1).usingColorSpace(.sRGB)!
+    }
+
     // MARK: - Hex
 
     /// Parses `#RRGGBB` and `RRGGBB`. Colours are persisted as hex rather than
