@@ -194,11 +194,8 @@ scripts/make-app.sh BatteryTime "Battery Time"
 
 The version comes from git, not `Info.plist`: `make-app.sh` stamps the
 consuming repo's nearest `vMAJOR.MINOR.PATCH[-prerelease]` tag into the bundle
-and **refuses to build without one**. Release by tagging:
-
-```sh
-git tag -a v1.2.0 -m 1.2.0 && git push origin v1.2.0
-```
+and **refuses to build without one**. In a Menubarn app you don't tag by hand —
+see [Releases](#releases-every-push-is-one) below.
 
 | Key | Tagged, clean build | 3 commits past the tag, uncommitted edits |
 |---|---|---|
@@ -239,6 +236,43 @@ once, and it sticks.
 Your app provides its own `Resources/Info.plist` with `LSUIElement=true` (no
 Dock icon) and a real bundle identifier; use this repo's
 [`Resources/Info.plist`](Resources/Info.plist) as the template.
+
+## Releases: every push is one
+
+Every Menubarn app (and StatusItemKit itself) follows one rule: **every push is
+a release, and every release has a changelog entry.** Before pushing, add a
+section to the top of the repo's `CHANGELOG.md`:
+
+```markdown
+## [1.3.0] - 2026-09-26
+### Changed
+- What changed, for someone who uses the app.
+```
+
+When it reaches `main`, GitHub tags `v1.3.0` on that commit and publishes a
+GitHub Release with the section as its notes. Two guards enforce the rule, both
+running [`scripts/release/check-release.sh`](scripts/release/check-release.sh)
+(the section must be new, dated, non-empty and above every existing tag):
+
+- **`.github/workflows/release.yml`** in each app calls the reusable
+  [`menubarn-release.yml`](.github/workflows/menubarn-release.yml). It runs on
+  every push to `main` — merged PR or direct push, from any machine — and does
+  the tagging. A push without a new version fails the run, so nothing slips by.
+- **A `pre-push` hook** refuses the push locally, before GitHub sees it.
+
+Set a repo up (or re-arm the hook after cloning one on a new machine — the hook
+lives in per-machine git config) with:
+
+```sh
+scripts/release/adopt.sh                  # every Menubarn app in ~/Code
+scripts/release/adopt.sh ~/Code/some-app  # just this one
+```
+
+It backfills `CHANGELOG.md` from the existing tags, writes the workflow and
+points the repo's `core.hooksPath` at `scripts/release/hooks`. The escape hatch
+for a push that genuinely isn't a release (setting this up, say) is
+`[no release]` in the tip commit's message; `git push --no-verify` skips only
+the local hook, not GitHub's check.
 
 ## Development
 
