@@ -21,8 +21,10 @@
 #   - .github/workflows/release.yml, which calls this repo's reusable
 #     menubarn-release.yml to tag and publish each push to main;
 #   - core.hooksPath (local to that repo) -> scripts/release/hooks, for the
-#     pre-push check. Local git config is per machine: re-run this after
-#     cloning an app somewhere new.
+#     pre-push check;
+#   - branch protection on GitHub: main needs "release / check" to merge a PR.
+# Local git config is per machine: re-run --hooks-only after cloning an app
+# somewhere new.
 # Nothing is committed; commit the first two with [no release] in the message.
 set -euo pipefail
 
@@ -75,6 +77,24 @@ HEAD
     done
 }
 
+# Branch protection on main: a PR cannot merge until "release / check" (the
+# workflow's pull_request job) passes, i.e. until it carries a new version or
+# its tip says [no release]. Admins are not forced (enforce_admins false) so a
+# direct push to main still works — that path is guarded by the pre-push hook
+# and the push job — but merging a failing PR then needs `gh pr merge --admin`,
+# which is never used for this.
+protect() {
+    local slug
+    slug="$(git -C "$1" remote get-url origin | sed -E 's#^(git@github\.com:|https://github\.com/)##; s#\.git$##')"
+    if ! command -v gh >/dev/null; then echo "$1: gh missing — branch protection not set" >&2; return; fi
+    gh api -X PUT "repos/$slug/branches/main/protection" --silent --input - <<'JSON' \
+        && echo "$1: main requires \"release / check\" to merge" \
+        || echo "$1: could not set branch protection" >&2
+{"required_status_checks": {"strict": false, "checks": [{"context": "release / check"}]},
+ "enforce_admins": false, "required_pull_request_reviews": null, "restrictions": null}
+JSON
+}
+
 for repo in "$@"; do
     [ -d "$repo/.git" ] || { echo "skip $repo: not a git checkout" >&2; continue; }
     (
@@ -105,5 +125,6 @@ jobs:
 YML
         git config --local core.hooksPath "$KIT/hooks"
         echo "$repo: workflow written, pre-push hook on"
+        protect "$repo"
     )
 done

@@ -7,6 +7,12 @@ and publishes the section as the release notes; a push without one is refused.
 Versions follow [Semantic Versioning](https://semver.org/). The full rule:
 [StatusItemKit — Releases](https://github.com/nicholaspsmith/StatusItemKit#releases-every-push-is-one).
 
+## [0.8.0] - 2026-09-26
+### Added
+- `adopt.sh` sets branch protection on `main`: a PR cannot merge until
+  `release / check` passes, i.e. until it carries a new version or its tip
+  says `[no release]`. Applied to every Menubarn repo.
+
 ## [0.7.0] - 2026-09-26
 ### Added
 - Pull requests to a Menubarn repo fail unless `CHANGELOG.md` carries a new,
