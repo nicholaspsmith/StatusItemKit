@@ -239,7 +239,7 @@ Dock icon) and a real bundle identifier; use this repo's
 
 ## Releases: every push is one
 
-Every Menubarn app (and StatusItemKit itself) follows one rule: **every push is
+Every Menubarn app (and StatusItemKit and HotkeyKit) follows one rule: **every push is
 a release, and every release has a changelog entry.** Before pushing, add a
 section to the top of the repo's `CHANGELOG.md`:
 
@@ -260,19 +260,31 @@ running [`scripts/release/check-release.sh`](scripts/release/check-release.sh)
   the tagging. A push without a new version fails the run, so nothing slips by.
 - **A `pre-push` hook** refuses the push locally, before GitHub sees it.
 
-Set a repo up (or re-arm the hook after cloning one on a new machine — the hook
-lives in per-machine git config) with:
+Set a repo up with `scripts/release/adopt.sh` (no arguments: every Menubarn
+app in `~/Code`, StatusItemKit and HotkeyKit; or pass repo paths). It
+backfills `CHANGELOG.md` from the existing tags, writes the workflow and points
+the repo's `core.hooksPath` at `scripts/release/hooks`.
 
-```sh
-scripts/release/adopt.sh                  # every Menubarn app in ~/Code
-scripts/release/adopt.sh ~/Code/some-app  # just this one
-```
+### Things to know
 
-It backfills `CHANGELOG.md` from the existing tags, writes the workflow and
-points the repo's `core.hooksPath` at `scripts/release/hooks`. The escape hatch
-for a push that genuinely isn't a release (setting this up, say) is
-`[no release]` in the tip commit's message; `git push --no-verify` skips only
-the local hook, not GitHub's check.
+- **Not a release?** Put `[no release]` in the tip commit's message — for
+  setup, CI or tooling that changes nothing a user runs. Both guards skip it.
+  `git push --no-verify` skips only the local hook; GitHub still checks.
+- **`## [Unreleased]`** — some changelogs were backfilled with commits made
+  since the last tag. The next push turns that section into its version
+  (rename the heading, add the date, reword the entries for a user).
+- **Don't tag by hand.** The workflow tags; a hand-made tag for the same
+  version makes the run fail. After a merge, `git pull` to fetch the tag, then
+  rebuild so the menu shows a clean version instead of `+N.gSHA`.
+- **The hook is per repo, per machine.** It lives in each repo's local git
+  config, not a global `core.hooksPath`, which would silently disable every
+  other repo's own hooks. So a fresh clone has no hook until it is re-armed —
+  every app's `install.sh` and the macOS setup suite do that by running
+  `scripts/release/adopt.sh --hooks-only`, which you can also run by hand. The
+  GitHub check applies regardless.
+- **Push over SSH.** Pushing a change to `.github/workflows/` over HTTPS needs
+  a token with the `workflow` scope; the SSH remotes (`git@github.com:…`) need
+  nothing extra.
 
 ## Development
 

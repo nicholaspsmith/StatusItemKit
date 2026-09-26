@@ -5,9 +5,15 @@
 #
 # Copyright (c) 2026 Nicholas Smith
 
-# Put a Menubarn app (or StatusItemKit) under the release rule: every push is a release.
+# Put a Menubarn app (or StatusItemKit, HotkeyKit) under the release rule:
+# every push is a release.
 #
-#   scripts/release/adopt.sh [repo...]     default: every Menubarn app in ~/Code, and StatusItemKit
+#   scripts/release/adopt.sh [repo...]     default: every Menubarn app in ~/Code,
+#                                          StatusItemKit and HotkeyKit
+#   scripts/release/adopt.sh --hooks-only  just re-arm the pre-push hook in every
+#                                          one of those that is cloned here (what
+#                                          each app's install.sh and the macOS
+#                                          setup suite run; changes no files)
 #
 # For each repo, idempotently:
 #   - CHANGELOG.md, backfilled from its vX.Y.Z tags if it has none (commits
@@ -23,19 +29,35 @@ set -euo pipefail
 KIT="$(cd "$(dirname "$0")" && pwd)"
 APPS=(menubar-barn keylight-menubar vpn-dns-menubar MacOS_Process_Monitor battery-time-menubar
       claude-usage-menubar MacRecorder apollo-monitor-menubar media-tracking-killer-menubar
-      download-recycler-menubar monitor-lizard-menubar home-assistant-menubar StatusItemKit)
+      download-recycler-menubar monitor-lizard-menubar home-assistant-menubar StatusItemKit HotkeyKit)
+CODE="$(cd "$KIT/../../.." && pwd)"   # the directory StatusItemKit is cloned in
+armed=()
+
+if [ "${1:-}" = "--hooks-only" ]; then
+    for app in "${APPS[@]}"; do
+        [ -d "$CODE/$app/.git" ] || continue
+        git -C "$CODE/$app" config --local core.hooksPath "$KIT/hooks"
+        armed+=("$app")
+    done
+    echo "Menubarn release hook armed in ${#armed[@]} repos: ${armed[*]}"
+    exit 0
+fi
 if [ $# -eq 0 ]; then
-    set -- "${APPS[@]/#/$HOME/Code/}"
+    set -- "${APPS[@]/#/$CODE/}"
 fi
 
 backfill() {
     local tags prev="" date
     echo "# Changelog"
     echo
-    echo "Every push to \`main\` is a release. Add a \`## [X.Y.Z] - YYYY-MM-DD\` section at"
-    echo "the top (minor for features, patch for fixes); GitHub tags it and publishes"
-    echo "the section as the release notes. Versions follow [Semantic"
-    echo "Versioning](https://semver.org/)."
+    cat <<'HEAD'
+Every push to `main` is a release. Before pushing, add a `## [X.Y.Z] - YYYY-MM-DD`
+section at the top with `- ` entries (minor for features, patch for fixes); if an
+`## [Unreleased]` section is waiting, turn it into that section. GitHub tags it
+and publishes the section as the release notes; a push without one is refused.
+Versions follow [Semantic Versioning](https://semver.org/). The full rule:
+[StatusItemKit — Releases](https://github.com/nicholaspsmith/StatusItemKit#releases-every-push-is-one).
+HEAD
     tags=($(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' | sort -rV))
     if [ ${#tags[@]} -gt 0 ] && [ -n "$(git log --no-merges --format=%h "${tags[0]}..HEAD")" ]; then
         echo; echo "## [Unreleased]"; echo
