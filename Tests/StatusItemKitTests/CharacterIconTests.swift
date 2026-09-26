@@ -81,21 +81,20 @@ final class CharacterIconTests: XCTestCase {
         return rep.colorAt(x: Int(x * scale), y: Int((img.size.height - y) * scale))!.usingColorSpace(.sRGB)!
     }
 
-    // Both pupils are one colour: green with the weekly window untouched,
-    // red when it is spent, and the two eyes always match.
+    // Both pupils are one colour: dark green (#005401) with the weekly window
+    // untouched, orange-red (#FF5401) when it is spent, and the eyes always match.
     func testOwlPupilsRunGreenToRedWithTheWeeklyWindow() {
         let fresh = CharacterIcon.owl(session: 0, weekly: 0)
         for x in [CGFloat(8.6), 23.4] {
             let c = sample(fresh, x, 11)
-            XCTAssertLessThan(c.redComponent, 0.3, "fresh pupil is green")
-            XCTAssertGreaterThan(c.greenComponent, 0.7, "fresh pupil is green")
-            XCTAssertLessThan(c.blueComponent, 0.3, "fresh pupil is green")
+            XCTAssertLessThan(c.redComponent, 0.05, "fresh pupil has no red")
+            XCTAssertGreaterThan(c.greenComponent, c.blueComponent + 0.2, "fresh pupil is green")
         }
         let spent = CharacterIcon.owl(session: 0, weekly: 1)
         for x in [CGFloat(8.6), 23.4] {
             let c = sample(spent, x, 11)
-            XCTAssertGreaterThan(c.redComponent, 0.8, "spent pupil is red")
-            XCTAssertLessThan(c.greenComponent, 0.3); XCTAssertLessThan(c.blueComponent, 0.3)
+            XCTAssertGreaterThan(c.redComponent, 0.95, "spent pupil is red")
+            XCTAssertLessThan(c.greenComponent, 0.5); XCTAssertLessThan(c.blueComponent, 0.05)
         }
         // The session window does not touch the pupil.
         let busy = sample(CharacterIcon.owl(session: 0.4, weekly: 0), 8.6, 11)
@@ -104,11 +103,12 @@ final class CharacterIconTests: XCTestCase {
         XCTAssertEqual(busy.blueComponent, idle.blueComponent, accuracy: 0.02)
     }
 
-    // The veins' opacity is the weekly fraction: none at 0%, faint but present
-    // just above it, solid at 100%.
+    // The veins appear in the last quarter of the week: none below 75%, 1%
+    // opaque at 75%, rising straight to solid at 100%.
     func testOwlVeinOpacityTracksTheWeeklyWindow() {
         // The reddest pixel in the eye white, outside the pupil, relative to the
-        // white around it: how far green has dropped below red.
+        // palest (the white itself, pink or not): how far green has dropped below
+        // red on the veins beyond the white's own tint.
         func vein(_ weekly: CGFloat) -> CGFloat {
             // At 8x, so the half-point veins cover whole pixels.
             let img = CharacterIcon.owl(session: 0, weekly: weekly), scale: CGFloat = 8
@@ -119,33 +119,37 @@ final class CharacterIconTests: XCTestCase {
             NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
             img.draw(in: NSRect(x: 0, y: 0, width: CGFloat(rep.pixelsWide), height: CGFloat(rep.pixelsHigh)))
             NSGraphicsContext.restoreGraphicsState()
-            var best: CGFloat = 0
+            var best: CGFloat = 0, palest: CGFloat = 1
             for px in 0..<rep.pixelsWide { for py in 0..<rep.pixelsHigh {
                 let x = CGFloat(px) / scale, y = img.size.height - CGFloat(py) / scale
                 let d = hypot(x - 8.6, y - 11)
                 // Skip the right eye's rim, which overlaps this eye's edge.
                 guard d > 3.8, d < 6.6, hypot(x - 23.4, y - 11) > 8.6, let c = rep.colorAt(x: px, y: py)?.usingColorSpace(.sRGB) else { continue }
                 best = max(best, c.redComponent - c.greenComponent)
+                palest = min(palest, c.redComponent - c.greenComponent)
             } }
-            return best
+            return best - palest
         }
         XCTAssertLessThan(vein(0), 0.01, "no veins at 0%")
-        XCTAssertGreaterThan(vein(0.1), 0.02, "veins already showing at 10%")
-        XCTAssertLessThan(vein(0.1), vein(0.5))
-        XCTAssertLessThan(vein(0.5), vein(1))
-        XCTAssertGreaterThan(vein(1), 0.75, "veins solid red at 100%")
+        XCTAssertLessThan(vein(0.74), 0.01, "no veins before 75%")
+        XCTAssertGreaterThan(vein(0.8), 0.05, "veins showing past 75%")
+        XCTAssertLessThan(vein(0.8), vein(0.9))
+        XCTAssertLessThan(vein(0.9), vein(1))
+        // Solid red (red - green ≈ 0.83) over the fully pink white (≈ 0.3).
+        XCTAssertGreaterThan(vein(1), 0.45, "veins solid red at 100%")
     }
 
     // Both lids droop together with the session window, whatever the weekly is.
     func testOwlLidsFollowTheSessionWindowInBothEyes() {
         // A point in the upper half of each eye: white when open, brown once
-        // the lid has come half way down. Sampled at 60°, between two veins.
+        // the lid has come half way down. Sampled at 80° (mirrored in the right
+        // eye), in a gap between veins.
         let open = CharacterIcon.owl(session: 0, weekly: 1)
         let half = CharacterIcon.owl(session: 0.5, weekly: 0)
-        for x in [CGFloat(8.6), 23.4] {
-            let o = sample(open, x + 2.5, 15.5)
+        for x: CGFloat in [8.6 + 0.87, 23.4 - 0.87] {
+            let o = sample(open, x, 15.9)
             XCTAssertGreaterThan(o.greenComponent, 0.7, "eye open at 0 session")
-            let h = sample(half, x + 2.5, 15.5)
+            let h = sample(half, x, 15.9)
             XCTAssertLessThan(h.greenComponent, 0.4, "lid covers the upper half at 0.5 session")
             XCTAssertGreaterThan(h.redComponent, h.blueComponent, "the lid is brown")
         }
