@@ -81,15 +81,15 @@ final class CharacterIconTests: XCTestCase {
         return rep.colorAt(x: Int(x * scale), y: Int((img.size.height - y) * scale))!.usingColorSpace(.sRGB)!
     }
 
-    // Both pupils are one colour: cyan with the weekly window untouched,
+    // Both pupils are one colour: green with the weekly window untouched,
     // red when it is spent, and the two eyes always match.
-    func testOwlPupilsRunCyanToRedWithTheWeeklyWindow() {
+    func testOwlPupilsRunGreenToRedWithTheWeeklyWindow() {
         let fresh = CharacterIcon.owl(session: 0, weekly: 0)
         for x in [CGFloat(8.6), 23.4] {
             let c = sample(fresh, x, 11)
-            XCTAssertLessThan(c.redComponent, 0.3, "fresh pupil is not red")
-            XCTAssertGreaterThan(c.greenComponent, 0.6, "fresh pupil is cyan")
-            XCTAssertGreaterThan(c.blueComponent, 0.7, "fresh pupil is cyan")
+            XCTAssertLessThan(c.redComponent, 0.3, "fresh pupil is green")
+            XCTAssertGreaterThan(c.greenComponent, 0.7, "fresh pupil is green")
+            XCTAssertLessThan(c.blueComponent, 0.3, "fresh pupil is green")
         }
         let spent = CharacterIcon.owl(session: 0, weekly: 1)
         for x in [CGFloat(8.6), 23.4] {
@@ -104,16 +104,48 @@ final class CharacterIconTests: XCTestCase {
         XCTAssertEqual(busy.blueComponent, idle.blueComponent, accuracy: 0.02)
     }
 
+    // The veins' opacity is the weekly fraction: none at 0%, faint but present
+    // just above it, solid at 100%.
+    func testOwlVeinOpacityTracksTheWeeklyWindow() {
+        // The reddest pixel in the eye white, outside the pupil, relative to the
+        // white around it: how far green has dropped below red.
+        func vein(_ weekly: CGFloat) -> CGFloat {
+            // At 8x, so the half-point veins cover whole pixels.
+            let img = CharacterIcon.owl(session: 0, weekly: weekly), scale: CGFloat = 8
+            let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: Int(img.size.width * scale),
+                                       pixelsHigh: Int(img.size.height * scale), bitsPerSample: 8, samplesPerPixel: 4,
+                                       hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)!
+            NSGraphicsContext.saveGraphicsState()
+            NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+            img.draw(in: NSRect(x: 0, y: 0, width: CGFloat(rep.pixelsWide), height: CGFloat(rep.pixelsHigh)))
+            NSGraphicsContext.restoreGraphicsState()
+            var best: CGFloat = 0
+            for px in 0..<rep.pixelsWide { for py in 0..<rep.pixelsHigh {
+                let x = CGFloat(px) / scale, y = img.size.height - CGFloat(py) / scale
+                let d = hypot(x - 8.6, y - 11)
+                // Skip the right eye's rim, which overlaps this eye's edge.
+                guard d > 3.8, d < 6.6, hypot(x - 23.4, y - 11) > 8.6, let c = rep.colorAt(x: px, y: py)?.usingColorSpace(.sRGB) else { continue }
+                best = max(best, c.redComponent - c.greenComponent)
+            } }
+            return best
+        }
+        XCTAssertLessThan(vein(0), 0.01, "no veins at 0%")
+        XCTAssertGreaterThan(vein(0.1), 0.02, "veins already showing at 10%")
+        XCTAssertLessThan(vein(0.1), vein(0.5))
+        XCTAssertLessThan(vein(0.5), vein(1))
+        XCTAssertGreaterThan(vein(1), 0.75, "veins solid red at 100%")
+    }
+
     // Both lids droop together with the session window, whatever the weekly is.
     func testOwlLidsFollowTheSessionWindowInBothEyes() {
         // A point in the upper half of each eye: white when open, brown once
-        // the lid has come half way down.
+        // the lid has come half way down. Sampled at 60°, between two veins.
         let open = CharacterIcon.owl(session: 0, weekly: 1)
         let half = CharacterIcon.owl(session: 0.5, weekly: 0)
         for x in [CGFloat(8.6), 23.4] {
-            let o = sample(open, x, 15.5)
+            let o = sample(open, x + 2.5, 15.5)
             XCTAssertGreaterThan(o.greenComponent, 0.7, "eye open at 0 session")
-            let h = sample(half, x, 15.5)
+            let h = sample(half, x + 2.5, 15.5)
             XCTAssertLessThan(h.greenComponent, 0.4, "lid covers the upper half at 0.5 session")
             XCTAssertGreaterThan(h.redComponent, h.blueComponent, "the lid is brown")
         }

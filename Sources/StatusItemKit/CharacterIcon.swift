@@ -50,7 +50,7 @@ public enum CharacterIcon {
     /// The owl is eyelid-brown all over, and its two eyes always match. Each is a real eye: white,
     /// pupil, and a brown eyelid. The lids drop with the `session` fraction — wide open at 0, half
     /// closed at 0.5, shut at 1. The `weekly` fraction is the owl's health: the whites go bloodshot
-    /// past a quarter used, and both pupils run `MeterColor.usage` from cyan at 0 to red at 1.
+    /// past a quarter used, and both pupils run `MeterColor.health` from green at 0 to red at 1.
     public static func owl(session: CGFloat, weekly: CGFloat) -> NSImage {
         canvas(width: 32, height: 22) { ctx in
             eyelid.set()
@@ -68,7 +68,8 @@ public enum CharacterIcon {
             // Eyes: two big eyes bulging past the sides of the head.
             let closed = max(0, min(1, session))
             let health = max(0, min(1, weekly))
-            let pupil = MeterColor.usage(health)
+            // Pupils: green on a fresh week, through yellow and orange to red.
+            let pupil = MeterColor.health(health)
             for cx in [CGFloat(8.6), 23.4] {
                 let c = NSPoint(x: cx, y: 11); let r: CGFloat = 7.4
                 cut(ctx, NSBezierPath(ovalIn: NSRect(x: c.x - r - 1, y: c.y - r - 1, width: (r + 1) * 2, height: (r + 1) * 2)))
@@ -77,23 +78,40 @@ public enum CharacterIcon {
                 // Tiredness: past a quarter of the week used the white picks
                 // up a pink that deepens as the week is spent — a cartoon's
                 // bloodshot sleepy eye, light pink (#FFB3B3) at 100%, never
-                // red — and short red veins appear.
+                // red. Short red veins fade in from the very start: their
+                // opacity is the weekly fraction itself, invisible at 0%,
+                // fully opaque at 100%.
                 let tired = max(0, min(1, (health - 0.25) / 0.75))
                 let pr: CGFloat = 3.1
                 NSColor(srgbRed: 1, green: 1 - 0.3 * tired, blue: 1 - 0.3 * tired, alpha: 1).set(); eye.fill()
-                if tired > 0 {
+                if health > 0 {
                     ctx.saveGraphicsState(); eye.addClip()
-                    NSColor(red: 0.95, green: 0.12, blue: 0.12, alpha: 0.3 + 0.7 * tired).set()
+                    NSColor(srgbRed: 0.95, green: 0.12, blue: 0.12, alpha: health).set()
                     // Veins run radially: one end near the pupil, the other near
-                    // the rim, each with a slight bend, fanned across the lower
-                    // half where the lid leaves them visible longest.
-                    for (i, angle) in [CGFloat(200), 232, 262, 292, 322, 350].enumerated() {
-                        let a = angle * .pi / 180, bend: CGFloat = i % 2 == 0 ? 0.9 : -0.9
-                        let start = NSPoint(x: c.x + cos(a) * (pr + 0.6), y: c.y + sin(a) * (pr + 0.6))
-                        let end = NSPoint(x: c.x + cos(a) * (r - 0.5), y: c.y + sin(a) * (r - 0.5))
-                        let mid = NSPoint(x: (start.x + end.x) / 2 - sin(a) * bend, y: (start.y + end.y) / 2 + cos(a) * bend)
-                        let v = NSBezierPath(); v.move(to: start)
-                        v.curve(to: end, controlPoint1: mid, controlPoint2: mid)
+                    // the rim, all the way round the eye at slightly uneven
+                    // angles. Each has its own shape — a bow, an S-wiggle, or a
+                    // bow with a short fork — and the right eye mirrors the left
+                    // so the face stays balanced. Drawn before the lid, which
+                    // hides them as it drops.
+                    let mirror: CGFloat = cx > 16 ? -1 : 1
+                    for (deg, shape, bend) in [(CGFloat(24), 0, CGFloat(0.9)), (97, 1, 0.8), (139, 2, -0.8),
+                                               (206, 0, -0.9), (263, 1, -0.8), (318, 2, 0.9)] {
+                        let a = (mirror > 0 ? deg : 180 - deg) * .pi / 180, b = bend * mirror
+                        // A point `t` of the way from pupil to rim, pushed `off` sideways.
+                        func at(_ t: CGFloat, _ off: CGFloat) -> NSPoint {
+                            let d = pr + 0.6 + t * (r - 0.5 - pr - 0.6)
+                            return NSPoint(x: c.x + cos(a) * d - sin(a) * off, y: c.y + sin(a) * d + cos(a) * off)
+                        }
+                        let v = NSBezierPath(); v.move(to: at(0, 0))
+                        if shape == 1 {
+                            v.curve(to: at(1, 0), controlPoint1: at(0.35, b * 1.4), controlPoint2: at(0.65, -b * 1.4))
+                        } else {
+                            v.curve(to: at(1, 0), controlPoint1: at(0.5, b), controlPoint2: at(0.5, b))
+                        }
+                        if shape == 2 {
+                            v.move(to: at(0.5, b * 0.75))
+                            v.curve(to: at(0.95, b * 2.2), controlPoint1: at(0.7, b * 1.1), controlPoint2: at(0.8, b * 1.8))
+                        }
                         v.lineWidth = 0.5; v.lineCapStyle = .round; v.stroke()
                     }
                     ctx.restoreGraphicsState()

@@ -48,6 +48,16 @@ public struct MeterColor: Equatable, Sendable {
         return NSColor(hue: hue, saturation: 0.85, brightness: 0.92, alpha: 1).usingColorSpace(.sRGB)!
     }
 
+    /// The colour of a usage fraction on the traffic-light ramp: green at 0,
+    /// yellow at half, orange at three quarters, red at 1. The hue falls
+    /// straight from 120° to 0°, which lands on each of those. Claude Usage's
+    /// owl pupils and its menu bars draw with this, so each bar matches a
+    /// pupil at its own percentage.
+    public static func health(_ fraction: CGFloat) -> NSColor {
+        let f = max(0, min(1, fraction))
+        return NSColor(hue: (1 - f) / 3, saturation: 0.9, brightness: 0.92, alpha: 1).usingColorSpace(.sRGB)!
+    }
+
     // MARK: - Hex
 
     /// Parses `#RRGGBB` and `RRGGBB`. Colours are persisted as hex rather than
