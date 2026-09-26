@@ -7,6 +7,16 @@ and publishes the section as the release notes; a push without one is refused.
 Versions follow [Semantic Versioning](https://semver.org/). The full rule:
 [StatusItemKit — Releases](https://github.com/nicholaspsmith/StatusItemKit#releases-every-push-is-one).
 
+## [0.7.0] - 2026-09-26
+### Added
+- Pull requests to a Menubarn repo fail unless `CHANGELOG.md` carries a new,
+  correctly formatted version (or the tip commit says `[no release]`).
+- A GitHub Release made by hand is retitled to its tag, `vX.Y.Z`, and the run
+  fails so it is noticed: one naming convention for every release.
+### Changed
+- `adopt.sh` writes the app workflow with `pull_request` and `release`
+  triggers; re-run it to update an adopted repo.
+
 ## [0.6.1] - 2026-09-26
 ### Fixed
 - The release check no longer exits silently in a repo with no tags yet (its

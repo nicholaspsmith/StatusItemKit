@@ -4,12 +4,19 @@
 #
 # Copyright (c) 2026 Nicholas Smith
 
-# Menubarn release, called by each app's .github/workflows/release.yml on every
-# push to main. Every push is a release: the pushed CHANGELOG.md must open with
-# a new "## [X.Y.Z] - date" section (scripts/release/check-release.sh), which
-# this tags vX.Y.Z on the pushed commit and publishes as a GitHub Release with
-# that section as its notes. A push that breaks the rule fails loudly, so it
-# cannot slip by. A merged branch whose tip commit says [no release] is skipped.
+# Menubarn release, called by each app's .github/workflows/release.yml.
+# Every push is a release: CHANGELOG.md must open with a new
+# "## [X.Y.Z] - YYYY-MM-DD" section (scripts/release/check-release.sh).
+#
+#   pull_request  check: the PR fails unless its CHANGELOG.md carries that
+#                 section, so a PR that skips the rule shows red before merge
+#   push to main  release: tag vX.Y.Z on the pushed commit and publish a
+#                 GitHub Release titled "vX.Y.Z" with the section as its notes;
+#                 a push that breaks the rule fails loudly
+#   release       naming: a release someone made by hand is retitled to its
+#                 tag, "vX.Y.Z" (the one naming convention), and flagged
+#
+# A PR or merged branch whose tip commit says [no release] is skipped.
 name: Menubarn release
 
 on:
@@ -19,7 +26,51 @@ permissions:
   contents: write
 
 jobs:
+  check:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          repository: nicholaspsmith/StatusItemKit
+          path: .menubarn-kit
+          sparse-checkout: scripts/release
+      - name: The PR carries a new release
+        run: |
+          git fetch --quiet --tags --force origin
+          if git log -1 --format=%B HEAD | grep -qF '[no release]'; then
+            echo "::notice::[no release] — this PR will not be released."
+            exit 0
+          fi
+          if ! version="$(.menubarn-kit/scripts/release/check-release.sh HEAD 2>err.txt)"; then
+            echo "::error::$(head -1 err.txt)"
+            cat err.txt
+            exit 1
+          fi
+          echo "::notice::Merging this PR releases v$version."
+
+  naming:
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Release title is its tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+          TITLE: ${{ github.event.release.name }}
+        run: |
+          if [ "$TITLE" = "$TAG" ]; then exit 0; fi
+          gh release edit "$TAG" -R "$GITHUB_REPOSITORY" --title "$TAG"
+          echo "::error::Release \"$TITLE\" was made by hand and is now titled \"$TAG\". Releases come from CHANGELOG.md via the release workflow, titled vX.Y.Z — don't create them by hand."
+          exit 1
+
   release:
+    if: github.event_name == 'push'
+    concurrency: release-${{ github.repository }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
