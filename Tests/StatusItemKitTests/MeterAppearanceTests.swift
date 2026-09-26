@@ -136,4 +136,17 @@ final class MeterAppearanceTests: XCTestCase {
         appearance.style = .pie
         XCTAssertFalse(appearance.image(fraction: 0.5).size.width.isZero)
     }
+
+    // The health ramp runs green, yellow, orange, red and clamps outside that.
+    func testHealthRampRunsGreenThroughYellowAndOrangeToRed() {
+        func hue(_ f: CGFloat) -> CGFloat { MeterColor.health(f).usingColorSpace(.sRGB)!.hueComponent * 360 }
+        XCTAssertEqual(hue(0), 120, accuracy: 2, "green")
+        XCTAssertEqual(hue(0.5), 60, accuracy: 2, "yellow")
+        XCTAssertEqual(hue(0.75), 30, accuracy: 2, "orange")
+        let end = MeterColor.health(1).usingColorSpace(.sRGB)!
+        XCTAssertGreaterThan(end.redComponent, 0.85)
+        XCTAssertLessThan(end.greenComponent, 0.15); XCTAssertLessThan(end.blueComponent, 0.15)
+        XCTAssertEqual(MeterColor.hex(from: MeterColor.health(-1)), MeterColor.hex(from: MeterColor.health(0)))
+        XCTAssertEqual(MeterColor.hex(from: MeterColor.health(2)), MeterColor.hex(from: MeterColor.health(1)))
+    }
 }
