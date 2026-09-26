@@ -59,11 +59,14 @@ Versions follow [Semantic Versioning](https://semver.org/). The full rule:
 [StatusItemKit — Releases](https://github.com/nicholaspsmith/StatusItemKit#releases-every-push-is-one).
 HEAD
     tags=($(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' | sort -rV))
-    if [ ${#tags[@]} -gt 0 ] && [ -n "$(git log --no-merges --format=%h "${tags[0]}..HEAD")" ]; then
+    if [ ${#tags[@]} -eq 0 ]; then
+        echo; echo "## [Unreleased]"; echo
+        git log --no-merges --format='- %s'
+    elif [ -n "$(git log --no-merges --format=%h "${tags[0]}..HEAD")" ]; then
         echo; echo "## [Unreleased]"; echo
         git log --no-merges --format='- %s' "${tags[0]}..HEAD"
     fi
-    for i in "${!tags[@]}"; do
+    for i in ${tags[@]+"${!tags[@]}"}; do
         prev="${tags[$((i + 1))]:-}"
         date="$(git log -1 --format=%cs "${tags[$i]}")"
         echo; echo "## [${tags[$i]#v}] - $date"; echo

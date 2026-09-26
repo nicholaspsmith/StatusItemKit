@@ -64,7 +64,9 @@ grep -q '^- ' <<<"$(section "$VERSION")" || fail "the [$VERSION] section in CHAN
 if git rev-parse -q --verify "refs/tags/v$VERSION" >/dev/null; then
     fail "v$VERSION is already released — this push needs a new version above it."
 fi
-LATEST="$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' | sed 's/^v//' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)"
+# `|| true`: a repo's first release has no tags, and grep finding nothing
+# would otherwise end the script silently under pipefail.
+LATEST="$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' | sed 's/^v//' | { grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' || true; } | sort -V | tail -1)"
 if [ -n "$LATEST" ] && [ "$(printf '%s\n%s\n' "$LATEST" "$VERSION" | sort -V | tail -1)" != "$VERSION" ]; then
     fail "[$VERSION] is older than the latest release, v$LATEST."
 fi

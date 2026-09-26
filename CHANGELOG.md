@@ -7,6 +7,12 @@ and publishes the section as the release notes; a push without one is refused.
 Versions follow [Semantic Versioning](https://semver.org/). The full rule:
 [StatusItemKit — Releases](https://github.com/nicholaspsmith/StatusItemKit#releases-every-push-is-one).
 
+## [0.6.1] - 2026-09-26
+### Fixed
+- The release check no longer exits silently in a repo with no tags yet (its
+  first release); `adopt.sh` backfills such a repo's whole history under
+  `[Unreleased]`.
+
 ## [0.6.0] - 2026-09-26
 ### Added
 - `scripts/release/adopt.sh --hooks-only` re-arms the pre-push hook in every
