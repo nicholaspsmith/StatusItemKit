@@ -258,4 +258,29 @@ final class CharacterIconTests: XCTestCase {
         let pngs = images.map { NSBitmapImageRep(data: $0.tiffRepresentation!)!.representation(using: .png, properties: [:])! }
         XCTAssertEqual(Set(pngs).count, states.count)
     }
+
+    func testCaterpillarKeepsOneWideCanvasForEveryState() {
+        for (effects, state) in [(0, CaterpillarState.processing), (3, .processing), (5, .processing),
+                                 (9, .processing), (2, .bypassed), (2, .error)] {
+            let img = CharacterIcon.caterpillar(effects: effects, state: state)
+            XCTAssertEqual(img.size, NSSize(width: 36, height: 22))
+            XCTAssertFalse(img.isTemplate)
+        }
+    }
+
+    func testCaterpillarIsSupersampledInto2xAnd1xBitmaps() {
+        let img = CharacterIcon.caterpillar(effects: 3, state: .processing)
+        let widths = Set(img.representations.map(\.pixelsWide))
+        XCTAssertEqual(widths, [72, 36])
+    }
+
+    func testCaterpillarSegmentsLightWithEffectsAndCapAtFive() {
+        func pixels(_ effects: Int) -> Data? {
+            CharacterIcon.caterpillar(effects: effects, state: .processing)
+                .representations.compactMap { $0 as? NSBitmapImageRep }.first { $0.pixelsWide == 72 }?
+                .representation(using: .png, properties: [:])
+        }
+        XCTAssertNotEqual(pixels(0), pixels(3))
+        XCTAssertEqual(pixels(5), pixels(9))
+    }
 }

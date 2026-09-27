@@ -8,6 +8,10 @@ without one is refused (`[no release]` in the tip commit is the only exception).
 Versions follow [Semantic Versioning](https://semver.org/). The full rule:
 [StatusItemKit — Releases](https://github.com/nicholaspsmith/StatusItemKit#releases-every-push-is-one).
 
+## [0.10.0] - 2026-09-27
+### Added
+- `CharacterIcon.caterpillar(effects:state:)`: SoundChain's caterpillar in black headphones. One segment lights per running effect (up to five); green processing, grey bypassed, red on an error. Drawn at 8x and downsampled to crisp 2x and 1x bitmaps, and cached.
+
 ## [0.9.0] - 2026-09-26
 ### Added
 - `CharacterIcon.menuCrane(state:)`: Mendoza, Menu Crane's crane, in four states (idle, searching, grabbed, miss).
