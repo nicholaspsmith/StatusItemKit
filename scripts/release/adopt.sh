@@ -31,7 +31,7 @@ set -euo pipefail
 KIT="$(cd "$(dirname "$0")" && pwd)"
 APPS=(menubar-barn keylight-menubar vpn-dns-menubar MacOS_Process_Monitor battery-time-menubar
       claude-usage-menubar MacRecorder apollo-monitor-menubar media-tracking-killer-menubar
-      download-recycler-menubar monitor-lizard-menubar home-assistant-menubar StatusItemKit HotkeyKit)
+      download-recycler-menubar monitor-lizard-menubar home-assistant-menubar soundchain-menubar StatusItemKit HotkeyKit)
 CODE="$(cd "$KIT/../../.." && pwd)"   # the directory StatusItemKit is cloned in
 armed=()
 
