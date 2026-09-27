@@ -259,8 +259,10 @@ running [`scripts/release/check-release.sh`](scripts/release/check-release.sh)
   every push to `main` — merged PR or direct push, from any machine — and does
   the tagging. A push without a new version fails the run, so nothing slips by.
 - **A `pre-push` hook** refuses the push locally, before GitHub sees it.
-- **Pull requests** run the same check: a PR whose `CHANGELOG.md` has no new,
-  correctly formatted version fails before it can be merged.
+- **Pull requests** run the same check, and branch protection on `main`
+  makes it required: a PR whose `CHANGELOG.md` has no new, correctly formatted
+  version **cannot be merged** — unless its tip commit says `[no release]`,
+  which passes the check without a version bump (so no new tag).
 
 **One naming convention.** Versions are `vX.Y.Z` tags, changelog sections are
 `## [X.Y.Z] - YYYY-MM-DD`, and a GitHub Release is titled with its tag,
@@ -270,13 +272,18 @@ run so it is noticed.
 
 Set a repo up with `scripts/release/adopt.sh` (no arguments: every Menubarn
 app in `~/Code`, StatusItemKit and HotkeyKit; or pass repo paths). It
-backfills `CHANGELOG.md` from the existing tags, writes the workflow and points
-the repo's `core.hooksPath` at `scripts/release/hooks`.
+backfills `CHANGELOG.md` from the existing tags, writes the workflow, points
+the repo's `core.hooksPath` at `scripts/release/hooks`, and sets the branch
+protection that requires `release / check` to merge (needs `gh`).
 
 ### Things to know
 
 - **Not a release?** Put `[no release]` in the tip commit's message — for
-  setup, CI or tooling that changes nothing a user runs. Both guards skip it.
+  setup, CI or tooling that changes nothing a user runs. Every guard skips it,
+  and a PR marked that way can merge without a version.
+- **Never `gh pr merge --admin`.** Branch protection doesn't bind admins
+  (so a direct push to `main` still works, guarded by the hook and the push
+  job), which means `--admin` would force a blocked PR through. Fix the PR.
   `git push --no-verify` skips only the local hook; GitHub still checks.
 - **`## [Unreleased]`** — some changelogs were backfilled with commits made
   since the last tag. The next push turns that section into its version
