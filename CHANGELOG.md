@@ -8,6 +8,11 @@ without one is refused (`[no release]` in the tip commit is the only exception).
 Versions follow [Semantic Versioning](https://semver.org/). The full rule:
 [StatusItemKit — Releases](https://github.com/nicholaspsmith/StatusItemKit#releases-every-push-is-one).
 
+## [0.9.0] - 2026-09-26
+### Added
+- `CharacterIcon.menuCrane(state:)`: Mendoza, Menu Crane's crane, in four states (idle, searching, grabbed, miss).
+- Menu Crane joins the release kit's app list.
+
 ## [0.8.0] - 2026-09-26
 ### Added
 - `adopt.sh` sets branch protection on `main`: a PR cannot merge until

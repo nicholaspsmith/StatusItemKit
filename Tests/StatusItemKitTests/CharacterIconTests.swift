@@ -247,4 +247,15 @@ final class CharacterIconTests: XCTestCase {
         let session = whitest(CharacterIcon.owl(session: 0.6, weekly: 0))
         XCTAssertGreaterThan(session.greenComponent, 0.99)
     }
+
+    func testMenuCraneIs22ptFullColourAndEveryStateDiffers() {
+        let states: [CharacterIcon.CraneState] = [.idle, .searching, .grabbed, .miss]
+        let images = states.map { CharacterIcon.menuCrane(state: $0) }
+        for img in images {
+            XCTAssertEqual(img.size, NSSize(width: 22, height: 22))
+            XCTAssertFalse(img.isTemplate)
+        }
+        let pngs = images.map { NSBitmapImageRep(data: $0.tiffRepresentation!)!.representation(using: .png, properties: [:])! }
+        XCTAssertEqual(Set(pngs).count, states.count)
+    }
 }

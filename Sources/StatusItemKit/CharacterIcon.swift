@@ -1001,4 +1001,114 @@ public enum CharacterIcon {
             NSBezierPath(ovalIn: NSRect(x: centre.x - 0.45, y: centre.y - 0.45, width: 0.9, height: 0.9)).fill()
         }
     }
+
+    // MENU CRANE: Mendoza's head side-on — red cap, two big touching eyes, a long beak to the
+    // right with a clamshell grab bucket hanging from a ring near its tip. The bucket opens
+    // while the panel is up, snaps shut on a copy, and hangs open and empty on no results.
+    public enum CraneState: Sendable { case idle, searching, grabbed, miss }
+
+    static let craneRed = NSColor(red: 0.88, green: 0.27, blue: 0.23, alpha: 1)
+    static let craneBeak = NSColor(red: 0.89, green: 0.78, blue: 0.56, alpha: 1)
+    static let craneBucket = NSColor(red: 0.97, green: 0.78, blue: 0.22, alpha: 1)
+    static let craneInk = NSColor(white: 0.12, alpha: 1)
+
+    public static func menuCrane(state: CraneState) -> NSImage {
+        canvas(width: 22, height: 22) { _ in
+            let line: CGFloat = 0.9
+            func inked(_ p: NSBezierPath, _ fill: NSColor) {
+                fill.set(); p.fill()
+                craneInk.set(); p.lineWidth = line; p.lineJoinStyle = .round; p.stroke()
+            }
+            func clipped(to p: NSBezierPath, _ fill: NSColor, _ rect: NSRect) {
+                NSGraphicsContext.saveGraphicsState()
+                p.addClip(); fill.set(); NSBezierPath(rect: rect).fill()
+                NSGraphicsContext.restoreGraphicsState()
+                craneInk.set(); p.lineWidth = line; p.stroke()
+            }
+
+            // Neck, rising from the bottom-left edge, with its white collar.
+            let neck = NSBezierPath()
+            neck.move(to: NSPoint(x: 1.2, y: -1))
+            neck.curve(to: NSPoint(x: 2.6, y: 11), controlPoint1: NSPoint(x: 0.8, y: 4), controlPoint2: NSPoint(x: 1.2, y: 8))
+            neck.line(to: NSPoint(x: 8.6, y: 10))
+            neck.curve(to: NSPoint(x: 7.4, y: -1), controlPoint1: NSPoint(x: 6.6, y: 7), controlPoint2: NSPoint(x: 6.8, y: 3))
+            neck.close()
+            inked(neck, body)
+            clipped(to: neck, .white, NSRect(x: 0, y: 1.2, width: 10, height: 1.6))
+
+            // Head and red cap.
+            let head = NSBezierPath(ovalIn: NSRect(x: 1.2, y: 8.8, width: 11, height: 11))
+            inked(head, body)
+            clipped(to: head, craneRed, NSRect(x: 0, y: 17.4, width: 14, height: 5))
+
+            // Beak, then the eyes on top of it.
+            let beak = NSBezierPath()
+            beak.move(to: NSPoint(x: 8.2, y: 12.6))
+            beak.line(to: NSPoint(x: 21.4, y: 10.8))
+            beak.line(to: NSPoint(x: 8.6, y: 10.0))
+            beak.close()
+            inked(beak, craneBeak)
+
+            let eyes = [NSPoint(x: 5.6, y: 14.8), NSPoint(x: 9.8, y: 15.2)]
+            for c in eyes { inked(NSBezierPath(ovalIn: NSRect(x: c.x - 2.7, y: c.y - 2.7, width: 5.4, height: 5.4)), .white) }
+            if state == .grabbed {
+                for c in eyes {   // happy closed crescents
+                    let arc = NSBezierPath()
+                    arc.appendArc(withCenter: NSPoint(x: c.x, y: c.y - 0.6), radius: 1.4, startAngle: 20, endAngle: 160)
+                    arc.lineWidth = 1; arc.lineCapStyle = .round
+                    craneInk.set(); arc.stroke()
+                }
+            } else {
+                let look: [CGSize]
+                switch state {
+                case .searching: look = [CGSize(width: 0.9, height: -1.1), CGSize(width: 0.9, height: -1.1)]
+                case .miss: look = [CGSize(width: -1.0, height: 0.8), CGSize(width: 1.0, height: -0.6)]
+                default: look = [CGSize(width: 1.1, height: 0), CGSize(width: 1.1, height: 0)]
+                }
+                craneInk.set()
+                for (c, d) in zip(eyes, look) {
+                    NSBezierPath(ovalIn: NSRect(x: c.x + d.width - 0.8, y: c.y + d.height - 0.8, width: 1.6, height: 1.6)).fill()
+                }
+            }
+
+            // Ring on the beak, cable, bucket.
+            let ringC = NSPoint(x: 17.6, y: 10.6)
+            let ring = NSBezierPath(ovalIn: NSRect(x: ringC.x - 1.1, y: ringC.y - 1.1, width: 2.2, height: 2.2))
+            ring.lineWidth = 0.9; NSColor(white: 0.55, alpha: 1).set(); ring.stroke()
+            let open = state == .searching || state == .miss
+            let top: CGFloat = open ? 6.8 : 7.8
+            let cable = NSBezierPath()
+            cable.move(to: NSPoint(x: ringC.x, y: ringC.y - 1.1)); cable.line(to: NSPoint(x: ringC.x, y: top))
+            cable.lineWidth = 0.8; craneInk.set(); cable.stroke()
+            if open {
+                for side: CGFloat in [-1, 1] {
+                    let jaw = NSBezierPath()
+                    jaw.move(to: NSPoint(x: ringC.x, y: top))
+                    jaw.line(to: NSPoint(x: ringC.x + side * 3.8, y: top - 1.4))
+                    jaw.line(to: NSPoint(x: ringC.x + side * 2.6, y: top - 5.2))
+                    jaw.line(to: NSPoint(x: ringC.x + side * 0.6, y: top - 3.4))
+                    jaw.close()
+                    inked(jaw, craneBucket)
+                }
+            } else {
+                let bucket = NSBezierPath()
+                bucket.move(to: NSPoint(x: ringC.x - 3.4, y: top))
+                bucket.line(to: NSPoint(x: ringC.x + 3.4, y: top))
+                bucket.line(to: NSPoint(x: ringC.x + 2.2, y: top - 4.6))
+                bucket.line(to: NSPoint(x: ringC.x - 2.2, y: top - 4.6))
+                bucket.close()
+                inked(bucket, craneBucket)
+                let seam = NSBezierPath()
+                seam.move(to: NSPoint(x: ringC.x, y: top)); seam.line(to: NSPoint(x: ringC.x, y: top - 4.6))
+                seam.lineWidth = 0.7; craneInk.set(); seam.stroke()
+            }
+            if state == .miss {   // sweat drop beside the head
+                let drop = NSBezierPath()
+                drop.move(to: NSPoint(x: 13.6, y: 20.4))
+                drop.curve(to: NSPoint(x: 13.6, y: 16.6), controlPoint1: NSPoint(x: 12.2, y: 18.2), controlPoint2: NSPoint(x: 12.4, y: 16.6))
+                drop.curve(to: NSPoint(x: 13.6, y: 20.4), controlPoint1: NSPoint(x: 14.8, y: 16.6), controlPoint2: NSPoint(x: 15.0, y: 18.2))
+                NSColor.systemBlue.set(); drop.fill()
+            }
+        }
+    }
 }
