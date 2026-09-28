@@ -149,6 +149,20 @@ public final class StatusItemController: NSObject, NSMenuDelegate {
         statusItem.length = visible ? NSStatusItem.variableLength : 0
     }
 
+    /// Take the item off the bar because the app has nothing to show — no
+    /// device to control, no backlight to set — and put it back when it does.
+    /// Separate from `setVisible`, so a manager's yield ending cannot bring
+    /// back an item the app has withdrawn.
+    ///
+    /// This one *is* `isVisible`: on macOS 27 a zero-width item still keeps a
+    /// slot, and the bar shows a ~16pt gap where it was (measured 2026-09-28).
+    /// The cost is the one `setVisible` avoids — the item may come back at the
+    /// left end of the status items rather than where it was.
+    public var isSuppressed: Bool {
+        get { !statusItem.isVisible }
+        set { if statusItem.isVisible == newValue { statusItem.isVisible = !newValue } }
+    }
+
     /// The item's width. A status item grows leftward — its right edge stays put
     /// — which is what lets a wide item push its left-hand neighbours off the
     /// display without disturbing anything to its right.

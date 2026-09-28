@@ -8,6 +8,11 @@ without one is refused (`[no release]` in the tip commit is the only exception).
 Versions follow [Semantic Versioning](https://semver.org/). The full rule:
 [StatusItemKit — Releases](https://github.com/nicholaspsmith/StatusItemKit#releases-every-push-is-one).
 
+## [0.11.0] - 2026-09-28
+
+- `StatusItemController.isSuppressed` takes the item off the bar when the app has nothing to show, independent of a manager's yield; uses `isVisible`, since on macOS 27 a zero-width item leaves a ~16pt gap
+- New `CharacterIcon.bin`, `raccoon` and `camcorder`, redrawn in the caterpillar's storybook style (ink outlines, shading, faces); each state shares one canvas so the bar never shifts
+
 ## [0.10.0] - 2026-09-27
 ### Added
 - `CharacterIcon.caterpillar(effects:state:)`: SoundChain's caterpillar in black headphones. One segment lights per running effect (up to five); green processing, grey bypassed, red on an error. Drawn at 8x and downsampled to crisp 2x and 1x bitmaps, and cached.

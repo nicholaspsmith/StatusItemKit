@@ -609,32 +609,6 @@ public enum CharacterIcon {
             cut(ctx, face); ctx.compositingOperation = .destinationOut; smile.stroke(); ctx.compositingOperation = .sourceOver
         }
     }
-    // CAMCORDER: a camcorder with a face — one big lens-eye on the body looking
-    // towards its snout of a lens hood, a small smile, a viewfinder for a hat,
-    // and the record light on top that comes on while recording.
-    public static func camcorder(recording: Bool) -> NSImage {
-        canvas(width: 24, height: 22) { ctx in
-            body.set()
-            // body and lens hood
-            NSBezierPath(roundedRect: NSRect(x: 1.5, y: 3, width: 14.5, height: 14), xRadius: 2.6, yRadius: 2.6).fill()
-            let hood = NSBezierPath(); hood.move(to: NSPoint(x: 16, y: 7)); hood.line(to: NSPoint(x: 22.5, y: 4.4)); hood.line(to: NSPoint(x: 22.5, y: 15.6)); hood.line(to: NSPoint(x: 16, y: 13)); hood.close(); hood.fill()
-            // viewfinder hat
-            NSBezierPath(roundedRect: NSRect(x: 3.5, y: 16.6, width: 7, height: 3), xRadius: 1.1, yRadius: 1.1).fill()
-            // the eye: a big lens looking towards the hood
-            let ec = NSPoint(x: 8.6, y: 11), er: CGFloat = 3.9
-            cut(ctx, NSBezierPath(ovalIn: NSRect(x: ec.x - er - 0.6, y: ec.y - er - 0.6, width: (er + 0.6) * 2, height: (er + 0.6) * 2)))
-            NSColor.white.set(); NSBezierPath(ovalIn: NSRect(x: ec.x - er, y: ec.y - er, width: er * 2, height: er * 2)).fill()
-            NSColor.black.set(); NSBezierPath(ovalIn: NSRect(x: ec.x - 1.1, y: ec.y - 2.1, width: 3.8, height: 3.8)).fill()
-            // smile under the eye
-            let smile = NSBezierPath()
-            smile.appendArc(withCenter: NSPoint(x: 8.6, y: 6.2), radius: 1.9, startAngle: 215, endAngle: 325, clockwise: false)
-            smile.lineWidth = 0.9; smile.lineCapStyle = .round
-            ctx.compositingOperation = .destinationOut; smile.stroke(); ctx.compositingOperation = .sourceOver
-            // record light on the hat: red while recording, a dark socket otherwise
-            (recording ? NSColor.systemRed : NSColor(white: 0.35, alpha: 1)).set()
-            NSBezierPath(ovalIn: NSRect(x: 11.4, y: 17.2, width: 2.6, height: 2.6)).fill()
-        }
-    }
     // APOLLO: an Apollo Twin's face — the monitor knob with its tick arc is
     // the mouth, and two squircle buttons above it are the eyes. The arc runs
     // from bottom-left over the top to bottom-right, ticks lighting green with
@@ -668,46 +642,6 @@ public enum CharacterIcon {
                 NSColor.black.withAlphaComponent(online ? 1 : 0.5).set()
                 NSBezierPath(ovalIn: NSRect(x: x + 1.95, y: 18.75, width: 1.3, height: 1.3)).fill()
             }
-        }
-    }
-    // RACCOON head: mask band; eyes open when active, closed (lines) when paused.
-    public static func raccoon(active: Bool) -> NSImage {
-        canvas { ctx in
-            body.set()
-            let head = NSBezierPath(ovalIn: NSRect(x: 2.5, y: 2, width: 13, height: 12))
-            head.appendOval(in: NSRect(x: 2, y: 10.5, width: 5, height: 6)); head.appendOval(in: NSRect(x: 11, y: 10.5, width: 5, height: 6)); head.windingRule = .nonZero; head.fill()
-            // mask band across the eyes
-            let mask = NSBezierPath(roundedRect: NSRect(x: 3.2, y: 6.8, width: 11.6, height: 4.2), xRadius: 2.1, yRadius: 2.1); cut(ctx, mask)
-            NSColor(white: 0.3, alpha: 1).set(); mask.fill()
-            if active {
-                NSColor.systemRed.set()
-                NSBezierPath(ovalIn: NSRect(x: 5, y: 7.7, width: 2.6, height: 2.6)).fill(); NSBezierPath(ovalIn: NSRect(x: 10.4, y: 7.7, width: 2.6, height: 2.6)).fill()
-            } else {
-                let z = NSBezierPath(); z.move(to: NSPoint(x: 5, y: 9)); z.line(to: NSPoint(x: 7.6, y: 9)); z.move(to: NSPoint(x: 10.4, y: 9)); z.line(to: NSPoint(x: 13, y: 9)); z.lineWidth = 1.2; z.lineCapStyle = .round; body.set(); z.stroke()
-            }
-            cut(ctx, NSBezierPath(ovalIn: NSRect(x: 8.1, y: 3.8, width: 1.8, height: 1.5)))
-        }
-    }
-    // BIN: recycling bin; lid lifted when active (with a green recycle triangle), closed when paused.
-    public static func bin(active: Bool) -> NSImage {
-        canvas { ctx in
-            (active ? NSColor.systemGreen : body).set()
-            let b = NSBezierPath(); b.move(to: NSPoint(x: 4, y: 12)); b.line(to: NSPoint(x: 14, y: 12)); b.line(to: NSPoint(x: 13, y: 1.5)); b.line(to: NSPoint(x: 5, y: 1.5)); b.close(); b.fill()
-            if active {
-                // Lid flung back to the left; a little guy peeks out over the rim on the right.
-                let lid = NSBezierPath(); lid.move(to: NSPoint(x: 2.2, y: 12.2)); lid.line(to: NSPoint(x: 8.6, y: 17.2)); lid.line(to: NSPoint(x: 9.4, y: 16)); lid.line(to: NSPoint(x: 3.2, y: 11.2)); lid.close(); lid.fill()
-                body.set()
-                NSBezierPath(ovalIn: NSRect(x: 8.6, y: 11.2, width: 5.6, height: 5.6)).fill()   // head
-                NSBezierPath(rect: NSRect(x: 12.4, y: 10.6, width: 2.6, height: 2.2)).fill()      // an arm over the rim
-                cut(ctx, NSBezierPath(ovalIn: NSRect(x: 9.8, y: 13.5, width: 1.3, height: 1.3)))
-                cut(ctx, NSBezierPath(ovalIn: NSRect(x: 11.9, y: 13.5, width: 1.3, height: 1.3)))
-            } else {
-                NSBezierPath(roundedRect: NSRect(x: 3, y: 12.4, width: 12, height: 1.8), xRadius: 0.6, yRadius: 0.6).fill()
-                NSBezierPath(roundedRect: NSRect(x: 7.5, y: 14, width: 3, height: 1.4), xRadius: 0.5, yRadius: 0.5).fill()
-            }
-            // ribs
-            let ribs = NSBezierPath(); for x in [7.0, 9.0, 11.0] { ribs.move(to: NSPoint(x: x, y: 3.5)); ribs.line(to: NSPoint(x: x, y: 10)) }; ribs.lineWidth = 0.9
-            ctx.compositingOperation = .destinationOut; ribs.stroke(); ctx.compositingOperation = .sourceOver
         }
     }
 
