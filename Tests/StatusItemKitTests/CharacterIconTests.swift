@@ -292,6 +292,8 @@ final class CharacterIconTests: XCTestCase {
                     let img = CharacterIcon.macDaddy(level: level, asleep: asleep, flourish: flourish)
                     XCTAssertEqual(img.size, NSSize(width: 24, height: 22))
                     XCTAssertFalse(img.isTemplate)
+                    let sizes = img.representations.map { NSSize(width: $0.pixelsWide, height: $0.pixelsHigh) }.sorted { $0.width < $1.width }
+                    XCTAssertEqual(sizes, [NSSize(width: 24, height: 22), NSSize(width: 48, height: 44)])
                     seen.insert(img.tiffRepresentation ?? Data())
                 }
             }
@@ -299,5 +301,31 @@ final class CharacterIconTests: XCTestCase {
         XCTAssertEqual(seen.count, 18, "every state should draw differently")
         XCTAssertTrue(CharacterIcon.macDaddy(level: .cool, asleep: false, flourish: nil)
                       === CharacterIcon.macDaddy(level: .cool, asleep: false, flourish: nil), "cached")
+    }
+
+    func testMacDaddyHotCuesSurviveSleep() {
+        let imgs = [MacDaddyLevel.cool, .sweating, .redHot].map {
+            CharacterIcon.macDaddy(level: $0, asleep: true, flourish: nil).tiffRepresentation ?? Data()
+        }
+        XCTAssertEqual(Set(imgs).count, 3, "asleep cool, sweating and red-hot must still differ")
+    }
+
+    func testMacDaddyDrawingStaysInsideTheCanvas() {
+        for level in [MacDaddyLevel.cool, .sweating, .redHot] { for asleep in [false, true] {
+            for flourish in [nil, MacDaddyFlourish.hatTip, .chainGlint] {
+                let img = CharacterIcon.macDaddy(level: level, asleep: asleep, flourish: flourish)
+                guard let rep = img.representations.max(by: { $0.pixelsWide < $1.pixelsWide }) as? NSBitmapImageRep else {
+                    return XCTFail("no bitmap rep")
+                }
+                // The outermost pixel ring (0.5pt at 2x) on top, left and right stays empty, so nothing is cropped.
+                var touched = 0
+                for x in 0..<rep.pixelsWide where (rep.colorAt(x: x, y: 0)?.alphaComponent ?? 0) > 0.02 { touched += 1 }
+                for y in 0..<rep.pixelsHigh {
+                    if (rep.colorAt(x: 0, y: y)?.alphaComponent ?? 0) > 0.02 { touched += 1 }
+                    if (rep.colorAt(x: rep.pixelsWide - 1, y: y)?.alphaComponent ?? 0) > 0.02 { touched += 1 }
+                }
+                XCTAssertEqual(touched, 0, "\(level) asleep=\(asleep) \(String(describing: flourish)) touches the canvas edge")
+            }
+        } }
     }
 }
