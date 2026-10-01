@@ -5,7 +5,7 @@
 #
 # Copyright (c) 2026 Nicholas Smith
 
-# Menubarn pre-push: refuse a push that does not carry a release. Installed per
+# Menumon pre-push: refuse a push that does not carry a release. Installed per
 # app repo by scripts/release/adopt.sh (core.hooksPath, local to that repo).
 #
 #   branch push   the tip's CHANGELOG.md opens with a new, dated, untagged
@@ -35,11 +35,11 @@ while read -r local_ref local_sha remote_ref _; do
             "$check" "$local_sha" --tag "${remote_ref#refs/tags/}" >/dev/null || status=1 ;;
         refs/heads/*)
             if git log -1 --format=%B "$local_sha" | grep -qF '[no release]'; then
-                echo "Menubarn: ${remote_ref#refs/heads/} pushed without a release ([no release])." >&2
+                echo "Menumon: ${remote_ref#refs/heads/} pushed without a release ([no release])." >&2
                 continue
             fi
             version="$("$check" "$local_sha")" || { status=1; continue; }
-            echo "Menubarn: ${remote_ref#refs/heads/} carries v$version — GitHub tags it when it reaches main." >&2 ;;
+            echo "Menumon: ${remote_ref#refs/heads/} carries v$version — GitHub tags it when it reaches main." >&2 ;;
     esac
 done <<<"$input"
 
