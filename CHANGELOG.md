@@ -8,6 +8,10 @@ without one is refused (`[no release]` in the tip commit is the only exception).
 Versions follow [Semantic Versioning](https://semver.org/). The full rule:
 [StatusItemKit — Releases](https://github.com/nicholaspsmith/StatusItemKit#releases-every-push-is-one).
 
+## [0.12.0] - 2026-10-01
+
+- New `CharacterIcon.macDaddy(level:asleep:flourish:)`: Mac Daddy, a tiny pimp whose suit and sweat follow process load, who sleeps when his duties are paused, and who tips his hat or flashes his chain after a sweep; one 24x22pt canvas for every state
+
 ## [0.11.0] - 2026-09-28
 
 - `StatusItemController.isSuppressed` takes the item off the bar when the app has nothing to show, independent of a manager's yield; uses `isVisible`, since on macOS 27 a zero-width item leaves a ~16pt gap
