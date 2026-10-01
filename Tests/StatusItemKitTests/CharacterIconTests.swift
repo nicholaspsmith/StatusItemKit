@@ -283,4 +283,21 @@ final class CharacterIconTests: XCTestCase {
         XCTAssertNotEqual(pixels(0), pixels(3))
         XCTAssertEqual(pixels(5), pixels(9))
     }
+
+    func testMacDaddyIsOneWidthInEveryState() {
+        var seen = Set<Data>()
+        for level in [MacDaddyLevel.cool, .sweating, .redHot] {
+            for asleep in [false, true] {
+                for flourish in [nil, MacDaddyFlourish.hatTip, .chainGlint] {
+                    let img = CharacterIcon.macDaddy(level: level, asleep: asleep, flourish: flourish)
+                    XCTAssertEqual(img.size, NSSize(width: 24, height: 22))
+                    XCTAssertFalse(img.isTemplate)
+                    seen.insert(img.tiffRepresentation ?? Data())
+                }
+            }
+        }
+        XCTAssertEqual(seen.count, 18, "every state should draw differently")
+        XCTAssertTrue(CharacterIcon.macDaddy(level: .cool, asleep: false, flourish: nil)
+                      === CharacterIcon.macDaddy(level: .cool, asleep: false, flourish: nil), "cached")
+    }
 }
