@@ -5,7 +5,7 @@
 #
 # Copyright (c) 2026 Nicholas Smith
 
-# Does a commit carry a new release? The one rule for every Menubarn app,
+# Does a commit carry a new release? The one rule for every Menumon app,
 # shared by the local pre-push hook and the GitHub release workflow:
 #
 #   Every push is a release. The commit's CHANGELOG.md must open (below any
@@ -27,8 +27,8 @@ TAG=""
 
 fail() {
     {
-        echo "✗ Menubarn release rule: $1"
-        echo "  Every push to a Menubarn app is a release. Add a section to the top of"
+        echo "✗ Menumon release rule: $1"
+        echo "  Every push to a Menumon app is a release. Add a section to the top of"
         echo "  CHANGELOG.md, e.g.:"
         echo "      ## [1.3.0] - $(date +%F)"
         echo "      ### Changed"

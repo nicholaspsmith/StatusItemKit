@@ -5,10 +5,10 @@
 #
 # Copyright (c) 2026 Nicholas Smith
 
-# Put a Menubarn app (or StatusItemKit, HotkeyKit) under the release rule:
+# Put a Menumon app (or StatusItemKit, HotkeyKit) under the release rule:
 # every push is a release.
 #
-#   scripts/release/adopt.sh [repo...]     default: every Menubarn app in ~/Code,
+#   scripts/release/adopt.sh [repo...]     default: every Menumon app in ~/Code,
 #                                          StatusItemKit and HotkeyKit
 #   scripts/release/adopt.sh --hooks-only  just re-arm the pre-push hook in every
 #                                          one of those that is cloned here (what
@@ -42,7 +42,7 @@ if [ "${1:-}" = "--hooks-only" ]; then
         git -C "$CODE/$app" config --local core.hooksPath "$KIT/hooks"
         armed+=("$app")
     done
-    echo "Menubarn release hook armed in ${#armed[@]} repos: ${armed[*]}"
+    echo "Menumon release hook armed in ${#armed[@]} repos: ${armed[*]}"
     exit 0
 fi
 if [ $# -eq 0 ]; then

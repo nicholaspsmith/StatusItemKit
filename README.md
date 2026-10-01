@@ -1,8 +1,8 @@
 # StatusItemKit
 
-<p align="center"><img src="docs/mascot.png" width="160" alt="StatusItemKit mascot, from the Menubarn widget library"></p>
+<p align="center"><img src="docs/mascot.png" width="160" alt="StatusItemKit mascot, from Menumon"></p>
 
-<p align="center">Part of the <a href="https://widgets.nicksmith.software">Menubarn</a> widget library.</p>
+<p align="center">Part of <strong><a href="https://menumon.nicksmith.software">Menumon</a></strong>.</p>
 
 A small, reusable framework for building **standalone macOS menu-bar apps** in
 Swift — no third-party host (like SwiftBar) required. It factors out the
@@ -58,7 +58,7 @@ the way:
 | `setTitle(_:warn:)` / `setIcon(_:)` | The render funnel — mutually-exclusive text vs. image paths, so you never get stray title spacing. |
 | `MenuBuilder` | `labelWidth(...)` and a view-based `textView(...)` that escapes NSMenu's keyboard-shortcut column reservation (uses explicit frames, not auto-layout). |
 | `MeterIcon` | Custom-drawn, full-color status glyphs: `dot`, and the proportional `gauge` / `arc` / `pie` / `wedge` meters (take a `0...1` fraction + color). |
-| `CharacterIcon` | The Menubarn mascots as status glyphs that still carry the data: an owl whose eyelids droop with the session and whose pupils and whites redden with the week, a chameleon that changes colour and grows a tail or tongue per connection, an octopus that grows arms and heats up with load, a keycap whose rays light with the backlight, an Apollo interface face whose tick ring is the level, a caterpillar in headphones that lights a segment per running effect, a raccoon, a bin, a camcorder, and Mac Daddy, a tiny pimp whose suit and sweat follow process load. Each app pairs one with `MeterStyle.character` in the shared Icon picker. |
+| `CharacterIcon` | The Menumon mascots as status glyphs that still carry the data: an owl whose eyelids droop with the session and whose pupils and whites redden with the week, a chameleon that changes colour and grows a tail or tongue per connection, an octopus that grows arms and heats up with load, a keycap whose rays light with the backlight, an Apollo interface face whose tick ring is the level, a caterpillar in headphones that lights a segment per running effect, a raccoon, a bin, a camcorder, and Mac Daddy, a tiny pimp whose suit and sweat follow process load. Each app pairs one with `MeterStyle.character` in the shared Icon picker. |
 | `Severity` | `level(pct:warnPct:)` → `.normal` / `.elevated` / `.high`, with a `.color`. |
 | `MeterStyle` | The meter shapes as a value: `.arc` / `.gauge` / `.pie` / `.wedge` / `.dot`, plus `MeterIcon.image(style:fraction:color:)`. |
 | `MeterColor` | Named presets and the `#RRGGBB` round-trip used to persist a colour, plus `swatch(_:)` for menu-item images. |
@@ -194,7 +194,7 @@ scripts/make-app.sh BatteryTime "Battery Time"
 
 The version comes from git, not `Info.plist`: `make-app.sh` stamps the
 consuming repo's nearest `vMAJOR.MINOR.PATCH[-prerelease]` tag into the bundle
-and **refuses to build without one**. In a Menubarn app you don't tag by hand —
+and **refuses to build without one**. In a Menumon app you don't tag by hand —
 see [Releases](#releases-every-push-is-one) below.
 
 | Key | Tagged, clean build | 3 commits past the tag, uncommitted edits |
@@ -239,7 +239,7 @@ Dock icon) and a real bundle identifier; use this repo's
 
 ## Releases: every push is one
 
-Every Menubarn app (and StatusItemKit and HotkeyKit) follows one rule: **every push is
+Every Menumon app (and StatusItemKit and HotkeyKit) follows one rule: **every push is
 a release, and every release has a changelog entry.** Before pushing, add a
 section to the top of the repo's `CHANGELOG.md`:
 
@@ -270,7 +270,7 @@ running [`scripts/release/check-release.sh`](scripts/release/check-release.sh)
 if one is created by hand, the workflow retitles it to its tag and fails the
 run so it is noticed.
 
-Set a repo up with `scripts/release/adopt.sh` (no arguments: every Menubarn
+Set a repo up with `scripts/release/adopt.sh` (no arguments: every Menumon
 app in `~/Code`, StatusItemKit and HotkeyKit; or pass repo paths). It
 backfills `CHANGELOG.md` from the existing tags, writes the workflow, points
 the repo's `core.hooksPath` at `scripts/release/hooks`, and sets the branch
