@@ -45,7 +45,9 @@ private enum MacDaddyGlyph {
     // MARK: Palette
 
     static let ink = NSColor(red: 0.12, green: 0.10, blue: 0.10, alpha: 1)
-    static let skin = (light: NSColor(red: 0.86, green: 0.66, blue: 0.50, alpha: 1), dark: NSColor(red: 0.64, green: 0.44, blue: 0.31, alpha: 1))
+    static let skin = (light: NSColor(red: 0.45, green: 0.29, blue: 0.20, alpha: 1), dark: NSColor(red: 0.30, green: 0.18, blue: 0.12, alpha: 1))
+    static let beard = (light: NSColor(white: 0.62, alpha: 1), dark: NSColor(white: 0.38, alpha: 1))
+    static let iris = NSColor(red: 0.35, green: 0.62, blue: 0.92, alpha: 1)
     static let hat = (light: NSColor(red: 0.56, green: 0.30, blue: 0.76, alpha: 1), dark: NSColor(red: 0.30, green: 0.12, blue: 0.46, alpha: 1))
     static let band = NSColor(red: 0.96, green: 0.80, blue: 0.20, alpha: 1)
     static let feather = (light: NSColor(red: 0.98, green: 0.45, blue: 0.70, alpha: 1), dark: NSColor(red: 0.78, green: 0.20, blue: 0.48, alpha: 1))
@@ -133,6 +135,16 @@ private enum MacDaddyGlyph {
         let head = oval(NSPoint(x: 12, y: 9.4), 8.6, 8.4)
         shaded(head, skin, ink: 0.6)
 
+        // Short grey beard: jaw and chin, with the moustache dipping over the mouth.
+        let beardPath = NSBezierPath()
+        beardPath.move(to: NSPoint(x: 7.8, y: 8.6))
+        beardPath.curve(to: NSPoint(x: 12, y: 5.0), controlPoint1: NSPoint(x: 7.6, y: 6.6), controlPoint2: NSPoint(x: 9.4, y: 5.0))
+        beardPath.curve(to: NSPoint(x: 16.2, y: 8.6), controlPoint1: NSPoint(x: 14.6, y: 5.0), controlPoint2: NSPoint(x: 16.4, y: 6.6))
+        beardPath.curve(to: NSPoint(x: 12, y: 7.9), controlPoint1: NSPoint(x: 15.4, y: 7.7), controlPoint2: NSPoint(x: 13.6, y: 8.2))
+        beardPath.curve(to: NSPoint(x: 7.8, y: 8.6), controlPoint1: NSPoint(x: 10.4, y: 8.2), controlPoint2: NSPoint(x: 8.6, y: 7.7))
+        beardPath.close()
+        shaded(beardPath, beard, ink: 0.6)
+
         // Gold chain: a sagging arc across the chest with a medallion.
         let chain = NSBezierPath()
         chain.move(to: NSPoint(x: 8.2, y: 4.4))
@@ -151,12 +163,13 @@ private enum MacDaddyGlyph {
             } else {
                 let open: CGFloat = s.level == .cool ? 1.1 : (s.level == .sweating ? 1.8 : 2.4)
                 NSColor.white.set(); oval(NSPoint(x: x, y: eyeY), 2.2, open).fill()
-                ink.set(); oval(NSPoint(x: x, y: eyeY - 0.1), 1.0, min(open, 1.2)).fill()
+                iris.set(); oval(NSPoint(x: x, y: eyeY - 0.1), 1.4, min(open, 1.5)).fill()
+                ink.set(); oval(NSPoint(x: x, y: eyeY - 0.1), 0.8, min(open, 1.0)).fill()
                 if s.level == .cool {
                     // half-lidded: a heavy lid line across the top of the eye
                     let lid = NSBezierPath()
                     lid.move(to: NSPoint(x: x - 1.2, y: eyeY + 0.35)); lid.line(to: NSPoint(x: x + 1.2, y: eyeY + 0.35))
-                    lid.lineWidth = 0.6; lid.lineCapStyle = .round; lid.stroke()
+                    lid.lineWidth = 0.75; lid.lineCapStyle = .round; lid.stroke()
                 }
             }
         }
