@@ -155,23 +155,29 @@ final class CharacterIconTests: XCTestCase {
         }
     }
 
-    func testMonitorLizardIsWideNonTemplateAndVariesWithState() {
-        let dim = CharacterIcon.monitorLizard(brightness: 0.1, nightShift: false)
-        XCTAssertEqual(dim.size, NSSize(width: 25, height: 22))
-        XCTAssertFalse(dim.isTemplate)
-        let bright = CharacterIcon.monitorLizard(brightness: 1.0, nightShift: false)
-        let amber = CharacterIcon.monitorLizard(brightness: 1.0, nightShift: true)
-        XCTAssertNotEqual(dim.tiffRepresentation, bright.tiffRepresentation, "the screen fill tracks brightness")
-        XCTAssertNotEqual(bright.tiffRepresentation, amber.tiffRepresentation, "Night Shift tints the screen")
-        XCTAssertNotEqual(bright.tiffRepresentation, CharacterIcon.monitorLizard(brightness: 1.0, nightShift: false, tongue: true).tiffRepresentation)
+    func testMonitorLizardIsOneSizeInEveryStateWithTwoReps() {
+        var seen = Set<Data>()
+        for level in [0, 0.25, 0.8, 1] as [CGFloat] { for nightShift in [false, true] { for tongue in [false, true] {
+            let img = CharacterIcon.monitorLizard(brightness: level, nightShift: nightShift, tongue: tongue)
+            XCTAssertEqual(img.size, NSSize(width: 25, height: 22))
+            XCTAssertFalse(img.isTemplate)
+            let sizes = img.representations.map { NSSize(width: $0.pixelsWide, height: $0.pixelsHigh) }.sorted { $0.width < $1.width }
+            XCTAssertEqual(sizes, [NSSize(width: 25, height: 22), NSSize(width: 50, height: 44)])
+            seen.insert(img.tiffRepresentation ?? Data())
+        } } }
+        XCTAssertEqual(seen.count, 16, "every state should draw differently")
+        XCTAssertTrue(CharacterIcon.monitorLizard(brightness: 0.5, nightShift: false)
+                      === CharacterIcon.monitorLizard(brightness: 0.5, nightShift: false), "cached")
+        func tiff(_ b: CGFloat, _ n: Bool, _ t: Bool) -> Data? { CharacterIcon.monitorLizard(brightness: b, nightShift: n, tongue: t).tiffRepresentation }
+        XCTAssertNotEqual(tiff(0.2, false, false), tiff(0.9, false, false), "the screen fill tracks brightness")
+        XCTAssertNotEqual(tiff(0.8, false, false), tiff(0.8, true, false), "Night Shift tints the screen")
+        XCTAssertNotEqual(tiff(0.8, false, false), tiff(0.8, false, true), "the tongue shows")
     }
 
     func testMonitorLizardScreenFillsBottomUpAndTintsAmber() throws {
-        // The screen rect in the implementation is x: 2.6...17.4, y: 6.1...14.5
-        // on the 25x22 canvas. Sample near its top and bottom, a little in from
-        // each edge so antialiasing at the boundary can't flip the result, and
-        // below the paws (y 13.4 up) that grip the top bezel.
-        let midX: CGFloat = 9.5, topY: CGFloat = 12.8, bottomY: CGFloat = 6.7
+        // The glass is x 2.8...20.4, y 4.0...16.0 on the 25x22 canvas. Sample right
+        // of the head and the glare, a little in from the top and bottom.
+        let midX: CGFloat = 14.5, topY: CGFloat = 15.2, bottomY: CGFloat = 4.7
 
         func sample(_ img: NSImage, _ x: CGFloat, _ y: CGFloat) -> NSColor {
             let rep = NSBitmapImageRep(data: img.tiffRepresentation!)!
@@ -179,41 +185,73 @@ final class CharacterIconTests: XCTestCase {
             // Bitmap rows run top-down; the canvas is drawn bottom-up.
             return rep.colorAt(x: Int(x * scale), y: Int((img.size.height - y) * scale))!.usingColorSpace(.sRGB)!
         }
+        func lightness(_ c: NSColor) -> CGFloat { (c.redComponent + c.greenComponent + c.blueComponent) / 3 }
 
         let dim = CharacterIcon.monitorLizard(brightness: 0.25, nightShift: false)
         let bright = CharacterIcon.monitorLizard(brightness: 1.0, nightShift: false)
         let amber = CharacterIcon.monitorLizard(brightness: 1.0, nightShift: true)
 
-        // The fill grows bottom-up: at low brightness the bottom of the screen
-        // is already lit but the top is still empty (transparent, since the
-        // screen was cut out of the bezel); at full brightness both are lit.
-        XCTAssertLessThan(sample(dim, midX, topY).alphaComponent, 0.1, "dim: top of screen still unlit")
-        XCTAssertGreaterThan(sample(dim, midX, bottomY).alphaComponent, 0.5, "dim: bottom of screen already lit")
-        XCTAssertGreaterThan(sample(bright, midX, topY).alphaComponent, 0.5, "bright: top of screen lit")
-        XCTAssertGreaterThan(sample(bright, midX, bottomY).alphaComponent, 0.5, "bright: bottom of screen lit")
-
-        // Night Shift tints the fill amber; without it the fill is the same
-        // neutral grey as the rest of the body.
-        let amberTop = sample(amber, midX, topY)
-        XCTAssertGreaterThan(amberTop.redComponent, 0.9)
-        XCTAssertGreaterThan(amberTop.greenComponent, 0.5); XCTAssertLessThan(amberTop.greenComponent, 0.75)
-        XCTAssertLessThan(amberTop.blueComponent, 0.35)
-
-        // Without Night Shift the fill is the mascot's sky blue, not grey and not the
-        // lizard's yellow.
+        // The fill grows bottom-up: at low brightness the bottom of the glass is lit
+        // blue but the top is still dark glass; at full brightness both are lit.
+        let dimTop = sample(dim, midX, topY), dimBottom = sample(dim, midX, bottomY)
+        XCTAssertGreaterThan(dimTop.alphaComponent, 0.9, "the unlit glass is opaque, not a hole")
+        XCTAssertLessThan(lightness(dimTop), 0.3, "dim: top of the glass still dark")
+        XCTAssertGreaterThan(dimBottom.blueComponent - dimBottom.redComponent, 0.4, "dim: bottom of the glass already blue")
         let blueTop = sample(bright, midX, topY)
-        XCTAssertLessThan(blueTop.redComponent, 0.5)
-        XCTAssertGreaterThan(blueTop.blueComponent, 0.9)
+        XCTAssertLessThan(blueTop.redComponent, 0.7)
+        XCTAssertGreaterThan(blueTop.blueComponent, 0.9, "bright: top of the glass lit blue")
+        // Brighter means lighter glass.
+        XCTAssertGreaterThan(lightness(sample(bright, midX, bottomY)), lightness(dimBottom) + 0.1)
 
-        // The lizard is a sandy leopard gecko, a different colour from the grey monitor
-        // and the blue screen: sample the head (x 11.4...22.6, y 13.6...21.3) away from
-        // its spots and eye, and the bezel.
-        let head = sample(bright, 15.2, 18.6)
+        // Night Shift turns the fill amber.
+        let amberTop = sample(amber, midX, topY)
+        XCTAssertGreaterThan(amberTop.redComponent, 0.85)
+        XCTAssertGreaterThan(amberTop.redComponent - amberTop.blueComponent, 0.4)
+
+        // Armando is a tan leopard gecko, a different colour from the grey bezel:
+        // sample his crown above the snout, away from its spots and eye.
+        let head = sample(bright, 3.1, 19.9)
         XCTAssertGreaterThan(head.alphaComponent, 0.9)
-        XCTAssertGreaterThan(head.redComponent - head.blueComponent, 0.4, "head is sandy yellow, not grey")
-        XCTAssertGreaterThan(head.greenComponent - head.blueComponent, 0.25)
-        let bezel = sample(bright, 9.5, 5.5)   // the bottom bezel strip, y 5...6.1
+        XCTAssertGreaterThan(head.redComponent - head.blueComponent, 0.25, "head is tan, not grey")
+        let bezel = sample(bright, 16, 3.15)   // the bottom bezel strip
         XCTAssertLessThan(abs(bezel.redComponent - bezel.blueComponent), 0.05, "bezel stays grey")
+    }
+
+    func testMonitorLizardFacesLeftWithTheTongueOutLeft() {
+        func sample(_ img: NSImage, _ x: CGFloat, _ y: CGFloat) -> NSColor {
+            let rep = NSBitmapImageRep(data: img.tiffRepresentation!)!
+            let scale = CGFloat(rep.pixelsWide) / img.size.width
+            return rep.colorAt(x: Int(x * scale), y: Int((img.size.height - y) * scale))!.usingColorSpace(.sRGB)!
+        }
+        func isPink(_ c: NSColor) -> Bool { c.alphaComponent > 0.9 && c.redComponent - c.greenComponent > 0.3 && c.blueComponent > c.greenComponent }
+        let plain = CharacterIcon.monitorLizard(brightness: 0.8, nightShift: false)
+        let tongue = CharacterIcon.monitorLizard(brightness: 0.8, nightShift: false, tongue: true)
+        // The head (tan) peeks over the top-left corner; the top-right is empty bar
+        // above the body.
+        let crown = sample(plain, 3.1, 19.9)
+        XCTAssertGreaterThan(crown.alphaComponent, 0.9, "the head sits top-left")
+        XCTAssertGreaterThan(crown.redComponent - crown.blueComponent, 0.25)
+        XCTAssertLessThan(sample(plain, 18, 21).alphaComponent, 0.1, "no head on the top-right")
+        // The tongue hangs down over the bezel's left side, left of the eye.
+        XCTAssertFalse(isPink(sample(plain, 2.3, 13.2)), "no tongue by default")
+        XCTAssertTrue(isPink(sample(tongue, 2.3, 13.2)), "the tongue hangs out to the left")
+    }
+
+    func testMonitorLizardDrawingStaysInsideTheCanvas() {
+        for level in [0, 0.25, 0.8, 1] as [CGFloat] { for nightShift in [false, true] { for tongue in [false, true] {
+            let img = CharacterIcon.monitorLizard(brightness: level, nightShift: nightShift, tongue: tongue)
+            guard let rep = img.representations.max(by: { $0.pixelsWide < $1.pixelsWide }) as? NSBitmapImageRep else {
+                return XCTFail("no bitmap rep")
+            }
+            // The outermost pixel ring (0.5pt at 2x) on top, left and right stays empty, so nothing is cropped.
+            var touched = 0
+            for x in 0..<rep.pixelsWide where (rep.colorAt(x: x, y: 0)?.alphaComponent ?? 0) > 0.02 { touched += 1 }
+            for y in 0..<rep.pixelsHigh {
+                if (rep.colorAt(x: 0, y: y)?.alphaComponent ?? 0) > 0.02 { touched += 1 }
+                if (rep.colorAt(x: rep.pixelsWide - 1, y: y)?.alphaComponent ?? 0) > 0.02 { touched += 1 }
+            }
+            XCTAssertEqual(touched, 0, "\(level) nightShift=\(nightShift) tongue=\(tongue) touches the canvas edge")
+        } } }
     }
 
     // The whites go pinker as the weekly window fills: pure white below a
