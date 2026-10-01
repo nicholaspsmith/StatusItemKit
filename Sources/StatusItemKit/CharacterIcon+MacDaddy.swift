@@ -114,7 +114,7 @@ private enum MacDaddyGlyph {
         let cg = NSGraphicsContext.current!.cgContext
         if s.asleep { cg.setAlpha(0.88); cg.beginTransparencyLayer(auxiliaryInfo: nil) }
 
-        // Suit: shoulders across the bottom, lapels meeting in a V.
+        // Suit: shoulders across the bottom, a flat neckline hidden by the fur collar.
         let suitPath = NSBezierPath()
         suitPath.move(to: NSPoint(x: 2.5, y: 0))
         suitPath.curve(to: NSPoint(x: 8, y: 5.6), controlPoint1: NSPoint(x: 2.8, y: 3.4), controlPoint2: NSPoint(x: 5, y: 5.2))
@@ -172,7 +172,7 @@ private enum MacDaddyGlyph {
         if !s.asleep { gold.light.set(); NSBezierPath(rect: NSRect(x: 12.3, y: 6.5, width: 0.7, height: 0.6)).fill() }
 
         // Sweat: one drop when sweating, two when red-hot — drawn even asleep.
-        let drops: [NSPoint] = s.level == .cool ? [] : (s.level == .sweating ? [NSPoint(x: 16.6, y: 10.6)] : [NSPoint(x: 16.6, y: 10.6), NSPoint(x: 7.3, y: 11.2)])
+        let drops: [NSPoint] = s.level == .cool ? [] : (s.level == .sweating ? [NSPoint(x: 16.6, y: 10.6)] : [NSPoint(x: 16.6, y: 10.6), NSPoint(x: 7.3, y: 10.0)])
         for d in drops {
             let drop = NSBezierPath()
             drop.move(to: NSPoint(x: d.x, y: d.y + 1.4))
@@ -181,11 +181,11 @@ private enum MacDaddyGlyph {
             sweat.set(); drop.fill(); ink.set(); drop.lineWidth = 0.35; drop.stroke()
         }
 
-        // Hat: brim + crown + band + feather. Lifted 1.6pt and tilted on a hat tip.
+        // Hat: brim + crown + band + feather. Lifted 1pt and tilted (clockwise) on a hat tip.
         NSGraphicsContext.saveGraphicsState()
         if s.flourish == .hatTip {
             let t = NSAffineTransform()
-            t.translateX(by: 12, yBy: 13.5); t.rotate(byDegrees: 12); t.translateX(by: -12, yBy: -13.5 + 1.6); t.concat()
+            t.translateX(by: 12, yBy: 13.5); t.rotate(byDegrees: -10); t.translateX(by: -12, yBy: -13.5 + 1.0); t.concat()
         }
         let brim = oval(NSPoint(x: 12, y: 13.4), 22.0, 3.0)
         shaded(brim, hat, ink: 0.55)
@@ -194,8 +194,8 @@ private enum MacDaddyGlyph {
         band.set(); NSBezierPath(rect: NSRect(x: 7.7, y: 14.2, width: 8.6, height: 1.2)).fill()
         let plume = NSBezierPath()
         plume.move(to: NSPoint(x: 15.6, y: 14.6))
-        plume.curve(to: NSPoint(x: 21.6, y: 21.6), controlPoint1: NSPoint(x: 18.5, y: 16.0), controlPoint2: NSPoint(x: 20.5, y: 18.5))
-        plume.curve(to: NSPoint(x: 16.4, y: 15.6), controlPoint1: NSPoint(x: 19.2, y: 19.6), controlPoint2: NSPoint(x: 17.8, y: 17.2))
+        plume.curve(to: NSPoint(x: 21.4, y: 21.0), controlPoint1: NSPoint(x: 18.5, y: 16.0), controlPoint2: NSPoint(x: 20.5, y: 18.2))
+        plume.curve(to: NSPoint(x: 16.4, y: 15.6), controlPoint1: NSPoint(x: 19.2, y: 19.2), controlPoint2: NSPoint(x: 17.8, y: 17.0))
         plume.close()
         shaded(plume, feather, ink: 0.4)
         NSGraphicsContext.restoreGraphicsState()

@@ -8,6 +8,10 @@ without one is refused (`[no release]` in the tip commit is the only exception).
 Versions follow [Semantic Versioning](https://semver.org/). The full rule:
 [StatusItemKit — Releases](https://github.com/nicholaspsmith/StatusItemKit#releases-every-push-is-one).
 
+## [0.12.1] - 2026-10-01
+
+- Mac Daddy's hat tip no longer clips the feather, and a sweat drop no longer hides under the brim
+
 ## [0.12.0] - 2026-10-01
 
 - New `CharacterIcon.macDaddy(level:asleep:flourish:)`: Mac Daddy, a tiny pimp whose suit and sweat follow process load, who sleeps when his duties are paused, and who tips his hat or flashes his chain after a sweep; one 24x22pt canvas for every state
