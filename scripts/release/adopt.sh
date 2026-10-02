@@ -19,7 +19,7 @@
 #   - CHANGELOG.md, backfilled from its vX.Y.Z tags if it has none (commits
 #     after the last tag go under [Unreleased]);
 #   - .github/workflows/release.yml, which calls this repo's reusable
-#     menubarn-release.yml to tag and publish each push to main;
+#     menumon-release.yml to tag and publish each push to main;
 #   - core.hooksPath (local to that repo) -> scripts/release/hooks, for the
 #     pre-push check;
 #   - branch protection on GitHub: main needs "release / check" to merge a PR.
@@ -108,7 +108,7 @@ for repo in "$@"; do
 # and publishes it as "vX.Y.Z". Pull requests fail unless they carry that new
 # version; a release made by hand is retitled to its tag. The rule and the
 # tagging live in StatusItemKit (scripts/release/,
-# .github/workflows/menubarn-release.yml).
+# .github/workflows/menumon-release.yml).
 name: Release
 
 on:
@@ -123,7 +123,7 @@ permissions:
 
 jobs:
   release:
-    uses: nicholaspsmith/StatusItemKit/.github/workflows/menubarn-release.yml@main
+    uses: nicholaspsmith/StatusItemKit/.github/workflows/menumon-release.yml@main
 YML
         git config --local core.hooksPath "$KIT/hooks"
         echo "$repo: workflow written, pre-push hook on"
