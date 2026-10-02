@@ -83,4 +83,25 @@ final class MascotAnimationTests: XCTestCase {
         for (a, b) in zip(track.points, track.points.dropFirst()) { area += a.x * b.y - b.x * a.y }
         XCTAssertGreaterThan(area, 0)   // positive shoelace area = counterclockwise
     }
+
+    // The icon lap starts and ends in his resting pose, facing the same way.
+    func testMonitorLapReturnsToItsPose() {
+        for p in [CGFloat(0), 1] {
+            let lap = MonitorLizardGlyph.Lap(p)
+            XCTAssertEqual(lap.blend, 0)
+            XCTAssertEqual(lap.turn.truncatingRemainder(dividingBy: 2 * .pi), 0, accuracy: 1e-6)
+            for t in [CGFloat(0), 0.5, 1] {
+                let a = lap.spine(t, 0), b = MonitorLizardGlyph.onSpine(t)
+                XCTAssertEqual(a.x, b.x, accuracy: 1e-6); XCTAssertEqual(a.y, b.y, accuracy: 1e-6)
+            }
+        }
+        XCTAssertEqual(MonitorLizardGlyph.Lap(0.5).blend, 1)
+    }
+
+    // Counterclockwise round the glass: heading left along the top, then down.
+    func testMonitorLapGoesCounterclockwise() {
+        let loop = MonitorLizardGlyph.loop
+        XCTAssertLessThan(loop.at(1).direction.dx, 0)
+        XCTAssertLessThan(loop.at(loop.length * 0.25).direction.dy, 0)
+    }
 }

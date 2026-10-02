@@ -25,7 +25,7 @@ public final class MinuteCue {
         "com.nicholaspsmith.MacDaddy",        // Menu Pimp flashes his teeth
         "com.nicholaspsmith.SoundChain",      // Carol runs
         "com.nicholaspsmith.VPNDNSMenuBar",   // Caveepyan licks
-        "com.nicholaspsmith.MonitorLizard",   // Armonitor's lap of the screen
+        "com.nicholaspsmith.MonitorLizard",   // Armonitor laps his monitor
     ]
 
     /// Seconds after the minute `bundleID` should start: one per animated app
