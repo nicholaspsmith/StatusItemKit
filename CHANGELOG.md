@@ -8,6 +8,10 @@ without one is refused (`[no release]` in the tip commit is the only exception).
 Versions follow [Semantic Versioning](https://semver.org/). The full rule:
 [StatusItemKit — Releases](https://github.com/nicholaspsmith/StatusItemKit#releases-every-push-is-one).
 
+## [0.16.1] - 2026-10-02
+
+- Armonitor's full-screen lap (`MonitorLizardLap`) takes 4 s instead of 8
+
 ## [0.16.0] - 2026-10-02
 
 - feat: Armonitor's minute animation is now a lap of the monitor in the icon: `monitorLizard(…, lap:)` takes him counterclockwise round the glass on the bezel and back into his pose (3 s). `MonitorLizardLap`, the full-screen run, is unchanged and is now for apps to play on their own events
