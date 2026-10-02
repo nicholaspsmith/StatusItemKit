@@ -12,6 +12,11 @@ public enum MacDaddyLevel: Hashable { case cool, sweating, redHot }
 public enum MacDaddyFlourish: Hashable { case hatTip, chainGlint }
 
 extension CharacterIcon {
+    /// How long Menu Pimp's grin lasts: the same 550 ms as Archimedes' blink.
+    public static let macDaddyGrinDuration: TimeInterval = 0.55
+}
+
+extension CharacterIcon {
     /// Mac Daddy: a tiny pimp from the chest up, in the caterpillar's storybook
     /// style. Wide-brim hat with a feather, fur-collared suit, gold chain. The
     /// suit carries the process load — purple when cool, amber with a sweat drop
@@ -20,13 +25,17 @@ extension CharacterIcon {
     /// and the suit greys, but sweat and red still show. `.hatTip` lifts and
     /// tilts the hat; `.chainGlint` puts a sparkle on the chain. One 24x22pt
     /// canvas for every state. Drawn at 8x, downsampled to 2x and 1x, cached.
-    public static func macDaddy(level: MacDaddyLevel, asleep: Bool, flourish: MacDaddyFlourish?) -> NSImage {
-        MacDaddyGlyph.image(.init(level: level, asleep: asleep, flourish: flourish))
+    ///
+    /// - Parameter grin: how far through his once-a-minute grin he is, 0...1;
+    ///   0 is no grin. Grin frames are not cached.
+    public static func macDaddy(level: MacDaddyLevel, asleep: Bool, flourish: MacDaddyFlourish?, grin: CGFloat = 0) -> NSImage {
+        MacDaddyGlyph.image(.init(level: level, asleep: asleep, flourish: flourish,
+                                  grin: grin > 0 && grin < 1 && !asleep ? grin : 0))
     }
 }
 
 private enum MacDaddyGlyph {
-    struct State: Hashable { let level: MacDaddyLevel; let asleep: Bool; let flourish: MacDaddyFlourish? }
+    struct State: Hashable { let level: MacDaddyLevel; let asleep: Bool; let flourish: MacDaddyFlourish?; var grin: CGFloat = 0 }
 
     static let size = NSSize(width: 24, height: 22)
     static let supersample: CGFloat = 8
@@ -38,7 +47,7 @@ private enum MacDaddyGlyph {
         let image = NSImage(size: size)
         for scale in [2, 1] as [CGFloat] { if let rep = downsample(big, scale: scale) { image.addRepresentation(rep) } }
         image.isTemplate = false
-        cache[s] = image
+        if s.grin == 0 { cache[s] = image }
         return image
     }
 
@@ -183,6 +192,7 @@ private enum MacDaddyGlyph {
         }
         ink.set(); mouth.lineWidth = 0.55; mouth.lineCapStyle = .round; mouth.stroke()
         if !s.asleep { gold.light.set(); NSBezierPath(rect: NSRect(x: 12.3, y: 6.5, width: 0.7, height: 0.6)).fill() }
+        if s.grin > 0 { MacDaddyOverlay.grin(s.grin, mouth: NSPoint(x: 12, y: 6.9)) }
 
         // Sweat: one drop when sweating, two when red-hot — drawn even asleep.
         let drops: [NSPoint] = s.level == .cool ? [] : (s.level == .sweating ? [NSPoint(x: 16.6, y: 10.6)] : [NSPoint(x: 16.6, y: 10.6), NSPoint(x: 7.3, y: 10.0)])

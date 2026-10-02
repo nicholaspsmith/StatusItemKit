@@ -8,6 +8,16 @@ without one is refused (`[no release]` in the tip commit is the only exception).
 Versions follow [Semantic Versioning](https://semver.org/). The full rule:
 [StatusItemKit — Releases](https://github.com/nicholaspsmith/StatusItemKit#releases-every-push-is-one).
 
+## [0.15.0] - 2026-10-02
+
+- feat: `MinuteCue`: each animated mascot animates once a minute, a second after the one ahead of it (Archimedes, Menu Pimp, Carol, Caveepyan, Armonitor, counting only the apps that are running); skipped under Reduce Motion
+- feat: `IconAnimation` drives an icon animation at 60 fps, including while a menu is open
+- feat: Menu Pimp's grin: `macDaddy(…, grin:)` widens his smile to show white teeth while a gold gleam crosses them (550 ms, linear)
+- feat: Carol's run: `caterpillar(…, running:)` scissors her feet, each one opposite its neighbour, while a bob ripples from tail to head (1 s)
+- feat: Caveepyan's lick: `chameleon(…, lick:)` flicks her tongue at the air, or unwinds it from the branch, reels it in and wraps it again (1 s)
+- feat: Armonitor's lap: `MonitorLizardLap` sends him out of the monitor and counterclockwise round the screen in an 8 s overlay; `monitorLizard(…, lizard: false)` draws the monitor without him while he is away
+- Mascots renamed: Armando is Armonitor, Mac Daddy is Menu Pimp
+
 ## [0.14.0] - 2026-10-02
 
 - The reusable release workflow is now `menumon-release.yml`. Repos calling the old `menubarn-release.yml` keep releasing unchanged, with a warning on each run asking them to switch

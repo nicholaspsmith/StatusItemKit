@@ -46,9 +46,14 @@ extension CharacterIcon {
     /// art, greyed, with a blue "z" — but an amber or red hat and the sweat still
     /// show. `.hatTip` swaps in the hat-tip art; `.chainGlint` sparkles on the
     /// medallion. 24x22pt in every state, cached per state.
-    public static func macDaddy(art: MacDaddyArt, level: MacDaddyLevel, asleep: Bool, flourish: MacDaddyFlourish?) -> NSImage {
+    ///
+    /// - Parameter grin: how far through his once-a-minute grin he is, 0...1
+    ///   (see `MacDaddyOverlay.grin`); 0 is no grin. Grin frames are not cached.
+    public static func macDaddy(art: MacDaddyArt, level: MacDaddyLevel, asleep: Bool, flourish: MacDaddyFlourish?,
+                                grin: CGFloat = 0) -> NSImage {
         let state = MacDaddyState(level: level, asleep: asleep, flourish: flourish)
-        if let cached = art.cache[state] { return cached }
+        let grinning = grin > 0 && grin < 1 && !asleep
+        if !grinning, let cached = art.cache[state] { return cached }
         let tipping = flourish == .hatTip && !asleep
         let picture = asleep ? art.asleep : (tipping ? art.hatTip : art.base)
         let mask = tipping ? art.hatTipMask : art.hatMask
@@ -64,7 +69,9 @@ extension CharacterIcon {
             MacDaddyOverlay.sweat(level, scale: scale)
             if flourish == .chainGlint { MacDaddyOverlay.glint(scale: scale) }
             if asleep { MacDaddyOverlay.z(scale: scale) }
+            if grinning { MacDaddyOverlay.grin(grin, mouth: MacDaddyOverlay.mouth) }
         }
+        guard !grinning else { return image }
         art.cache[state] = image
         return image
     }
@@ -83,6 +90,81 @@ enum MacDaddyOverlay {
     /// Sweat drops by the temples: right first, then left.
     static let dropSpots = [NSPoint(x: 17.3, y: 10.2), NSPoint(x: 6.6, y: 10.2)]
     static let medallion = NSPoint(x: 11.77, y: 1.46)
+    /// The middle of his mouth in the art.
+    static let mouth = NSPoint(x: 11.8, y: 7.6)
+
+    static let gold = NSColor(srgbRed: 1.00, green: 0.82, blue: 0.26, alpha: 1)
+
+    /// Menu Pimp's once-a-minute grin, `progress` 0...1 through it, all
+    /// linear: the first fifth the smile widens and opens to show a row of
+    /// white teeth, the middle three fifths a gold gleam sweeps across them
+    /// left to right with a sparkle riding on it, and the last fifth the smile
+    /// closes again.
+    static func grin(_ progress: CGFloat, mouth m: NSPoint) {
+        let p = max(0, min(1, progress))
+        let open = min(1, p / 0.2, (1 - p) / 0.2)
+        guard open > 0 else { return }
+        // The smile: a flat-topped D whose bottom drops and corners lift as it opens.
+        let half = 1.7 + 0.7 * open, drop = 1.5 * open, lift = 0.5 * open
+        let top = m.y + 0.45
+        let smile = NSBezierPath()
+        smile.move(to: NSPoint(x: m.x - half, y: top + lift))
+        smile.curve(to: NSPoint(x: m.x + half, y: top + lift),
+                    controlPoint1: NSPoint(x: m.x - half * 0.55, y: top), controlPoint2: NSPoint(x: m.x + half * 0.55, y: top))
+        smile.curve(to: NSPoint(x: m.x - half, y: top + lift),
+                    controlPoint1: NSPoint(x: m.x + half * 0.6, y: top - drop * 1.35), controlPoint2: NSPoint(x: m.x - half * 0.6, y: top - drop * 1.35))
+        smile.close()
+        NSColor(srgbRed: 0.30, green: 0.06, blue: 0.08, alpha: 1).set(); smile.fill()
+        NSGraphicsContext.saveGraphicsState()
+        smile.addClip()
+        // Upper teeth: a white band under the top lip, split into teeth.
+        let teethDepth = 0.95 * open
+        let teeth = NSRect(x: m.x - half, y: top - teethDepth, width: half * 2, height: teethDepth + lift + 0.2)
+        NSColor(white: 0.98, alpha: 1).set(); NSBezierPath(rect: teeth).fill()
+        NSColor(white: 0.70, alpha: 1).set()
+        var x = m.x - 1.5
+        while x <= m.x + 1.6 {
+            NSBezierPath(rect: NSRect(x: x - 0.06, y: teeth.minY, width: 0.12, height: teeth.height)).fill()
+            x += 0.75
+        }
+        // The gleam: a slanted gold bar with a white core crossing the teeth.
+        let sweep = (p - 0.2) / 0.6
+        var gleamX: CGFloat?
+        if sweep > 0 && sweep < 1 {
+            let gx = m.x - half - 0.8 + sweep * (half * 2 + 1.6)
+            gleamX = gx
+            func bar(_ w: CGFloat) -> NSBezierPath {
+                let b = NSBezierPath()
+                b.move(to: NSPoint(x: gx - w / 2 + 0.5, y: teeth.maxY)); b.line(to: NSPoint(x: gx + w / 2 + 0.5, y: teeth.maxY))
+                b.line(to: NSPoint(x: gx + w / 2 - 0.5, y: teeth.minY)); b.line(to: NSPoint(x: gx - w / 2 - 0.5, y: teeth.minY))
+                b.close(); return b
+            }
+            NSBezierPath(rect: teeth).addClip()
+            gold.set(); bar(1.1).fill()
+            NSColor(srgbRed: 1, green: 0.97, blue: 0.80, alpha: 1).set(); bar(0.35).fill()
+        }
+        NSGraphicsContext.restoreGraphicsState()
+        ink.set(); smile.lineWidth = 0.4; smile.lineJoinStyle = .round; smile.stroke()
+        // A four-point sparkle riding the gleam, brightest mid-sweep.
+        if let gx = gleamX {
+            let glow = sin(sweep * .pi)
+            let c = NSPoint(x: gx + 0.4, y: top + 0.1)
+            let star = NSBezierPath()
+            let long = 1.6 * glow + 0.4, short: CGFloat = 0.3
+            for i in 0..<8 {
+                let a = CGFloat(i) * .pi / 4 + .pi / 2
+                let r = i.isMultiple(of: 2) ? long : short
+                let pt = NSPoint(x: c.x + cos(a) * r, y: c.y + sin(a) * r)
+                i == 0 ? star.move(to: pt) : star.line(to: pt)
+            }
+            star.close()
+            NSGraphicsContext.saveGraphicsState()
+            let shine = NSShadow(); shine.shadowColor = gold.withAlphaComponent(0.9)
+            shine.shadowBlurRadius = 1.0; shine.shadowOffset = .zero; shine.set()
+            NSColor(srgbRed: 1, green: 0.96, blue: 0.72, alpha: glow).set(); star.fill()
+            NSGraphicsContext.restoreGraphicsState()
+        }
+    }
 
     static func sweat(_ level: MacDaddyLevel, scale: CGFloat) {
         let count = level == .cool ? 0 : (level == .sweating ? 1 : 2)
