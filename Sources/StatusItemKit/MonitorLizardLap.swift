@@ -201,7 +201,7 @@ public enum LizardBody {
 /// screen, and climbs back in. Show the icon without him (`lizard: false`)
 /// while `isRunning`.
 public final class MonitorLizardLap {
-    public static let duration: TimeInterval = 4
+    public static let duration: TimeInterval = 3.4
 
     private var window: NSWindow?
     private var animation: IconAnimation?
