@@ -8,6 +8,10 @@ without one is refused (`[no release]` in the tip commit is the only exception).
 Versions follow [Semantic Versioning](https://semver.org/). The full rule:
 [StatusItemKit — Releases](https://github.com/nicholaspsmith/StatusItemKit#releases-every-push-is-one).
 
+## [0.14.0] - 2026-10-02
+
+- The reusable release workflow is now `menumon-release.yml`. Repos calling the old `menubarn-release.yml` keep releasing unchanged, with a warning on each run asking them to switch
+
 ## [0.13.0] - 2026-10-01
 
 - Illustrated icons: `IllustratedIcon` composes menu-bar images from mascot art plus live overlays; Mac Daddy (`macDaddy(art:…)`) and Lumen (`lumen(keycap:…)`) use it

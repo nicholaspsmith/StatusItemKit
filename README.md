@@ -256,7 +256,8 @@ running [`scripts/release/check-release.sh`](scripts/release/check-release.sh)
 (the section must be new, dated, non-empty and above every existing tag):
 
 - **`.github/workflows/release.yml`** in each app calls the reusable
-  [`menubarn-release.yml`](.github/workflows/menubarn-release.yml). It runs on
+  [`menumon-release.yml`](.github/workflows/menumon-release.yml). (Its old name,
+  `menubarn-release.yml`, still works and warns on every run.) It runs on
   every push to `main` — merged PR or direct push, from any machine — and does
   the tagging. A push without a new version fails the run, so nothing slips by.
 - **A `pre-push` hook** refuses the push locally, before GitHub sees it.

@@ -4,12 +4,20 @@
 #
 # Copyright (c) 2026 Nicholas Smith
 
-# DEPRECATED: the old name of menumon-release.yml, kept so repos that still
-# call it keep releasing (each run warns them to switch). It is a copy, not a
-# call: nesting a reusable workflow would rename the required check from
-# "release / check" to "release / release / check". Keep its jobs identical
-# to menumon-release.yml apart from the warning step.
-name: Menubarn release (renamed to Menumon release)
+# Menumon release, called by each app's .github/workflows/release.yml.
+# Every push is a release: CHANGELOG.md must open with a new
+# "## [X.Y.Z] - YYYY-MM-DD" section (scripts/release/check-release.sh).
+#
+#   pull_request  check: the PR fails unless its CHANGELOG.md carries that
+#                 section, so a PR that skips the rule shows red before merge
+#   push to main  release: tag vX.Y.Z on the pushed commit and publish a
+#                 GitHub Release titled "vX.Y.Z" with the section as its notes;
+#                 a push that breaks the rule fails loudly
+#   release       naming: a release someone made by hand is retitled to its
+#                 tag, "vX.Y.Z" (the one naming convention), and flagged
+#
+# A PR or merged branch whose tip commit says [no release] is skipped.
+name: Menumon release
 
 on:
   workflow_call:
@@ -22,8 +30,6 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - name: Deprecated workflow name
-        run: echo "::warning::menubarn-release.yml was renamed menumon-release.yml. This copy still works; change your release.yml to nicholaspsmith/StatusItemKit/.github/workflows/menumon-release.yml@main."
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
@@ -51,8 +57,6 @@ jobs:
     if: github.event_name == 'release'
     runs-on: ubuntu-latest
     steps:
-      - name: Deprecated workflow name
-        run: echo "::warning::menubarn-release.yml was renamed menumon-release.yml. This copy still works; change your release.yml to nicholaspsmith/StatusItemKit/.github/workflows/menumon-release.yml@main."
       - name: Release title is its tag
         env:
           GH_TOKEN: ${{ github.token }}
@@ -69,8 +73,6 @@ jobs:
     concurrency: release-${{ github.repository }}
     runs-on: ubuntu-latest
     steps:
-      - name: Deprecated workflow name
-        run: echo "::warning::menubarn-release.yml was renamed menumon-release.yml. This copy still works; change your release.yml to nicholaspsmith/StatusItemKit/.github/workflows/menumon-release.yml@main."
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
