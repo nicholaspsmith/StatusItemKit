@@ -256,16 +256,46 @@ public enum CharacterIcon {
     /// Three independent limbs for three independent states, so the glyph can
     /// say all eight combinations at once without a legend. Colour still
     /// carries Mullvad's in-between states, which are the ones worth a glance.
+    ///
+    /// - Parameter lick: seconds into her once-a-minute lick (see
+    ///   `chameleonLickDuration`), or nil when still.
     public static func chameleon(tailscale: Bool, mullvad: Bool, acceptDNS: Bool = false,
-                                 alert: NSColor? = nil) -> NSImage {
+                                 alert: NSColor? = nil, lick: TimeInterval? = nil) -> NSImage {
         let color = alert ?? ((mullvad || tailscale) ? NSColor.systemGreen : restingSkin)
-        return chameleon(color: color, tail: tailscale, tongue: mullvad, eyeLit: acceptDNS)
+        return chameleon(color: color, tail: tailscale, tongue: mullvad, eyeLit: acceptDNS, lick: lick)
+    }
+
+    /// How long Caveepyan's lick lasts.
+    public static let chameleonLickDuration: TimeInterval = 1.0
+
+    /// How much of the tongue is out, 0...1 along its path, `t` seconds into
+    /// the lick. Tongue in the mouth: it shoots out, flicks twice at the air
+    /// and draws back. Tongue wrapped round the branch: it unwinds and reels
+    /// back into the mouth, rests a beat, then shoots out and wraps again.
+    /// A chameleon's tongue launches fast and decelerates, so going out eases
+    /// out; reeling in starts slowly and speeds up, so it eases in.
+    static func tongueExtent(lickAt t: TimeInterval, wrapped: Bool) -> CGFloat {
+        let d = chameleonLickDuration
+        func easeOut(_ x: Double) -> Double { 1 - pow(1 - max(0, min(1, x)), 3) }
+        func easeIn(_ x: Double) -> Double { pow(max(0, min(1, x)), 2) }
+        let x: Double
+        if wrapped {
+            if t < 0.4 * d { x = 1 - easeIn(t / (0.4 * d)) }
+            else if t < 0.55 * d { x = 0 }
+            else { x = easeOut((t - 0.55 * d) / (0.4 * d)) }
+        } else {
+            if t < 0.18 * d { x = easeOut(t / (0.18 * d)) }
+            else if t < 0.62 * d { x = 1 - 0.3 * abs(sin(2 * .pi * (t - 0.18 * d) / (0.44 * d))) }
+            else { x = 1 - easeIn((t - 0.62 * d) / (0.3 * d)) }
+        }
+        return CGFloat(max(0, min(1, x)))
     }
 
     /// - Parameter eyeLit: accept-dns. Cyan rather than green: the body is
     ///   green whenever either VPN is up, and a green iris inside it was a
     ///   state you had to hunt for.
-    public static func chameleon(color: NSColor, tail: Bool, tongue: Bool, eyeLit: Bool = false) -> NSImage {
+    public static func chameleon(color: NSColor, tail: Bool, tongue: Bool, eyeLit: Bool = false,
+                                 lick: TimeInterval? = nil) -> NSImage {
         // Drawn for a Retina bar, like the owl: the crest teeth, toes and tongue
         // are sub-point marks that land on half pixels at 2x. Icon ▸ Dot is
         // there for anyone who wants a flat glyph.
@@ -548,29 +578,93 @@ public enum CharacterIcon {
 
             // MARK: the tongue
 
-            guard tongue else { return }
+            let extent = lick.map { $0 > 0 && $0 < chameleonLickDuration ? tongueExtent(lickAt: $0, wrapped: tongue) : (tongue ? 1 : 0) }
+                ?? (tongue ? 1 : 0)
+            guard extent > 0 else { return }
             // Out of the snout and round the branch ahead: the wrap is what says
             // "caught", where a straight line just says "pointing".
             let catchPoint = NSPoint(x: 1.7, y: branchY(1.7))
             let tonguePink = NSColor(srgbRed: 0.95, green: 0.38, blue: 0.52, alpha: 1)
             let tongueDeep = NSColor(srgbRed: 0.78, green: 0.24, blue: 0.40, alpha: 1)
+            let wrapRadius = branchThickness / 2 + 0.55
 
-            let shot = NSBezierPath()
-            shot.move(to: NSPoint(x: 2.1, y: 12.4))
-            shot.curve(to: NSPoint(x: catchPoint.x + 1.55, y: catchPoint.y + 0.6),
-                       controlPoint1: NSPoint(x: 2.4, y: 11.4), controlPoint2: NSPoint(x: 2.0, y: 9.4))
-            shot.appendArc(withCenter: catchPoint, radius: branchThickness / 2 + 0.55,
-                           startAngle: 20, endAngle: -300, clockwise: true)
-            shot.lineWidth = 1.0; shot.lineCapStyle = .round; shot.lineJoinStyle = .round
-            tongueDeep.set(); shot.stroke()
-            tonguePink.set(); shot.lineWidth = 0.55; shot.stroke()
-            branchOver(from: -0.5, to: 3.4)
-            let curlBack = NSBezierPath()
-            curlBack.appendArc(withCenter: catchPoint, radius: branchThickness / 2 + 0.55,
-                               startAngle: 190, endAngle: 60, clockwise: true)
-            curlBack.lineWidth = 1.0; curlBack.lineCapStyle = .round
-            tongueDeep.set(); curlBack.stroke()
-            tonguePink.set(); curlBack.lineWidth = 0.55; curlBack.stroke()
+            func strokeTongue(_ path: NSBezierPath) {
+                path.lineCapStyle = .round; path.lineJoinStyle = .round
+                path.lineWidth = 1.0; tongueDeep.set(); path.stroke()
+                path.lineWidth = 0.55; tonguePink.set(); path.stroke()
+            }
+
+            if tongue && extent >= 1 {
+                let shot = NSBezierPath()
+                shot.move(to: NSPoint(x: 2.1, y: 12.4))
+                shot.curve(to: NSPoint(x: catchPoint.x + 1.55, y: catchPoint.y + 0.6),
+                           controlPoint1: NSPoint(x: 2.4, y: 11.4), controlPoint2: NSPoint(x: 2.0, y: 9.4))
+                shot.appendArc(withCenter: catchPoint, radius: wrapRadius,
+                               startAngle: 20, endAngle: -300, clockwise: true)
+                strokeTongue(shot)
+                branchOver(from: -0.5, to: 3.4)
+                let curlBack = NSBezierPath()
+                curlBack.appendArc(withCenter: catchPoint, radius: wrapRadius,
+                                   startAngle: 190, endAngle: 60, clockwise: true)
+                strokeTongue(curlBack)
+                return
+            }
+
+            // Mid-lick: the tongue as points along its path, drawn only as far
+            // as `extent` of its length, with the club tip a real tongue has.
+            func cubic(_ p0: NSPoint, _ p1: NSPoint, _ p2: NSPoint, _ p3: NSPoint, steps: Int) -> [NSPoint] {
+                (0...steps).map { k in
+                    let t = CGFloat(k) / CGFloat(steps), u = 1 - t
+                    return NSPoint(x: u*u*u*p0.x + 3*u*u*t*p1.x + 3*u*t*t*p2.x + t*t*t*p3.x,
+                                   y: u*u*u*p0.y + 3*u*u*t*p1.y + 3*u*t*t*p2.y + t*t*t*p3.y)
+                }
+            }
+            var points: [NSPoint]
+            // Where the wrap passes in front of the branch (the curl back over it).
+            var frontFrom: Int?
+            if tongue {
+                points = cubic(NSPoint(x: 2.1, y: 12.4), NSPoint(x: 2.4, y: 11.4), NSPoint(x: 2.0, y: 9.4),
+                               NSPoint(x: catchPoint.x + 1.55, y: catchPoint.y + 0.6), steps: 24)
+                let arcSteps = 64
+                for k in 1...arcSteps {
+                    let deg = 20 - 320 * CGFloat(k) / CGFloat(arcSteps)
+                    if deg <= -170 && frontFrom == nil { frontFrom = points.count - 1 }
+                    points.append(NSPoint(x: catchPoint.x + wrapRadius * cos(deg * .pi / 180),
+                                          y: catchPoint.y + wrapRadius * sin(deg * .pi / 180)))
+                }
+            } else {
+                // Free: out past the snout and curling up into the air ahead of it.
+                points = cubic(NSPoint(x: 2.1, y: 12.4), NSPoint(x: 1.0, y: 12.6), NSPoint(x: 0.4, y: 14.0),
+                               NSPoint(x: 0.8, y: 15.8), steps: 20)
+                points += cubic(NSPoint(x: 0.8, y: 15.8), NSPoint(x: 1.1, y: 17.3), NSPoint(x: 2.0, y: 17.9),
+                                NSPoint(x: 2.6, y: 17.2), steps: 16).dropFirst()
+            }
+            var lengths: [CGFloat] = [0]
+            for k in 1..<points.count { lengths.append(lengths[k - 1] + hypot(points[k].x - points[k - 1].x, points[k].y - points[k - 1].y)) }
+            let reach = extent * lengths.last!
+            var shown: [NSPoint] = [points[0]]
+            for k in 1..<points.count {
+                if lengths[k] <= reach { shown.append(points[k]); continue }
+                let f = (reach - lengths[k - 1]) / max(0.0001, lengths[k] - lengths[k - 1])
+                shown.append(NSPoint(x: points[k - 1].x + (points[k].x - points[k - 1].x) * f,
+                                     y: points[k - 1].y + (points[k].y - points[k - 1].y) * f))
+                break
+            }
+            func polyline(_ pts: ArraySlice<NSPoint>) -> NSBezierPath {
+                let p = NSBezierPath(); p.move(to: pts.first!)
+                for q in pts.dropFirst() { p.line(to: q) }
+                return p
+            }
+            strokeTongue(polyline(shown[...]))
+            if let front = frontFrom, shown.count > front + 1 {
+                branchOver(from: -0.5, to: 3.4)
+                strokeTongue(polyline(shown[front...]))
+            }
+            // The club tip.
+            let tip = shown.last!
+            let club = NSBezierPath(ovalIn: NSRect(x: tip.x - 0.6, y: tip.y - 0.6, width: 1.2, height: 1.2))
+            tonguePink.set(); club.fill()
+            tongueDeep.set(); club.lineWidth = 0.3; club.stroke()
         }
     }
 
@@ -934,8 +1028,60 @@ extension CharacterIcon {
     /// state. One 36x22pt canvas for every variant, so the bar never shifts. Drawn at
     /// 8x and downsampled to 2x and 1x bitmaps (smoother than drawing at bar size),
     /// and cached.
-    public static func caterpillar(effects: Int, state: CaterpillarState) -> NSImage {
-        CaterpillarGlyph.image(effects: effects, state: state)
+    ///
+    /// - Parameter running: seconds into her once-a-minute run (see
+    ///   `caterpillarRunDuration`), or nil standing still. Running frames
+    ///   are not cached.
+    public static func caterpillar(effects: Int, state: CaterpillarState, running: TimeInterval? = nil) -> NSImage {
+        CaterpillarGlyph.image(effects: effects, state: state, running: running)
+    }
+
+    /// How long Carol's run lasts.
+    public static let caterpillarRunDuration: TimeInterval = 1.0
+}
+
+/// Carol's run, as offsets for each part at a moment of it.
+///
+/// A caterpillar moves by a wave travelling from tail to head: each segment
+/// lifts, swings forward and sets down just after the one behind it. Here
+/// that wave runs at three strides a second; each segment's bob lags the one
+/// behind it by a fixed phase, so the lift visibly ripples forward and ends at
+/// the head. The feet scissor: alternate feet swing in opposite directions, so
+/// while one is forward its neighbours are back. Everything ramps in over the
+/// first tenth of a second and out over the last, so the run starts and stops
+/// from the standing pose without a jump.
+struct CaterpillarGait: Equatable {
+    /// Strides per second.
+    static let stride: Double = 3
+    /// Phase lag between neighbouring parts, as a fraction of a stride.
+    static let lag: Double = 0.16
+    static let bobHeight: CGFloat = 0.75
+    static let footSwing: CGFloat = 0.85
+
+    let time: TimeInterval
+    let duration: TimeInterval
+
+    /// 0 standing, 1 at full stride.
+    var strength: CGFloat {
+        let ramp = 0.1
+        return CGFloat(max(0, min(1, time / ramp, (duration - time) / ramp)))
+    }
+
+    /// Phase of part `index` (0 is the segment behind the head, rising toward
+    /// the tail; the head is -1). Parts nearer the tail lead.
+    private func phase(_ index: Int) -> Double {
+        2 * .pi * (Self.stride * time + Double(index) * Self.lag)
+    }
+
+    /// How far part `index` is lifted. Only ever up: a bob, not a wobble.
+    func bob(_ index: Int) -> CGFloat {
+        strength * Self.bobHeight * CGFloat(max(0, sin(phase(index))))
+    }
+
+    /// How far foot `index` is swung forward (positive, toward the head) or back.
+    func foot(_ index: Int) -> CGFloat {
+        let side: CGFloat = index.isMultiple(of: 2) ? 1 : -1
+        return strength * Self.footSwing * side * CGFloat(sin(2 * .pi * Self.stride * time))
     }
 }
 
@@ -954,16 +1100,20 @@ private enum CaterpillarGlyph {
     private struct Key: Hashable { let lit: Int; let state: State }
     private static var cache: [Key: NSImage] = [:]
 
-    static func image(effects: Int, state: State) -> NSImage {
+    static func image(effects: Int, state: State, running: TimeInterval? = nil) -> NSImage {
         let key = Key(lit: max(0, min(effects, bodySegments)), state: state)
-        if let cached = cache[key] { return cached }
-        let big = render(lit: key.lit, palette: Palette(state), scale: supersample)
+        let gait = running.flatMap { t in
+            t > 0 && t < CharacterIcon.caterpillarRunDuration
+                ? CaterpillarGait(time: t, duration: CharacterIcon.caterpillarRunDuration) : nil
+        }
+        if gait == nil, let cached = cache[key] { return cached }
+        let big = render(lit: key.lit, palette: Palette(state), gait: gait, scale: supersample)
         let image = NSImage(size: size)
         for scale in [2, 1] as [CGFloat] {
             if let rep = downsample(big, scale: scale) { image.addRepresentation(rep) }
         }
         image.isTemplate = false
-        cache[key] = image
+        if gait == nil { cache[key] = image }
         return image
     }
 
@@ -994,7 +1144,7 @@ private enum CaterpillarGlyph {
 
     // MARK: Rendering
 
-    private static func render(lit: Int, palette: Palette, scale: CGFloat) -> NSBitmapImageRep {
+    private static func render(lit: Int, palette: Palette, gait: CaterpillarGait?, scale: CGFloat) -> NSBitmapImageRep {
         let rep = NSBitmapImageRep(bitmapDataPlanes: nil,
                                    pixelsWide: Int(size.width * scale), pixelsHigh: Int(size.height * scale),
                                    bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
@@ -1008,7 +1158,7 @@ private enum CaterpillarGlyph {
         t.translateX(by: gridOffset.x, yBy: gridOffset.y)
         t.scale(by: gridScale)
         t.concat()
-        draw(lit: lit, palette: palette)
+        draw(lit: lit, palette: palette, gait: gait)
         NSGraphicsContext.restoreGraphicsState()
         return rep
     }
@@ -1064,31 +1214,40 @@ private enum CaterpillarGlyph {
         return path
     }
 
-    private static func draw(lit: Int, palette: Palette) {
+    private static func draw(lit: Int, palette: Palette, gait: CaterpillarGait?) {
         let groundY: CGFloat = 3.2
+        // The head rides last in the wave, after the segment behind it.
+        let headBob = gait?.bob(-1) ?? 0
 
         // Light rims for the headphones go down first, so they show only against the
         // background (keeping the parts readable on a dark bar), never over the face.
+        NSGraphicsContext.saveGraphicsState()
+        lift(headBob)
         Palette.rim.set()
         let rimBand = bandPath(from: 0, to: 1)
         rimBand.lineWidth = 1.9; rimBand.stroke()
         let rimCup = NSBezierPath(roundedRect: cupRect.insetBy(dx: -0.3, dy: -0.3), xRadius: 1.6, yRadius: 1.6)
         rimCup.fill()
+        NSGraphicsContext.restoreGraphicsState()
 
         // Body: tail first so each segment overlaps the one behind it.
         let firstX: CGFloat = 15.4, spacing: CGFloat = 2.95
         for i in (0..<bodySegments).reversed() {
             let cx = firstX - CGFloat(i) * spacing
             let r: CGFloat = 3.25 - CGFloat(max(0, i - 2)) * 0.35
-            let lift: CGFloat = i % 2 == 0 ? 0.5 : 0
+            let lift: CGFloat = (i % 2 == 0 ? 0.5 : 0) + (gait?.bob(i) ?? 0)
             let bottom = groundY + 0.6 + lift
+            // Running, each foot swings forward and back (the head is to the
+            // right) and leaves the ground as it comes forward.
+            let swing = gait?.foot(i) ?? 0
+            let footX = cx + swing, footY = groundY + max(0, swing) * 0.35
 
             // leg with a little round foot, rimmed in light so it reads on a dark bar
             let leg = NSBezierPath()
             leg.move(to: NSPoint(x: cx, y: bottom + 0.8))
-            leg.line(to: NSPoint(x: cx, y: groundY - 0.2))
+            leg.line(to: NSPoint(x: footX, y: footY - 0.2))
             leg.lineCapStyle = .round
-            let foot = NSBezierPath(ovalIn: NSRect(x: cx - 0.85, y: groundY - 0.75, width: 1.7, height: 1.0))
+            let foot = NSBezierPath(ovalIn: NSRect(x: footX - 0.85, y: footY - 0.75, width: 1.7, height: 1.0))
             Palette.rim.set()
             leg.lineWidth = 1.45; leg.stroke()
             foot.lineWidth = 0.7; foot.stroke()
@@ -1104,6 +1263,10 @@ private enum CaterpillarGlyph {
                 NSBezierPath(ovalIn: NSRect(x: cx - r * 0.5, y: bottom + r * 1.25, width: r * 0.95, height: r * 0.5)).fill()
             }
         }
+
+        // Head, face and headphones all bob together.
+        NSGraphicsContext.saveGraphicsState()
+        lift(headBob)
 
         // Back piece of the band: goes behind the head.
         Palette.phones.set()
@@ -1143,5 +1306,12 @@ private enum CaterpillarGlyph {
         sheen.move(to: NSPoint(x: 19.0, y: 14.8))
         sheen.curve(to: NSPoint(x: 22.6, y: 16.4), controlPoint1: NSPoint(x: 19.8, y: 16.0), controlPoint2: NSPoint(x: 21.2, y: 16.5))
         sheen.lineWidth = 0.35; sheen.lineCapStyle = .round; sheen.stroke()
+        NSGraphicsContext.restoreGraphicsState()
+    }
+
+    /// Shifts everything drawn after it up by `dy`, until the state is restored.
+    private static func lift(_ dy: CGFloat) {
+        guard dy != 0 else { return }
+        let t = NSAffineTransform(); t.translateX(by: 0, yBy: dy); t.concat()
     }
 }

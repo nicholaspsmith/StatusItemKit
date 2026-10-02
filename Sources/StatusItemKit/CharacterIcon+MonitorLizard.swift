@@ -9,7 +9,7 @@ import AppKit
 // MARK: - Monitor Lizard
 
 extension CharacterIcon {
-    /// Monitor Lizard: Armando, a tan leopard gecko draped over a grey monitor, in
+    /// Monitor Lizard: Armonitor, a tan leopard gecko draped over a grey monitor, in
     /// the caterpillar's storybook style and posed like his mascot. The monitor
     /// fills most of the canvas; his small head peeks over its top-left corner
     /// facing left, smiling, his slim body lies along the top edge, and his thin
@@ -18,16 +18,20 @@ extension CharacterIcon {
     /// `nightShift` turns the fill amber. `tongue` flicks a pink tongue out of his
     /// mouth to the left. One 25x22pt canvas for every state, so the bar never
     /// shifts. Drawn at 8x, downsampled to 2x and 1x bitmaps, and cached.
-    public static func monitorLizard(brightness: CGFloat, nightShift: Bool, tongue: Bool = false) -> NSImage {
+    ///
+    /// - Parameter lizard: false draws the monitor alone, for while Armonitor
+    ///   is off on his lap of the screen (`MonitorLizardLap`).
+    public static func monitorLizard(brightness: CGFloat, nightShift: Bool, tongue: Bool = false,
+                                     lizard: Bool = true) -> NSImage {
         MonitorLizardGlyph.image(.init(level: Int((max(0, min(1, brightness)) * 100).rounded()),
-                                       nightShift: nightShift, tongue: tongue))
+                                       nightShift: nightShift, tongue: tongue, lizard: lizard))
     }
 }
 
-/// Armando's drawing. See `CharacterIcon.monitorLizard(brightness:nightShift:tongue:)`.
-private enum MonitorLizardGlyph {
+/// Armonitor's drawing. See `CharacterIcon.monitorLizard(brightness:nightShift:tongue:)`.
+enum MonitorLizardGlyph {
     /// `level` is the brightness in hundredths, so the cache stays bounded.
-    struct State: Hashable { let level: Int; let nightShift: Bool; let tongue: Bool }
+    struct State: Hashable { let level: Int; let nightShift: Bool; let tongue: Bool; var lizard = true }
 
     static let size = NSSize(width: 25, height: 22)
     static let supersample: CGFloat = 8
@@ -78,7 +82,7 @@ private enum MonitorLizardGlyph {
     static let headScale: CGFloat = 0.75
     static let headOrigin = NSPoint(x: 0.375, y: 5.175)
 
-    /// The spine Armando's body and tail follow, back of the head to tail tip:
+    /// The spine Armonitor's body and tail follow, back of the head to tail tip:
     /// along the top edge, round the top-right corner, down the right side and
     /// tucked under the stand.
     static let spine: [(NSPoint, NSPoint, NSPoint, NSPoint)] = [
@@ -221,6 +225,8 @@ private enum MonitorLizardGlyph {
             NSColor(white: 1, alpha: 0.22).set(); glare.fill()
         }
         ink.withAlphaComponent(0.8).set(); glassPath.lineWidth = 0.45; glassPath.stroke()
+
+        guard s.lizard else { return }
 
         // Body and tail, with leopard spots.
         let body = tube()
