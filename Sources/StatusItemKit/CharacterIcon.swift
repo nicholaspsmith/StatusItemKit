@@ -615,8 +615,12 @@ public enum CharacterIcon {
             func cubic(_ p0: NSPoint, _ p1: NSPoint, _ p2: NSPoint, _ p3: NSPoint, steps: Int) -> [NSPoint] {
                 (0...steps).map { k in
                     let t = CGFloat(k) / CGFloat(steps), u = 1 - t
-                    return NSPoint(x: u*u*u*p0.x + 3*u*u*t*p1.x + 3*u*t*t*p2.x + t*t*t*p3.x,
-                                   y: u*u*u*p0.y + 3*u*u*t*p1.y + 3*u*t*t*p2.y + t*t*t*p3.y)
+                    // Bernstein weights, named so the type checker need not solve one long expression.
+                    let b0: CGFloat = u * u * u, b1: CGFloat = 3 * u * u * t
+                    let b2: CGFloat = 3 * u * t * t, b3: CGFloat = t * t * t
+                    let x: CGFloat = b0 * p0.x + b1 * p1.x + b2 * p2.x + b3 * p3.x
+                    let y: CGFloat = b0 * p0.y + b1 * p1.y + b2 * p2.y + b3 * p3.y
+                    return NSPoint(x: x, y: y)
                 }
             }
             var points: [NSPoint]
