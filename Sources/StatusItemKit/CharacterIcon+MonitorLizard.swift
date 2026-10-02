@@ -19,31 +19,57 @@ extension CharacterIcon {
     /// mouth to the left. One 25x22pt canvas for every state, so the bar never
     /// shifts. Drawn at 8x, downsampled to 2x and 1x bitmaps, and cached.
     ///
-    /// - Parameter lizard: false draws the monitor alone, for while Armonitor
-    ///   is off on his lap of the screen (`MonitorLizardLap`).
+    /// - Parameters:
+    ///   - lizard: false draws the monitor alone, for while Armonitor is off
+    ///     on his lap of the whole screen (`MonitorLizardLap`).
+    ///   - lap: how far through his once-a-minute lap of the monitor he is,
+    ///     0...1 over `monitorLizardLapDuration`; 0 is his resting pose. Lap
+    ///     frames are not cached.
     public static func monitorLizard(brightness: CGFloat, nightShift: Bool, tongue: Bool = false,
-                                     lizard: Bool = true) -> NSImage {
+                                     lizard: Bool = true, lap: CGFloat = 0) -> NSImage {
         MonitorLizardGlyph.image(.init(level: Int((max(0, min(1, brightness)) * 100).rounded()),
-                                       nightShift: nightShift, tongue: tongue, lizard: lizard))
+                                       nightShift: nightShift, tongue: tongue, lizard: lizard,
+                                       lap: lap > 0 && lap < 1 ? lap : 0))
     }
+
+    /// How long Armonitor's lap of the monitor takes.
+    public static let monitorLizardLapDuration: TimeInterval = 3
 }
 
 /// Armonitor's drawing. See `CharacterIcon.monitorLizard(brightness:nightShift:tongue:)`.
 enum MonitorLizardGlyph {
     /// `level` is the brightness in hundredths, so the cache stays bounded.
-    struct State: Hashable { let level: Int; let nightShift: Bool; let tongue: Bool; var lizard = true }
+    struct State: Hashable { let level: Int; let nightShift: Bool; let tongue: Bool; var lizard = true; var lap: CGFloat = 0 }
 
     static let size = NSSize(width: 25, height: 22)
     static let supersample: CGFloat = 8
     private static var cache: [State: NSImage] = [:]
+    /// The lap is the same every minute, so its frames are kept — but only for
+    /// the screen he is currently on (the brightness and Night Shift), which
+    /// bounds the cache to one lap. Progress is snapped to `lapFrames` steps.
+    private static var lapCache: [Int: NSImage] = [:]
+    private static var lapCacheFor: State?
+    static let lapFrames = 180
 
     static func image(_ s: State) -> NSImage {
-        if let cached = cache[s] { return cached }
-        let big = render(s, scale: supersample)
+        var s = s
+        var frame: Int?
+        if s.lap > 0 {
+            let f = Int((s.lap * CGFloat(lapFrames)).rounded())
+            s.lap = CGFloat(f) / CGFloat(lapFrames)
+            var base = s; base.lap = 0
+            if lapCacheFor != base { lapCache.removeAll(); lapCacheFor = base }
+            if let cached = lapCache[f] { return cached }
+            frame = f
+        } else if let cached = cache[s] {
+            return cached
+        }
+        // Lap frames are many; 4x is plenty for a moving body.
+        let big = render(s, scale: s.lap > 0 ? 4 : supersample)
         let image = NSImage(size: size)
         for scale in [2, 1] as [CGFloat] { if let rep = downsample(big, scale: scale) { image.addRepresentation(rep) } }
         image.isTemplate = false
-        cache[s] = image
+        if let frame { lapCache[frame] = image } else { cache[s] = image }
         return image
     }
 
@@ -120,18 +146,22 @@ enum MonitorLizardGlyph {
         return NSPoint(x: c.x + nrm.x * off, y: c.y + nrm.y * off)
     }
 
+    /// A spine: the point at overall `t` (0 behind the head, 1 the tail tip),
+    /// pushed `off` points along its normal.
+    typealias Spine = (CGFloat, CGFloat) -> NSPoint
+
     /// The body and tail as one tapering tube with a rounded tip.
-    static func tube() -> NSBezierPath {
+    static func tube(_ spine: Spine = onSpine) -> NSBezierPath {
         let steps = 120
         var left: [NSPoint] = [], right: [NSPoint] = []
         for k in 0...steps {
             let t = CGFloat(k) / CGFloat(steps), w = width(t) / 2
-            left.append(onSpine(t, w)); right.append(onSpine(t, -w))
+            left.append(spine(t, w)); right.append(spine(t, -w))
         }
         let p = NSBezierPath()
         p.move(to: left[0])
         for q in left.dropFirst() { p.line(to: q) }
-        p.appendArc(withCenter: onSpine(1), radius: width(1) / 2, startAngle: 0, endAngle: 360)
+        p.appendArc(withCenter: spine(1, 0), radius: width(1) / 2, startAngle: 0, endAngle: 360)
         for q in right.reversed() { p.line(to: q) }
         p.close()
         return p
@@ -228,8 +258,12 @@ enum MonitorLizardGlyph {
 
         guard s.lizard else { return }
 
+        // Mid-lap his spine runs round the bezel instead of lying in its pose.
+        let lap = s.lap > 0 ? Lap(s.lap) : nil
+        let spine: Spine = lap?.spine ?? onSpine
+
         // Body and tail, with leopard spots.
-        let body = tube()
+        let body = tube(spine)
         NSGradient(starting: skin.light, ending: skin.dark)?.draw(in: body, angle: -70)
         clipped(body) {
             spot.set()
@@ -238,26 +272,120 @@ enum MonitorLizardGlyph {
                 (0.27, 0.3, 0.65), (0.34, -0.3, 0.6), (0.42, 0.3, 0.6), (0.50, -0.2, 0.55),
                 (0.58, 0.2, 0.55), (0.66, -0.15, 0.5), (0.74, 0.1, 0.5), (0.82, 0, 0.45),
             ]
-            for (t, off, d) in spots { oval(onSpine(t, off), d, d).fill() }
+            for (t, off, d) in spots { oval(spine(t, off), d, d).fill() }
         }
         ink.set(); body.lineWidth = 0.5; body.lineJoinStyle = .round; body.stroke()
 
+        // On the move: two pairs of little feet paddling at his sides.
+        if let lap, lap.blend > 0.3 {
+            for (t, phase) in [(CGFloat(0.12), CGFloat(0)), (0.4, .pi)] {
+                for side in [CGFloat(1), -1] {
+                    let paddle = sin(lap.head * 2 * .pi / 5 + phase) * 0.012 * side
+                    shaded(oval(spine(t + paddle, side * (width(t) / 2 + 0.35)), 1.0, 1.0), skin, ink: 0.35)
+                }
+            }
+        }
+
         // A hind foot gripping the bezel's right side.
+        if lap == nil || lap!.blend < 0.3 { drawHindFoot() }
+
+        // The head and tongue are drawn in their own design space, scaled down onto
+        // the bezel's top-left corner; ink widths are divided by the scale so the
+        // outlines stay as heavy as the rest. Mid-lap the head rides the front of
+        // the spine, turned to face the way he is going.
+        NSGraphicsContext.saveGraphicsState()
+        let k = lap.map { headScale + (lapHeadScale - headScale) * $0.blend } ?? headScale
+        let nape = spine(0, 0)
+        let place = NSAffineTransform()
+        place.translateX(by: nape.x, yBy: nape.y)
+        place.rotate(byRadians: lap?.turn ?? 0)
+        place.scale(by: k)
+        place.translateX(by: -neckInHead.x, yBy: -neckInHead.y)
+        place.concat()
+        drawHead(s, k)
+        NSGraphicsContext.restoreGraphicsState()
+    }
+
+    private static func drawHindFoot() {
         let hind = oval(NSPoint(x: 21.7, y: 12.0), 1.6, 1.1, tilt: -20)
         shaded(hind, skin, ink: 0.45)
         let toes = NSBezierPath()
         toes.move(to: NSPoint(x: 21.1, y: 11.6)); toes.line(to: NSPoint(x: 20.9, y: 11.3))
         toes.move(to: NSPoint(x: 21.1, y: 12.4)); toes.line(to: NSPoint(x: 20.8, y: 12.5))
         toes.lineWidth = 0.4; toes.lineCapStyle = .round; ink.set(); toes.stroke()
+    }
 
-        // The head and tongue are drawn in their own design space, scaled down onto
-        // the bezel's top-left corner; ink widths are divided by the scale so the
-        // outlines stay as heavy as the rest.
-        NSGraphicsContext.saveGraphicsState()
-        let k = headScale
-        let place = NSAffineTransform(); place.translateX(by: headOrigin.x, yBy: headOrigin.y); place.scale(by: k); place.concat()
-        drawHead(s, k)
-        NSGraphicsContext.restoreGraphicsState()
+    // MARK: The lap of the monitor
+
+    /// The back of his head in the head's design space: where it meets the
+    /// spine. Placed there at `headScale`, the head lands at `headOrigin`.
+    static let neckInHead = NSPoint(x: (7.6 - headOrigin.x) / headScale, y: (18.6 - headOrigin.y) / headScale)
+    /// His head is smaller on the move, so it fits round the bezel's corners.
+    static let lapHeadScale: CGFloat = 0.5
+
+    /// The loop he runs: the middle of the bezel, round the glass.
+    static let loop = LizardTrack(bounds: bezelRect, start: NSPoint(x: 7.6, y: bezelRect.maxY - 0.7),
+                                  topY: bezelRect.maxY - 0.7, margin: 0.7, corner: 1.3, step: 0.2)
+    /// How long his body is along the spine, so it fills the same length of loop.
+    static let bodyLength: CGFloat = {
+        var total: CGFloat = 0, last = onSpine(0)
+        for k in 1...200 { let p = onSpine(CGFloat(k) / 200); total += hypot(p.x - last.x, p.y - last.y); last = p }
+        return total
+    }()
+
+    /// One moment of the lap. He leaves his pose, runs counterclockwise once
+    /// round the glass on the bezel — left along the top, down, along the
+    /// bottom, up the right side — and settles back into the pose. His body
+    /// follows a gentle S-wave fixed to the bezel, so it slithers through
+    /// the same bends his head did.
+    struct Lap {
+        /// How far along the loop his head is, in points.
+        let head: CGFloat
+        /// 0 in his resting pose, 1 fully on the loop: the pose melts into the
+        /// lap over the first sixth and back over the last.
+        let blend: CGFloat
+        let turn: CGFloat
+
+        init(_ progress: CGFloat) {
+            let p = max(0, min(1, progress))
+            head = loop.length * (0.5 - 0.5 * cos(.pi * p))
+            blend = min(1, p / 0.16, (1 - p) / 0.16)
+            // He starts facing left (along the top); going counterclockwise he
+            // turns a full circle by the time he is home. Unwrap the angle
+            // against that, then ease it toward the nearest resting angle.
+            let d = loop.at(head).direction
+            let raw = atan2(d.dy, d.dx) - .pi
+            let expected = 2 * .pi * head / loop.length
+            let full = raw + 2 * .pi * ((expected - raw) / (2 * .pi)).rounded()
+            let rest = 2 * .pi * (full / (2 * .pi)).rounded()
+            turn = rest + (full - rest) * blend
+        }
+
+        /// The loop at `s`, wrapped round so the body can trail behind the start.
+        private func onLoop(_ s: CGFloat) -> NSPoint {
+            let len = loop.length
+            return loop.at(((s.truncatingRemainder(dividingBy: len)) + len).truncatingRemainder(dividingBy: len)).point
+        }
+
+        private func centre(_ t: CGFloat) -> NSPoint {
+            let s = head - t * bodyLength
+            var p = onLoop(s)
+            // The slither: a sideways wave fixed to the bezel, fading out at the neck.
+            let ahead = onLoop(s + 0.3)
+            let tl = max(0.0001, hypot(ahead.x - p.x, ahead.y - p.y))
+            let wave = 0.4 * min(1, t * 5) * sin(2 * .pi * s / 7)
+            p = NSPoint(x: p.x - (ahead.y - p.y) / tl * wave, y: p.y + (ahead.x - p.x) / tl * wave)
+            let rest = onSpine(t)
+            return NSPoint(x: rest.x + (p.x - rest.x) * blend, y: rest.y + (p.y - rest.y) * blend)
+        }
+
+        func spine(_ t: CGFloat, _ off: CGFloat) -> NSPoint {
+            let c = centre(t)
+            guard off != 0 else { return c }
+            let a = centre(max(0, t - 0.004)), b = centre(min(1, t + 0.004))
+            let dx = b.x - a.x, dy = b.y - a.y, len = max(0.0001, hypot(dx, dy))
+            return NSPoint(x: c.x - dy / len * off, y: c.y + dx / len * off)
+        }
     }
 
     private static func drawHead(_ s: State, _ k: CGFloat) {

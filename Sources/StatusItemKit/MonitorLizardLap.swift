@@ -24,16 +24,17 @@ public struct LizardTrack {
     ///   - start: where he leaves and comes home, on the top run.
     ///   - topY: the height of the top run (the middle of the menu bar).
     ///   - margin: how far the side and bottom runs keep from the edges.
-    public init(bounds: NSRect, start: NSPoint, topY: CGFloat, margin: CGFloat = 16, corner: CGFloat = 36) {
+    ///   - step: the spacing of the polyline's points.
+    public init(bounds: NSRect, start: NSPoint, topY: CGFloat, margin: CGFloat = 16, corner: CGFloat = 36, step: CGFloat = 2) {
         let l = bounds.minX + margin, r = bounds.maxX - margin, b = bounds.minY + margin
         let r0 = min(corner, (topY - b) / 2, (r - l) / 2)
         var pts: [NSPoint] = [start]
         func line(to p: NSPoint) {
-            let a = pts.last!, n = max(1, Int(hypot(p.x - a.x, p.y - a.y) / 2))
+            let a = pts.last!, n = max(1, Int(hypot(p.x - a.x, p.y - a.y) / step))
             for k in 1...n { let f = CGFloat(k) / CGFloat(n); pts.append(NSPoint(x: a.x + (p.x - a.x) * f, y: a.y + (p.y - a.y) * f)) }
         }
         func arc(center c: NSPoint, from a0: CGFloat, to a1: CGFloat) {
-            let n = max(4, Int(abs(a1 - a0) * r0 / 2))
+            let n = max(4, Int(abs(a1 - a0) * r0 / step))
             for k in 1...n { let a = a0 + (a1 - a0) * CGFloat(k) / CGFloat(n); pts.append(NSPoint(x: c.x + r0 * cos(a), y: c.y + r0 * sin(a))) }
         }
         let sx = min(max(start.x, l + r0), r - r0)
