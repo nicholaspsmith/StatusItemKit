@@ -8,6 +8,11 @@ without one is refused (`[no release]` in the tip commit is the only exception).
 Versions follow [Semantic Versioning](https://semver.org/). The full rule:
 [StatusItemKit — Releases](https://github.com/nicholaspsmith/StatusItemKit#releases-every-push-is-one).
 
+## [0.18.0] - 2026-10-05
+
+- VPN & DNS's mascot is now Iguanamous, an iguana: dewlap, a crest of spines, a ringed tail and clawed feet. The tail and tongue still wrap the branch for Tailscale and Mullvad, the eye still turns cyan for accept-dns, and the colours are unchanged
+- `CharacterIcon.iguana(…)` and `iguanaLickDuration` replace `chameleon(…)` and `chameleonLickDuration`, which still work and are marked deprecated
+
 ## [0.17.0] - 2026-10-05
 
 - feat: Homestead's house has weather. `house(…, weather:night:)` draws a `HouseWeather` around the cottage — sun or moon behind the roof, clouds over it, rain, snow, sleet or lightning beside the walls, fog, wind — and never across the windows. Without a weather the glyph is unchanged

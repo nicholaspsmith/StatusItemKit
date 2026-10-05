@@ -24,7 +24,7 @@ public final class MinuteCue {
         "com.nicholaspsmith.ClaudeUsage",     // Archimedes blinks
         "com.nicholaspsmith.MacDaddy",        // Menu Pimp flashes his teeth
         "com.nicholaspsmith.SoundChain",      // Carol runs
-        "com.nicholaspsmith.VPNDNSMenuBar",   // Caveepyan licks
+        "com.nicholaspsmith.VPNDNSMenuBar",   // Iguanamous licks
         "com.nicholaspsmith.MonitorLizard",   // Armonitor laps his monitor
     ]
 

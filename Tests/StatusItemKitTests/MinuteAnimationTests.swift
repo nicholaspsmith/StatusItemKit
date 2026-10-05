@@ -56,7 +56,7 @@ final class MascotAnimationTests: XCTestCase {
     }
 
     func testTongueLickReturnsToWhereItStarted() {
-        let d = CharacterIcon.chameleonLickDuration
+        let d = CharacterIcon.iguanaLickDuration
         XCTAssertEqual(CharacterIcon.tongueExtent(lickAt: 0, wrapped: false), 0, accuracy: 0.01)
         XCTAssertEqual(CharacterIcon.tongueExtent(lickAt: d * 0.999, wrapped: false), 0, accuracy: 0.01)
         XCTAssertEqual(CharacterIcon.tongueExtent(lickAt: 0, wrapped: true), 1, accuracy: 0.01)
@@ -66,7 +66,7 @@ final class MascotAnimationTests: XCTestCase {
 
     func testAnimationFramesKeepTheCanvasSize() {
         XCTAssertEqual(CharacterIcon.caterpillar(effects: 2, state: .processing, running: 0.4).size, NSSize(width: 36, height: 22))
-        XCTAssertEqual(CharacterIcon.chameleon(tailscale: true, mullvad: true, lick: 0.3).size, NSSize(width: 30, height: 22))
+        XCTAssertEqual(CharacterIcon.iguana(tailscale: true, mullvad: true, lick: 0.3).size, NSSize(width: 30, height: 22))
         XCTAssertEqual(CharacterIcon.macDaddy(level: .cool, asleep: false, flourish: nil, grin: 0.5).size, NSSize(width: 24, height: 22))
         XCTAssertEqual(CharacterIcon.monitorLizard(brightness: 0.5, nightShift: false, lizard: false).size, NSSize(width: 25, height: 22))
     }

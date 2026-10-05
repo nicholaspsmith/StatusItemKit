@@ -12,8 +12,8 @@ import AppKit
 /// character alongside the geometric meters and switching moves nothing. Each
 /// silhouette is hand-drawn as a path — at this size a mascot has to become a
 /// pictogram — and the number lives in something the character *does*: the
-/// owl's eyes are pie meters, the chameleon changes colour and grows a tail per
-/// connection, the octopus grows and heats from four green arms to eight red ones, the key's rays light
+/// owl's eyes are pie meters, the iguana changes colour and wraps its tail or
+/// tongue round its branch per connection, the octopus grows and heats from four green arms to eight red ones, the key's rays light
 /// with the backlight, the Apollo's volume arc is the level, the raccoon's eyes
 /// close when paused, the bin's lid lifts when active, the monitor lizard's
 /// screen fills with the brightness, and the caterpillar lights a segment per
@@ -221,61 +221,65 @@ public enum CharacterIcon {
         octopusHead(ctx)
     }
 
-    // CHAMELEON
-/// A chameleon climbing at an incline, painted the state colour. Its tail
-    /// hangs down when Tailscale is connected; its tongue flicks out when
-    /// Mullvad is.
-    /// The chameleon's stick, and its colour when nothing is connected.
+    // IGUANA
+    /// The iguana's branch, and the wood colour.
     static let stick = NSColor(red: 0.45, green: 0.28, blue: 0.14, alpha: 1)
 
-    /// The chameleon at rest. Not the branch's brown, which it used to borrow:
-    /// against wood of the same colour the animal read as a lump on the branch
-    /// rather than an animal. This is the muted olive a veiled chameleon
-    /// actually sits at, far enough from the vivid green of a live connection
-    /// to never be mistaken for one.
+    /// The iguana at rest: a muted olive, far enough from the vivid green of a
+    /// live connection never to be mistaken for one, and clear of the
+    /// branch's brown.
     static let restingSkin = NSColor(srgbRed: 0.588, green: 0.651, blue: 0.416, alpha: 1)
 
     /// accept-dns, in the eye and on its menu row's dot. Cyan holds against
-    /// every body the chameleon wears — olive at rest, green connected, red
-    /// blocked — which green did not.
+    /// every body colour the iguana takes: olive at rest, green connected,
+    /// red blocked.
     public static let dnsCyan = NSColor(srgbRed: 0.24, green: 0.83, blue: 0.93, alpha: 1)
 
-    /// A chameleon hanging onto a brown stick. Brown like the stick when
-    /// nothing is connected, with a short straight tail; green whenever
-    /// something is. Tailscale: dark spots (its icon is dots) and the tail
-    /// curls. Mullvad: a yellow hard hat and its tongue out. Both: green,
-    /// spotted, hat, tongue and curled tail. `alert` overrides
-    /// the body colour for Mullvad's in-between states (connecting, blocked).
-    /// VPN & DNS: a chameleon on a branch, where each thing it does is one
-    /// connection.
+    /// VPN & DNS: Iguanamous the iguana on a branch, where each thing it does
+    /// is one connection.
     ///
     /// - Tailscale: the tail comes down off the back and wraps the branch.
     /// - Mullvad: the tongue shoots out and wraps the branch ahead of it.
     /// - accept-dns: the eye turns cyan.
     ///
-    /// Three independent limbs for three independent states, so the glyph can
-    /// say all eight combinations at once without a legend. Colour still
-    /// carries Mullvad's in-between states, which are the ones worth a glance.
+    /// Olive when nothing is connected, green when anything is; `alert`
+    /// overrides the body colour for Mullvad's in-between states
+    /// (connecting, blocked).
     ///
-    /// - Parameter lick: seconds into her once-a-minute lick (see
-    ///   `chameleonLickDuration`), or nil when still.
-    public static func chameleon(tailscale: Bool, mullvad: Bool, acceptDNS: Bool = false,
-                                 alert: NSColor? = nil, lick: TimeInterval? = nil) -> NSImage {
+    /// - Parameter lick: seconds into the once-a-minute lick (see
+    ///   `iguanaLickDuration`), or nil when still.
+    public static func iguana(tailscale: Bool, mullvad: Bool, acceptDNS: Bool = false,
+                              alert: NSColor? = nil, lick: TimeInterval? = nil) -> NSImage {
         let color = alert ?? ((mullvad || tailscale) ? NSColor.systemGreen : restingSkin)
-        return chameleon(color: color, tail: tailscale, tongue: mullvad, eyeLit: acceptDNS, lick: lick)
+        return iguana(color: color, tail: tailscale, tongue: mullvad, eyeLit: acceptDNS, lick: lick)
     }
 
-    /// How long Caveepyan's lick lasts.
-    public static let chameleonLickDuration: TimeInterval = 1.0
+    /// How long Iguanamous's lick lasts.
+    public static let iguanaLickDuration: TimeInterval = 1.0
+
+    @available(*, deprecated, renamed: "iguana(tailscale:mullvad:acceptDNS:alert:lick:)")
+    public static func chameleon(tailscale: Bool, mullvad: Bool, acceptDNS: Bool = false,
+                                 alert: NSColor? = nil, lick: TimeInterval? = nil) -> NSImage {
+        iguana(tailscale: tailscale, mullvad: mullvad, acceptDNS: acceptDNS, alert: alert, lick: lick)
+    }
+
+    @available(*, deprecated, renamed: "iguana(color:tail:tongue:eyeLit:lick:)")
+    public static func chameleon(color: NSColor, tail: Bool, tongue: Bool, eyeLit: Bool = false,
+                                 lick: TimeInterval? = nil) -> NSImage {
+        iguana(color: color, tail: tail, tongue: tongue, eyeLit: eyeLit, lick: lick)
+    }
+
+    @available(*, deprecated, renamed: "iguanaLickDuration")
+    public static var chameleonLickDuration: TimeInterval { iguanaLickDuration }
 
     /// How much of the tongue is out, 0...1 along its path, `t` seconds into
     /// the lick. Tongue in the mouth: it shoots out, flicks twice at the air
     /// and draws back. Tongue wrapped round the branch: it unwinds and reels
     /// back into the mouth, rests a beat, then shoots out and wraps again.
-    /// A chameleon's tongue launches fast and decelerates, so going out eases
-    /// out; reeling in starts slowly and speeds up, so it eases in.
+    /// Going out eases out (a fast launch that decelerates); reeling in eases
+    /// in.
     static func tongueExtent(lickAt t: TimeInterval, wrapped: Bool) -> CGFloat {
-        let d = chameleonLickDuration
+        let d = iguanaLickDuration
         func easeOut(_ x: Double) -> Double { 1 - pow(1 - max(0, min(1, x)), 3) }
         func easeIn(_ x: Double) -> Double { pow(max(0, min(1, x)), 2) }
         let x: Double
@@ -291,12 +295,10 @@ public enum CharacterIcon {
         return CGFloat(max(0, min(1, x)))
     }
 
-    /// - Parameter eyeLit: accept-dns. Cyan rather than green: the body is
-    ///   green whenever either VPN is up, and a green iris inside it was a
-    ///   state you had to hunt for.
-    public static func chameleon(color: NSColor, tail: Bool, tongue: Bool, eyeLit: Bool = false,
-                                 lick: TimeInterval? = nil) -> NSImage {
-        // Drawn for a Retina bar, like the owl: the crest teeth, toes and tongue
+    /// - Parameter eyeLit: accept-dns: the iris turns cyan.
+    public static func iguana(color: NSColor, tail: Bool, tongue: Bool, eyeLit: Bool = false,
+                              lick: TimeInterval? = nil) -> NSImage {
+        // Drawn for a Retina bar, like the owl: the crest spines, claws and tongue
         // are sub-point marks that land on half pixels at 2x. Icon ▸ Dot is
         // there for anyone who wants a flat glyph.
         let base = color.usingColorSpace(.sRGB) ?? color
@@ -365,7 +367,7 @@ public enum CharacterIcon {
                                controlPoint2: NSPoint(x: 26.8, y: 10.0))
                 tailPath.appendArc(withCenter: centre, radius: 2.7, startAngle: 30, endAngle: -260, clockwise: true)
             } else {
-                // At rest a chameleon carries its tail rolled up behind it.
+                // At rest the tail is carried rolled up behind.
                 let centre = NSPoint(x: 25.0, y: 13.6)
                 tailPath.curve(to: NSPoint(x: centre.x - 0.2, y: centre.y + 2.1),
                                controlPoint1: NSPoint(x: 23.0, y: 13.8),
@@ -377,6 +379,11 @@ public enum CharacterIcon {
             tailPath.lineWidth = 1.9; tailPath.lineCapStyle = .round; tailPath.lineJoinStyle = .round
             base.set(); tailPath.stroke()
             highlight.withAlphaComponent(0.5).set(); tailPath.lineWidth = 0.55; tailPath.stroke()
+            // The dark rings an iguana's tail is banded with.
+            let rings = tailPath.copy() as! NSBezierPath
+            rings.lineWidth = 1.9; rings.lineCapStyle = .butt
+            rings.setLineDash([0.7, 1.6], count: 2, phase: 1.2)
+            deep.withAlphaComponent(0.55).set(); rings.stroke()
             if tail {
                 // The far side of the curl goes behind the wood, and the tip
                 // comes back over it.
@@ -399,13 +406,15 @@ public enum CharacterIcon {
                 limb.lineWidth = thickness; limb.lineCapStyle = .round; limb.lineJoinStyle = .round
                 legColor.set(); limb.stroke()
 
-                // Two toes over the branch and two under: a chameleon's foot is
-                // a pair of opposed bundles, which is why it can hold on at all.
-                let grip = NSBezierPath()
-                grip.appendArc(withCenter: NSPoint(x: foot.x, y: branchY(foot.x)),
-                               radius: branchThickness / 2 + 0.45, startAngle: 150, endAngle: 30, clockwise: true)
-                grip.lineWidth = 0.95; grip.lineCapStyle = .round
-                legColor.set(); grip.stroke()
+                // Long splayed toes, clawed, spread over the top of the branch.
+                let top = branchY(foot.x) + branchThickness / 2
+                let claws = NSBezierPath()
+                for (dx, reach) in [(-1.3, 0.9), (0.0, 1.0), (1.3, 0.8)] as [(CGFloat, CGFloat)] {
+                    claws.move(to: NSPoint(x: foot.x, y: top + 0.5))
+                    claws.line(to: NSPoint(x: foot.x + dx, y: top + 0.1 - 0.15 * reach))
+                }
+                claws.lineWidth = 0.6; claws.lineCapStyle = .round
+                legColor.set(); claws.stroke()
             }
             // The far pair, in shadow behind the body.
             leg(hip: NSPoint(x: 18.6, y: 10.4), knee: NSPoint(x: 20.6, y: 7.8),
@@ -415,170 +424,152 @@ public enum CharacterIcon {
 
             // MARK: the body
 
-            // One closed outline: blunt snout, a casque rising behind the eye,
-            // a deep laterally-flattened belly, and a rump the tail leaves from.
-            // A chameleon is laterally compressed: side-on it is a deep, short
-            // leaf of an animal, not a long low one. That proportion — body
-            // deeper than half its length, carried high off the branch on bent
-            // legs — is the whole difference between this and a frog.
+            // One closed outline: a blunt, blocky head, the dewlap hanging under
+            // the chin, and a long low body to the rump the tail leaves from.
+            // Long and low, close to the branch.
             let body = NSBezierPath()
-            body.move(to: NSPoint(x: 2.0, y: 12.6))                        // the snout, blunt and low
-            body.curve(to: NSPoint(x: 4.6, y: 15.4),                       // up the wedge of the face
-                       controlPoint1: NSPoint(x: 2.4, y: 14.2), controlPoint2: NSPoint(x: 3.4, y: 14.8))
-            // The casque: tall and raked back, but its apex is a rounded ridge
-            // rather than a spike — a point turns the animal into a dinosaur.
-            body.line(to: NSPoint(x: 7.6, y: 19.2))
-            body.curve(to: NSPoint(x: 9.0, y: 18.4),
-                       controlPoint1: NSPoint(x: 8.2, y: 19.7), controlPoint2: NSPoint(x: 8.8, y: 19.2))
-            body.line(to: NSPoint(x: 10.4, y: 16.2))                       // a steep drop behind it
-            // The back: a long shallow arch, not a dome. Chameleons are deep
-            // through the body but they are not round, and at this size an
-            // over-curved back is what reads as a frog.
-            body.curve(to: NSPoint(x: 16.4, y: 16.8),
-                       controlPoint1: NSPoint(x: 12.4, y: 17.6), controlPoint2: NSPoint(x: 14.6, y: 17.5))
+            body.move(to: NSPoint(x: 2.0, y: 12.6))                        // the snout, blunt and rounded
+            body.curve(to: NSPoint(x: 5.6, y: 15.2),                       // up over the brow
+                       controlPoint1: NSPoint(x: 2.1, y: 14.4), controlPoint2: NSPoint(x: 3.6, y: 15.2))
+            body.curve(to: NSPoint(x: 9.4, y: 14.8),                       // the flat crown, dipping to the neck
+                       controlPoint1: NSPoint(x: 7.2, y: 15.2), controlPoint2: NSPoint(x: 8.4, y: 14.8))
+            body.curve(to: NSPoint(x: 16.4, y: 15.4),                      // the back, long and nearly level
+                       controlPoint1: NSPoint(x: 11.6, y: 15.0), controlPoint2: NSPoint(x: 14.2, y: 15.6))
             body.curve(to: NSPoint(x: 21.2, y: 12.6),                      // taper to the rump
-                       controlPoint1: NSPoint(x: 18.8, y: 16.0), controlPoint2: NSPoint(x: 20.8, y: 14.8))
-            body.curve(to: NSPoint(x: 13.2, y: 8.8),                       // the belly, shallow and long
-                       controlPoint1: NSPoint(x: 21.4, y: 10.2), controlPoint2: NSPoint(x: 17.2, y: 8.6))
-            body.curve(to: NSPoint(x: 5.6, y: 10.6),                       // forward along it
-                       controlPoint1: NSPoint(x: 9.6, y: 9.0), controlPoint2: NSPoint(x: 6.8, y: 9.6))
-            body.curve(to: NSPoint(x: 2.0, y: 12.6),                       // the gular fold under the chin
-                       controlPoint1: NSPoint(x: 4.4, y: 11.4), controlPoint2: NSPoint(x: 2.8, y: 11.4))
+                       controlPoint1: NSPoint(x: 18.6, y: 15.1), controlPoint2: NSPoint(x: 20.6, y: 14.2))
+            body.curve(to: NSPoint(x: 13.6, y: 9.4),                       // the belly, low along the branch
+                       controlPoint1: NSPoint(x: 21.4, y: 10.6), controlPoint2: NSPoint(x: 17.4, y: 9.4))
+            body.curve(to: NSPoint(x: 9.2, y: 10.0),                       // forward to the chest
+                       controlPoint1: NSPoint(x: 11.4, y: 9.4), controlPoint2: NSPoint(x: 10.0, y: 9.6))
+            // The dewlap: the big flap of skin under the chin, the one shape
+            // that says "iguana" at this size.
+            body.curve(to: NSPoint(x: 5.4, y: 8.4),
+                       controlPoint1: NSPoint(x: 8.6, y: 9.0), controlPoint2: NSPoint(x: 6.8, y: 8.2))
+            body.curve(to: NSPoint(x: 3.0, y: 11.6),
+                       controlPoint1: NSPoint(x: 4.2, y: 8.6), controlPoint2: NSPoint(x: 3.2, y: 10.2))
+            body.curve(to: NSPoint(x: 2.0, y: 12.6),                       // the jaw back to the snout
+                       controlPoint1: NSPoint(x: 2.6, y: 11.9), controlPoint2: NSPoint(x: 2.1, y: 12.2))
             body.close()
             base.set(); body.fill()
 
-            // Form: a shaded belly and throat, a lit ridge along the back.
+            // Form: a shaded belly and dewlap, a lit ridge along the back, and
+            // the dark bands an iguana carries across its flanks.
             ctx.saveGraphicsState(); body.addClip()
             shade.set()
             let belly = NSBezierPath()
-            belly.move(to: NSPoint(x: 2.4, y: 12.0))
-            belly.curve(to: NSPoint(x: 21.6, y: 11.2),
-                        controlPoint1: NSPoint(x: 8.0, y: 8.6), controlPoint2: NSPoint(x: 17.4, y: 8.4))
+            belly.move(to: NSPoint(x: 2.4, y: 11.6))
+            belly.curve(to: NSPoint(x: 21.6, y: 11.4),
+                        controlPoint1: NSPoint(x: 8.0, y: 10.6), controlPoint2: NSPoint(x: 17.4, y: 9.8))
             belly.line(to: NSPoint(x: 21.6, y: 7.0)); belly.line(to: NSPoint(x: 2.4, y: 7.0)); belly.close()
             belly.fill()
-            // Flank bands, the markings a veiled chameleon actually carries.
             shade.withAlphaComponent(0.55).set()
-            for x in [CGFloat(10.6), 13.4, 16.2, 19.0] {
+            for x in [CGFloat(12.4), 15.4, 18.4] {
                 let band = NSBezierPath()
-                band.move(to: NSPoint(x: x, y: 17.4))
-                band.curve(to: NSPoint(x: x - 1.4, y: 9.2),
-                           controlPoint1: NSPoint(x: x - 0.3, y: 14.2), controlPoint2: NSPoint(x: x - 1.6, y: 11.6))
-                band.lineWidth = 1.5; band.lineCapStyle = .round; band.stroke()
+                band.move(to: NSPoint(x: x, y: 15.6))
+                band.curve(to: NSPoint(x: x - 1.0, y: 10.0),
+                           controlPoint1: NSPoint(x: x - 0.2, y: 13.6), controlPoint2: NSPoint(x: x - 1.1, y: 11.8))
+                band.lineWidth = 1.2; band.lineCapStyle = .round; band.stroke()
             }
             highlight.withAlphaComponent(0.6).set()
             let backLight = NSBezierPath()
-            backLight.move(to: NSPoint(x: 11.2, y: 16.8))
-            backLight.curve(to: NSPoint(x: 20.0, y: 14.0),
-                            controlPoint1: NSPoint(x: 14.4, y: 17.6), controlPoint2: NSPoint(x: 18.6, y: 16.0))
-            backLight.lineWidth = 1.1; backLight.lineCapStyle = .round; backLight.stroke()
+            backLight.move(to: NSPoint(x: 10.4, y: 14.6))
+            backLight.curve(to: NSPoint(x: 20.0, y: 13.4),
+                            controlPoint1: NSPoint(x: 13.6, y: 15.2), controlPoint2: NSPoint(x: 18.4, y: 14.8))
+            backLight.lineWidth = 1.0; backLight.lineCapStyle = .round; backLight.stroke()
             ctx.restoreGraphicsState()
+            // The dewlap's edge, so the flap reads as hanging from the throat
+            // rather than as more belly.
+            deep.withAlphaComponent(0.7).set()
+            let flap = NSBezierPath()
+            flap.move(to: NSPoint(x: 8.8, y: 9.6))
+            flap.curve(to: NSPoint(x: 5.4, y: 8.4),
+                       controlPoint1: NSPoint(x: 8.2, y: 8.9), controlPoint2: NSPoint(x: 6.8, y: 8.2))
+            flap.curve(to: NSPoint(x: 3.2, y: 11.2),
+                       controlPoint1: NSPoint(x: 4.2, y: 8.6), controlPoint2: NSPoint(x: 3.3, y: 10.0))
+            flap.lineWidth = 0.5; flap.lineCapStyle = .round; flap.stroke()
 
-            // The dorsal crest: the raised fin that runs from the casque to the
-            // tail. It is the feature that says "chameleon" more than anything
-            // but the eye, so it is a filled sail in its own value — a line of
-            // teeth in a colour close to the body reads as a rough edge and
-            // nothing more.
-            //
-            // The teeth are set on the actual back curve rather than on a
-            // straight line, so the fin follows the spine instead of floating
-            // off it at the shoulders.
+            // The dorsal crest: a row of separate spines from the back of the
+            // head down the spine, tallest at the neck, set on the back curve so
+            // they follow the spine.
             func backPoint(_ t: CGFloat) -> NSPoint {
                 let segments: [(NSPoint, NSPoint, NSPoint, NSPoint)] = [
-                    (NSPoint(x: 10.4, y: 16.2), NSPoint(x: 12.4, y: 17.6),
-                     NSPoint(x: 14.6, y: 17.5), NSPoint(x: 16.4, y: 16.8)),
-                    (NSPoint(x: 16.4, y: 16.8), NSPoint(x: 18.8, y: 16.0),
-                     NSPoint(x: 20.8, y: 14.8), NSPoint(x: 21.2, y: 12.6)),
+                    (NSPoint(x: 8.4, y: 14.9), NSPoint(x: 11.6, y: 15.0),
+                     NSPoint(x: 14.2, y: 15.6), NSPoint(x: 16.4, y: 15.4)),
+                    (NSPoint(x: 16.4, y: 15.4), NSPoint(x: 18.6, y: 15.1),
+                     NSPoint(x: 20.6, y: 14.2), NSPoint(x: 21.2, y: 12.6)),
                 ]
                 let scaled = t * CGFloat(segments.count)
                 let index = min(Int(scaled), segments.count - 1)
                 let local = scaled - CGFloat(index)
                 let (p0, c1, c2, p3) = segments[index]
                 let u = 1 - local
-                let x = u * u * u * p0.x + 3 * u * u * local * c1.x + 3 * u * local * local * c2.x + local * local * local * p3.x
-                let y = u * u * u * p0.y + 3 * u * u * local * c1.y + 3 * u * local * local * c2.y + local * local * local * p3.y
-                return NSPoint(x: x, y: y)
+                let b0: CGFloat = u * u * u, b1: CGFloat = 3 * u * u * local
+                let b2: CGFloat = 3 * u * local * local, b3: CGFloat = local * local * local
+                return NSPoint(x: b0 * p0.x + b1 * c1.x + b2 * c2.x + b3 * p3.x,
+                               y: b0 * p0.y + b1 * c1.y + b2 * c2.y + b3 * p3.y)
             }
 
-            let teeth = 9
-            let sail = NSBezierPath()
-            sail.move(to: backPoint(0))
-            for tooth in 0..<teeth {
-                let t0 = CGFloat(tooth) / CGFloat(teeth)
-                let t1 = CGFloat(tooth + 1) / CGFloat(teeth)
+            let spines = 10
+            let comb = NSBezierPath()
+            for spine in 0..<spines {
+                let t0 = CGFloat(spine) / CGFloat(spines)
+                let t1 = CGFloat(spine + 1) / CGFloat(spines)
                 let root = backPoint(t0), next = backPoint(t1)
-                // Taper: tall over the shoulders, shrinking towards the tail,
-                // the way a real crest does.
-                let height = 2.3 - 1.4 * t0
+                // Tall at the neck, down to nubs at the rump.
+                let height = 2.6 - 2.0 * t0
                 let dx = next.x - root.x, dy = next.y - root.y
                 let length = max(sqrt(dx * dx + dy * dy), 0.001)
-                // Perpendicular to the back, raked towards the tail the way a
-                // real crest lies rather than standing straight up.
                 let normal = NSPoint(x: -dy / length, y: dx / length)
-                let mid = NSPoint(x: (root.x + next.x) / 2, y: (root.y + next.y) / 2)
-                sail.line(to: NSPoint(x: mid.x + normal.x * height + dx * 0.16,
-                                      y: mid.y + normal.y * height + dy * 0.16))
-                sail.line(to: next)
+                // Each spine its own narrow triangle, raked back towards the
+                // tail, with a gap of back between it and the next.
+                let foot = NSPoint(x: root.x + dx * 0.15, y: root.y + dy * 0.15 - 0.4)
+                let heel = NSPoint(x: root.x + dx * 0.75, y: root.y + dy * 0.75 - 0.4)
+                let tip = NSPoint(x: root.x + dx * 0.7 + normal.x * height, y: root.y + dy * 0.7 + normal.y * height)
+                comb.move(to: foot); comb.line(to: tip); comb.line(to: heel); comb.close()
             }
-            // Close back along the spine, just inside the body, so the fin is
-            // attached rather than perched.
-            for tooth in stride(from: teeth, through: 0, by: -1) {
-                let point = backPoint(CGFloat(tooth) / CGFloat(teeth))
-                sail.line(to: NSPoint(x: point.x + 0.25, y: point.y - 1.1))
-            }
-            sail.close()
-
-            highlight.set(); sail.fill()
-            // A shaded root, so the fin reads as standing up off the back.
-            ctx.saveGraphicsState(); sail.addClip()
-            shade.withAlphaComponent(0.85).set()
-            let root = NSBezierPath()
-            root.move(to: backPoint(0))
-            for step in 1...12 { root.line(to: backPoint(CGFloat(step) / 12)) }
-            root.lineWidth = 1.5; root.lineCapStyle = .round; root.stroke()
-            ctx.restoreGraphicsState()
-            deep.set(); sail.lineWidth = 0.4; sail.lineJoinStyle = .round; sail.stroke()
+            highlight.set(); comb.fill()
+            deep.set(); comb.lineWidth = 0.35; comb.lineJoinStyle = .round; comb.stroke()
 
             // MARK: the head
 
-            // The eye turret: a cone of skin with a lid ring, then the eye.
-            let eye = NSPoint(x: 5.2, y: 13.6)
-            base.set()
-            NSBezierPath(ovalIn: NSRect(x: eye.x - 2.0, y: eye.y - 2.0, width: 4.0, height: 4.0)).fill()
+            // The eye: small, round and set high, with a ring of lid around it.
+            // The iris is the accept-dns light.
+            let eye = NSPoint(x: 5.4, y: 13.7)
             shade.set()
-            NSBezierPath(ovalIn: NSRect(x: eye.x - 1.62, y: eye.y - 1.62, width: 3.24, height: 3.24)).fill()
-            deep.withAlphaComponent(0.55).set()
-            let lid = NSBezierPath(ovalIn: NSRect(x: eye.x - 1.62, y: eye.y - 1.62, width: 3.24, height: 3.24))
-            lid.lineWidth = 0.45; lid.stroke()
-            // Sclera, iris, pupil, catchlight. The iris is the accept-dns light.
+            NSBezierPath(ovalIn: NSRect(x: eye.x - 1.4, y: eye.y - 1.4, width: 2.8, height: 2.8)).fill()
             NSColor(white: 0.97, alpha: 1).set()
-            NSBezierPath(ovalIn: NSRect(x: eye.x - 1.18, y: eye.y - 1.18, width: 2.36, height: 2.36)).fill()
+            NSBezierPath(ovalIn: NSRect(x: eye.x - 1.05, y: eye.y - 1.05, width: 2.1, height: 2.1)).fill()
             (eyeLit ? CharacterIcon.dnsCyan
                     : NSColor(srgbRed: 0.30, green: 0.34, blue: 0.42, alpha: 1)).set()
-            NSBezierPath(ovalIn: NSRect(x: eye.x - 0.88, y: eye.y - 0.88, width: 1.76, height: 1.76)).fill()
+            NSBezierPath(ovalIn: NSRect(x: eye.x - 0.8, y: eye.y - 0.8, width: 1.6, height: 1.6)).fill()
             NSColor(white: 0.08, alpha: 1).set()
-            NSBezierPath(ovalIn: NSRect(x: eye.x - 0.52, y: eye.y - 0.52, width: 1.04, height: 1.04)).fill()
+            NSBezierPath(ovalIn: NSRect(x: eye.x - 0.45, y: eye.y - 0.45, width: 0.9, height: 0.9)).fill()
             NSColor.white.set()
-            NSBezierPath(ovalIn: NSRect(x: eye.x + 0.25, y: eye.y + 0.45, width: 0.5, height: 0.5)).fill()
+            NSBezierPath(ovalIn: NSRect(x: eye.x + 0.2, y: eye.y + 0.35, width: 0.45, height: 0.45)).fill()
 
-            // The near pair of legs, drawn over the body: a chameleon's stance
-            // is most of what makes it a chameleon, and behind the belly they
-            // were invisible.
-            leg(hip: NSPoint(x: 17.4, y: 9.4), knee: NSPoint(x: 19.0, y: 6.9),
-                foot: NSPoint(x: 17.8, y: branchY(17.8) + 1.0), thickness: 1.7, color: shade)
-            leg(hip: NSPoint(x: 9.4, y: 9.2), knee: NSPoint(x: 7.4, y: 6.9),
-                foot: NSPoint(x: 8.6, y: branchY(8.6) + 1.0), thickness: 1.7, color: shade)
+            // The cheek shield: the big round scale below the ear.
+            let shield = NSBezierPath(ovalIn: NSRect(x: 7.3, y: 11.2, width: 1.9, height: 1.9))
+            highlight.set(); shield.fill()
+            deep.withAlphaComponent(0.6).set(); shield.lineWidth = 0.35; shield.stroke()
 
-            // Mouth: the long chameleon line from the snout back under the eye.
+            // The near pair of legs, drawn over the body, set out to the side
+            // and bent at the elbow the way a lizard holds itself up.
+            leg(hip: NSPoint(x: 17.6, y: 10.0), knee: NSPoint(x: 19.4, y: 7.4),
+                foot: NSPoint(x: 18.0, y: branchY(18.0) + 1.0), thickness: 1.6, color: shade)
+            leg(hip: NSPoint(x: 9.8, y: 10.0), knee: NSPoint(x: 8.0, y: 7.4),
+                foot: NSPoint(x: 9.0, y: branchY(9.0) + 1.0), thickness: 1.6, color: shade)
+
+            // Mouth: a short, slightly downturned line back from the snout.
             deep.withAlphaComponent(0.8).set()
             let mouth = NSBezierPath()
             mouth.move(to: NSPoint(x: 2.2, y: 12.4))
-            mouth.curve(to: NSPoint(x: 8.2, y: 12.0),
-                        controlPoint1: NSPoint(x: 4.0, y: 11.6), controlPoint2: NSPoint(x: 6.4, y: 11.5))
-            mouth.lineWidth = 0.55; mouth.lineCapStyle = .round; mouth.stroke()
+            mouth.curve(to: NSPoint(x: 6.8, y: 12.1),
+                        controlPoint1: NSPoint(x: 3.8, y: 11.9), controlPoint2: NSPoint(x: 5.4, y: 11.9))
+            mouth.lineWidth = 0.5; mouth.lineCapStyle = .round; mouth.stroke()
 
             // MARK: the tongue
 
-            let extent = lick.map { $0 > 0 && $0 < chameleonLickDuration ? tongueExtent(lickAt: $0, wrapped: tongue) : (tongue ? 1 : 0) }
+            let extent = lick.map { $0 > 0 && $0 < iguanaLickDuration ? tongueExtent(lickAt: $0, wrapped: tongue) : (tongue ? 1 : 0) }
                 ?? (tongue ? 1 : 0)
             guard extent > 0 else { return }
             // Out of the snout and round the branch ahead: the wrap is what says
