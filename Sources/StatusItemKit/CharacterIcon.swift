@@ -751,7 +751,15 @@ public enum CharacterIcon {
     /// bar. Half-point sills, mullions and shingle courses land on half pixels
     /// at 2x and hold. Anyone on a non-Retina display can pick the plain Dot in
     /// Icon ▸, which is what it is there for.
-    public static func house(lightsOn: Int, fanOn: Bool, reachable: Bool, configured: Bool) -> NSImage {
+    ///
+    /// - Parameters:
+    ///   - weather: drawn around the house — sky over the roof, rain or snow
+    ///     beside the walls — never across the windows. Nil is a clear,
+    ///     empty sky, the glyph as it always was. Only a reachable house has
+    ///     weather: a hollow one is not reporting any.
+    ///   - night: the moon instead of the sun.
+    public static func house(lightsOn: Int, fanOn: Bool, reachable: Bool, configured: Bool,
+                             weather: HouseWeather? = nil, night: Bool = false) -> NSImage {
         canvas(width: 26, height: 22) { ctx in
             let wallLight = NSColor(srgbRed: 0.96, green: 0.93, blue: 0.86, alpha: 1)
             let wallShade = NSColor(srgbRed: 0.85, green: 0.81, blue: 0.72, alpha: 1)
@@ -798,6 +806,8 @@ public enum CharacterIcon {
                 silhouette.stroke()
                 return
             }
+
+            if let weather { drawSky(weather, night: night, ctx: ctx) }
 
             // Walls, lit from above.
             wallLight.set()
@@ -877,6 +887,8 @@ public enum CharacterIcon {
             NSBezierPath(ovalIn: NSRect(x: door.maxX - 1.1, y: door.minY + 2.1, width: 0.7, height: 0.7)).fill()
             wallShade.set()
             NSBezierPath(rect: NSRect(x: door.minX - 0.9, y: wall.minY - 0.5, width: door.width + 1.8, height: 0.6)).fill()
+
+            if let weather { drawWeatherFront(weather) }
 
             guard fanOn else { return }
             // Blades in the right window, contrasting with the glass behind them.
