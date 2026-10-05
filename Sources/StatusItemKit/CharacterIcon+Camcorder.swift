@@ -8,11 +8,11 @@ import AppKit
 
 extension CharacterIcon {
     /// MacRecorder: the mascot's blue camcorder, drawn in the caterpillar's storybook
-    /// style (ink outlines, top-left-lit shading). Two eyes over a big front lens for a
-    /// snout, a yellow viewfinder and a tally light on top, a grey lens hood out the
-    /// right side. Recording lights it up: the tally glows red, the lens glass turns
-    /// red, and the eyes are wide open. Idle, the tally is a dark socket, the glass is
-    /// dark and the eyes are half-lidded. 24x22pt either way, so the bar never shifts.
+    /// style (ink outlines, top-left-lit shading), seen from the front: two eyes over
+    /// the lens — his one lens — and a yellow viewfinder and a tally light on top.
+    /// Recording lights it up: the tally glows red, the lens glass turns red, and the
+    /// eyes are wide open. Idle, the tally is a dark socket, the glass is dark and the
+    /// eyes are half-lidded. 20x22pt either way, so the bar never shifts.
     ///
     /// - Parameter focus: progress through the once-a-minute focus, 0 … 1: the
     ///   iris closes in round the glass and opens again while a glint crosses
@@ -20,7 +20,7 @@ extension CharacterIcon {
     ///   are the resting glyph, and recording ignores it — the tally light is
     ///   already talking.
     public static func camcorder(recording: Bool, focus: CGFloat = 0) -> NSImage {
-        canvas(width: 24, height: 22) { ctx in
+        canvas(width: 20, height: 22) { ctx in
             let ink = NSColor(red: 0.08, green: 0.12, blue: 0.24, alpha: 1)
             let blueLight = NSColor(red: 0.56, green: 0.80, blue: 1.00, alpha: 1)
             let blueDark = NSColor(red: 0.13, green: 0.42, blue: 0.82, alpha: 1)
@@ -42,16 +42,6 @@ extension CharacterIcon {
                 NSGradient(colors: [red.withAlphaComponent(0.9), red.withAlphaComponent(0)])?
                     .draw(in: oval(tally, 3.4, 3.4), relativeCenterPosition: .zero)
             }
-            // Lens hood out the right side: a flared grey barrel with a dark mouth.
-            let hood = NSBezierPath()
-            hood.move(to: NSPoint(x: 17, y: 6.4)); hood.line(to: NSPoint(x: 22, y: 4.6))
-            hood.curve(to: NSPoint(x: 22, y: 13.4), controlPoint1: NSPoint(x: 23.9, y: 6.2), controlPoint2: NSPoint(x: 23.9, y: 11.8))
-            hood.line(to: NSPoint(x: 17, y: 11.6)); hood.close()
-            shaded(hood, greyLight, greyDark)
-            ctx.saveGraphicsState(); hood.addClip()
-            NSColor(red: 0.20, green: 0.23, blue: 0.30, alpha: 1).set(); oval(NSPoint(x: 23, y: 9), 1.3, 4.3).fill()
-            ctx.restoreGraphicsState()
-            ink.set(); hood.stroke()
             // Viewfinder: a yellow block on top, left of centre.
             let finder = NSBezierPath(roundedRect: NSRect(x: 3.6, y: 14.6, width: 6.4, height: 3.8), xRadius: 1.1, yRadius: 1.1)
             shaded(finder, NSColor(red: 1, green: 0.92, blue: 0.45, alpha: 1), NSColor(red: 0.92, green: 0.64, blue: 0.05, alpha: 1))
@@ -77,7 +67,7 @@ extension CharacterIcon {
             ink.set(); bulb.lineWidth = 0.6; bulb.stroke()
             NSColor(white: 1, alpha: recording ? 0.95 : 0.5).set(); oval(NSPoint(x: tally.x - 0.7, y: tally.y + 0.7), 0.55, 0.55).fill()
 
-            // Eyes: whites, pupils glancing towards the lens hood, a glint each.
+            // Eyes: whites, pupils glancing to the side, a glint each.
             // Idle, a blue lid covers the top half: dozing between takes.
             for cx in [CGFloat(5.9), 12.5] {
                 let c = NSPoint(x: cx, y: 11.6)

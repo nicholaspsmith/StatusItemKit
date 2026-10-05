@@ -10,6 +10,7 @@ Versions follow [Semantic Versioning](https://semver.org/). The full rule:
 
 ## [0.23.0] - 2026-10-05
 
+- Manny (MacRecorder's camcorder) has one lens, the one in his face: the second lens hood out his side is gone, and the glyph is 20 pt wide instead of 24
 - Iguanamous sits a little further right on his branch, so the tongue's wrap round it is never cut off, and the backs of the tongue's and tail's curls now pass fully behind the wood
 
 ## [0.22.0] - 2026-10-05
