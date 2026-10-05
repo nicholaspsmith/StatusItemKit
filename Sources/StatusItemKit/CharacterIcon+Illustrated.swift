@@ -229,21 +229,30 @@ extension CharacterIcon {
     /// it in code and light clockwise from the top with the backlight `level`:
     /// any light at all lights the first, full lights all eight and brightens
     /// them. Off (level 0) or inactive, the keycap greys and the rays go.
-    public static func lumen(keycap: NSImage, level: CGFloat, active: Bool = true) -> NSImage {
+    ///
+    /// - Parameter shimmer: progress through the once-a-minute gleam, 0 … 1: a
+    ///   bright wave sweeps once clockwise round the rays from the top, each lit
+    ///   ray flaring as it passes and the unlit ones glowing faintly. 0 and 1
+    ///   are the resting glyph. Off or inactive, there is no shimmer.
+    public static func lumen(keycap: NSImage, level: CGFloat, active: Bool = true, shimmer: CGFloat = 0) -> NSImage {
         let f = max(0, min(1, level.isFinite ? level : 0))
+        let on = active && f > 0
+        let wave = on ? LumenRays.wave(shimmer) : nil
         let q = Int((f * 64).rounded())   // cache in 64ths
         let key = LumenKey(art: ObjectIdentifier(keycap), level: active ? q : 0, active: active)
-        if let cached = lumenCache[key] { return cached }
-        let on = active && f > 0
+        if wave == nil, let cached = lumenCache[key] { return cached }
         let lit = on ? max(1, Int((f * 8).rounded())) : 0
         let image = IllustratedIcon.compose(size: lumenCanvas, base: keycap,
                                             desaturate: on ? 0 : 1, alpha: on ? 1 : 0.85) { _, scale in
             guard on else { return }
-            LumenRays.draw(lit: lit, brightness: 0.6 + 0.4 * f, scale: scale)
+            LumenRays.draw(lit: lit, brightness: 0.6 + 0.4 * f, scale: scale, wave: wave)
         }
-        lumenCache[key] = image
+        if wave == nil { lumenCache[key] = image }
         return image
     }
+
+    /// How long Lumen's once-a-minute shimmer takes to sweep round his rays.
+    public static let lumenShimmerDuration: TimeInterval = 1.2
 
     /// How many of Lumen's eight rays a level lights (0 when off or inactive).
     public static func lumenRaysLit(level: CGFloat, active: Bool = true) -> Int {
@@ -282,23 +291,59 @@ enum LumenRays {
         return p
     }
 
-    static func draw(lit: Int, brightness: CGFloat, scale: CGFloat) {
-        for i in 0..<lit {
+    /// How strongly the shimmer lights each of the eight rays at `progress`
+    /// (0 … 1), or nil when nothing is lit — at rest, before and after the sweep.
+    /// The crest travels from just before ray 0 to just past ray 7, so both
+    /// ends of the sweep are dark.
+    static func wave(_ progress: CGFloat) -> [CGFloat]? {
+        guard progress.isFinite, progress > 0, progress < 1 else { return nil }
+        let spread: CGFloat = 1.6
+        let crest = -spread + progress * (7 + 2 * spread)
+        let glow = (0..<8).map { i -> CGFloat in
+            let d = abs(CGFloat(i) - crest) / spread
+            guard d < 1 else { return 0 }
+            let x = 1 - d
+            return x * x * (3 - 2 * x)   // smoothstep
+        }
+        return glow.contains { $0 > 0.001 } ? glow : nil
+    }
+
+    static func draw(lit: Int, brightness: CGFloat, scale: CGFloat, wave: [CGFloat]? = nil) {
+        for i in 0..<8 {
+            let g = wave?[i] ?? 0
+            guard i < lit || g > 0 else { continue }
             let ray = path(i)
+            guard i < lit else {
+                // An unlit ray the wave is passing: a faint ghost of gold.
+                NSGraphicsContext.saveGraphicsState()
+                if scale >= 2 {
+                    let glow = NSShadow()
+                    glow.shadowColor = gold.withAlphaComponent(0.5 * g)
+                    glow.shadowBlurRadius = 1.2
+                    glow.shadowOffset = .zero
+                    glow.set()
+                }
+                gold.withAlphaComponent(0.4 * g).set(); ray.fill()
+                NSGraphicsContext.restoreGraphicsState()
+                continue
+            }
             NSGraphicsContext.saveGraphicsState()
             if scale >= 2 {
                 let glow = NSShadow()
-                glow.shadowColor = gold.withAlphaComponent(0.75 * brightness)
-                glow.shadowBlurRadius = 1.4 * brightness
+                glow.shadowColor = gold.withAlphaComponent(min(1, 0.75 * brightness + 0.25 * g))
+                glow.shadowBlurRadius = 1.4 * brightness + 1.0 * g
                 glow.shadowOffset = .zero
                 glow.set()
             }
             // At 1x a darker keyline smears into brown, so the ray is one deeper gold instead.
             let fill = scale >= 2 ? gold : deepGold
-            fill.blended(withFraction: (1 - brightness) * 0.6, of: orange)?.withAlphaComponent(min(1, brightness + 0.15)).set()
+            fill.blended(withFraction: (1 - brightness) * 0.6 * (1 - g), of: orange)?.withAlphaComponent(min(1, brightness + 0.15 + g)).set()
             ray.fill()
+            if g > 0 {   // the gleam itself: the ray washes towards white as the crest passes
+                NSColor(srgbRed: 1, green: 0.98, blue: 0.85, alpha: 0.7 * g).set(); ray.fill()
+            }
             NSGraphicsContext.restoreGraphicsState()
-            if scale >= 2 { edge.withAlphaComponent(0.8 * brightness).set(); ray.lineWidth = 0.35; ray.stroke() }
+            if scale >= 2 { edge.withAlphaComponent(0.8 * brightness * (1 - 0.5 * g)).set(); ray.lineWidth = 0.35; ray.stroke() }
         }
     }
 }

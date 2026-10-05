@@ -153,13 +153,13 @@ app's state. Each app offers it as `MeterStyle.character` in the Icon picker.
 | `owl(session:weekly:)` | Claude Usage | Archimedes: eyelids close with the session fraction; the whites go bloodshot and the pupils run green → red with the weekly fraction. |
 | `iguana(tailscale:mullvad:acceptDNS:alert:lick:)` | VPN & DNS | Iguanamous on a branch: tail wrapped round it = Tailscale, tongue wrapped round it = Mullvad, cyan eye = accept-dns. Olive when nothing is connected, green when anything is, `alert` colour for Mullvad connecting or blocked. `iguana(color:tail:tongue:eyeLit:lick:)` takes the parts directly. |
 | `macDaddy(art:level:asleep:flourish:grin:)` | Mac Daddy | Menu Pimp from his illustrated art (`MacDaddyArt.load(from:)`): the hat is purple when cool, amber with a sweat drop when sweating, red with two drops when red-hot; greyed with a "z" when asleep. `macDaddy(level:asleep:flourish:grin:)` is the code-drawn fallback. |
-| `lumen(keycap:level:active:)` | KeyLight | Lumen, a keycap in sunglasses from illustrated art, with eight rays drawn in code that light clockwise with the backlight level. `key(level:active:)` is the code-drawn fallback. |
+| `lumen(keycap:level:active:shimmer:)` | KeyLight | Lumen, a keycap in sunglasses from illustrated art, with eight rays drawn in code that light clockwise with the backlight level; `shimmer` sweeps a gleam round them. `key(level:active:)` is the code-drawn fallback. |
 | `monitorLizard(brightness:nightShift:tongue:…)` | Monitor Lizard | Armonitor on a monitor whose screen fills blue with brightness, amber under Night Shift. |
 | `caterpillar(effects:state:running:)` | SoundChain | Carol in headphones: one lit segment per running effect (up to five); colour is the state. |
-| `house(lightsOn:fanOn:reachable:configured:weather:night:)` | Homestead | A cottage whose windows light with the lights on, a fan in one window while a fan runs, hollow when Home Assistant is unreachable, and an optional `HouseWeather` drawn around it. |
+| `house(lightsOn:fanOn:reachable:configured:weather:night:door:)` | Homestead | Gertie, a cottage whose windows light with the lights on, a fan in one window while a fan runs, hollow when Home Assistant is unreachable, and an optional `HouseWeather` drawn around it; `door` swings the front door open a crack. |
 | `menuCrane(state:)` | Menu Crane | Mendoza's head with a grab bucket: open while searching, shut on a copy, open and empty on no results. |
 | `apollo(level:online:)` | Apollo Monitor | An Apollo Twin face whose knob's tick ring lights with the monitor level; dimmed when the level cannot be changed. |
-| `camcorder(recording:)` | MacRecorder | A camcorder whose tally light and lens turn red while recording. |
+| `camcorder(recording:focus:)` | MacRecorder | Manny, a camcorder whose tally light and lens turn red while recording; `focus` closes and reopens his lens's iris. |
 | `octopus(fraction:)`, `raccoon(active:)`, `bin(active:)`, `battery(charge:color:)` | — | Not used by a current app: an octopus that gains arms and reddens with load, a raccoon and a wheelie bin that sleep when paused, and a battery with a face that fills with the charge (Battery Time draws its own glyph). |
 
 Since StatusItemKit 0.18.0, `chameleon(…)` and `chameleonLickDuration` are
@@ -167,10 +167,12 @@ deprecated forwarders to `iguana(…)` and `iguanaLickDuration`.
 
 ### Once-a-minute animations
 
-Seven mascots animate once a minute: Archimedes blinks (Claude Usage), Menu
+Ten mascots animate once a minute: Archimedes blinks (Claude Usage), Menu
 Pimp grins with a gold gleam (Mac Daddy), Carol runs (SoundChain), Iguanamous
 licks (VPN & DNS), Armonitor laps his monitor (Monitor Lizard), Volta blinks
-while his charge sloshes (Battery Time) and Apollo blinks (Apollo Monitor).
+while his charge sloshes (Battery Time), Apollo blinks (Apollo Monitor), a
+gleam sweeps round Lumen's rays (KeyLight), Manny focuses his lens (MacRecorder)
+and Gertie opens her front door a crack (Homestead).
 
 `MinuteCue` keeps them from moving at once. Every app wakes on the wall-clock
 minute and waits one second for each app ahead of it in `MinuteCue.order` that

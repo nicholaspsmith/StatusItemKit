@@ -8,6 +8,13 @@ without one is refused (`[no release]` in the tip commit is the only exception).
 Versions follow [Semantic Versioning](https://semver.org/). The full rule:
 [StatusItemKit — Releases](https://github.com/nicholaspsmith/StatusItemKit#releases-every-push-is-one).
 
+## [0.21.0] - 2026-10-05
+
+- Lumen shimmers: `lumen(keycap:level:active:shimmer:)` sweeps a gleam once round his rays, each lit ray flaring and the unlit ones glowing faintly as it passes (`lumenShimmerDuration`, 1.2 s)
+- Manny focuses: `camcorder(recording:focus:)` closes his lens's iris and opens it again while a glint crosses the glass (`camcorderFocusDuration`, 0.9 s). He is the Unblinking Eye, so his eyes stay put, and nothing moves while he records
+- Gertie welcomes you: `house(…, door:)` swings the front door open a crack and shuts it, lamplight in the gap when a light is on (`houseDoorDuration`, 1.2 s)
+- KeyLight, MacRecorder and Homestead take their turns in `MinuteCue.order`, after Apollo Monitor
+
 ## [0.20.0] - 2026-10-05
 
 - Apollo blinks: `apollo(level:online:blink:)` squashes his eye buttons shut, and `apolloBlinkDuration` / `apolloBlinkClosure(at:)` give the 550 ms blink. Apollo Monitor takes its turn in `MinuteCue.order`, last
