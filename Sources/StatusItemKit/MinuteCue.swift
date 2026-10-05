@@ -28,6 +28,9 @@ public final class MinuteCue {
         "com.nicholaspsmith.MonitorLizard",   // Armonitor laps his monitor
         "com.nicholaspsmith.BatteryTime",     // Volta blinks and sloshes
         "com.nicholaspsmith.ApolloMonitor",   // Apollo blinks
+        "com.nicholaspsmith.KeyLight",        // Lumen's rays shimmer
+        "com.nicholaspsmith.MacRecorder",     // Manny focuses his lens
+        "com.nicholaspsmith.Homestead",       // Gertie opens her door a crack
     ]
 
     /// Seconds after the minute `bundleID` should start: one per animated app

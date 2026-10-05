@@ -104,4 +104,35 @@ final class MascotAnimationTests: XCTestCase {
         XCTAssertLessThan(loop.at(1).direction.dx, 0)
         XCTAssertLessThan(loop.at(loop.length * 0.25).direction.dy, 0)
     }
+
+    // Lumen's gleam, Manny's focus and Gertie's door all end where they began.
+    func testShimmerFocusAndDoorReturnToRest() {
+        XCTAssertNil(LumenRays.wave(0)); XCTAssertNil(LumenRays.wave(1))
+        XCTAssertNotNil(LumenRays.wave(0.5))
+        XCTAssertGreaterThan(LumenRays.wave(0.5)!.max()!, 0.5)
+        for p in [CGFloat(0), 1] {
+            XCTAssertEqual(CharacterIcon.camcorderIrisClosure(at: p), 0)
+            XCTAssertEqual(CharacterIcon.houseDoorOpening(at: p), 0)
+        }
+        XCTAssertEqual(CharacterIcon.camcorderIrisClosure(at: 0.35), 1)
+        XCTAssertEqual(CharacterIcon.houseDoorOpening(at: 0.45), 1)
+    }
+
+    func testEndFramesMatchTheRestingGlyph() {
+        func png(_ i: NSImage) -> Data? {
+            let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: Int(i.size.width * 2), pixelsHigh: 44, bitsPerSample: 8,
+                                       samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)!
+            rep.size = i.size
+            NSGraphicsContext.saveGraphicsState(); NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+            i.draw(in: NSRect(origin: .zero, size: i.size)); NSGraphicsContext.restoreGraphicsState()
+            return rep.representation(using: .png, properties: [:])
+        }
+        XCTAssertEqual(png(CharacterIcon.camcorder(recording: false, focus: 1)), png(CharacterIcon.camcorder(recording: false)))
+        XCTAssertNotEqual(png(CharacterIcon.camcorder(recording: false, focus: 0.4)), png(CharacterIcon.camcorder(recording: false)))
+        XCTAssertEqual(png(CharacterIcon.camcorder(recording: true, focus: 0.4)), png(CharacterIcon.camcorder(recording: true)))
+        let house = { (d: CGFloat, r: Bool) in CharacterIcon.house(lightsOn: 1, fanOn: false, reachable: r, configured: true, door: d) }
+        XCTAssertEqual(png(house(1, true)), png(house(0, true)))
+        XCTAssertNotEqual(png(house(0.45, true)), png(house(0, true)))
+        XCTAssertEqual(png(house(0.45, false)), png(house(0, false)))
+    }
 }

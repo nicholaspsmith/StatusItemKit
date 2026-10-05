@@ -13,7 +13,13 @@ extension CharacterIcon {
     /// right side. Recording lights it up: the tally glows red, the lens glass turns
     /// red, and the eyes are wide open. Idle, the tally is a dark socket, the glass is
     /// dark and the eyes are half-lidded. 24x22pt either way, so the bar never shifts.
-    public static func camcorder(recording: Bool) -> NSImage {
+    ///
+    /// - Parameter focus: progress through the once-a-minute focus, 0 … 1: the
+    ///   iris closes in round the glass and opens again while a glint crosses
+    ///   the lens. He is the Unblinking Eye, so the eyes never move. 0 and 1
+    ///   are the resting glyph, and recording ignores it — the tally light is
+    ///   already talking.
+    public static func camcorder(recording: Bool, focus: CGFloat = 0) -> NSImage {
         canvas(width: 24, height: 22) { ctx in
             let ink = NSColor(red: 0.08, green: 0.12, blue: 0.24, alpha: 1)
             let blueLight = NSColor(red: 0.56, green: 0.80, blue: 1.00, alpha: 1)
@@ -101,8 +107,50 @@ extension CharacterIcon {
                 let iris = oval(lc, 1.55, 1.55); iris.lineWidth = 0.9
                 red.set(); iris.stroke()
             }
+            let p = recording || !focus.isFinite ? 0 : max(0, min(1, focus))
+            if p > 0 && p < 1 {
+                // Focusing: aperture blades close in to a small pupil and open again,
+                // and a glint streaks across the glass from top-left to bottom-right.
+                let iris = camcorderIrisClosure(at: p)
+                ctx.saveGraphicsState(); glass.addClip()
+                if iris > 0 {
+                    let hole = 2.5 - 1.55 * iris
+                    let ring = oval(lc, 2.6, 2.6); ring.append(oval(lc, hole, hole).reversed)
+                    // slate-metal blades, so they read against the dark glass they close over
+                    NSGradient(starting: NSColor(red: 0.50, green: 0.55, blue: 0.66, alpha: 1), ending: NSColor(red: 0.20, green: 0.23, blue: 0.32, alpha: 1))?
+                        .draw(in: ring, angle: -60)
+                    // the blades' edge: a dark rim round the opening
+                    let rim = oval(lc, hole, hole); rim.lineWidth = 0.35
+                    ink.withAlphaComponent(0.8).set(); rim.stroke()
+                }
+                let sweep = max(0, min(1, (p - 0.2) / 0.6))
+                if sweep > 0 && sweep < 1 {
+                    let along = -3.4 + 6.8 * sweep
+                    let c = NSPoint(x: lc.x + along * 0.707, y: lc.y - along * 0.707)
+                    let streak = NSBezierPath()
+                    streak.move(to: NSPoint(x: c.x - 1.6, y: c.y - 1.6)); streak.line(to: NSPoint(x: c.x + 1.6, y: c.y + 1.6))
+                    streak.lineWidth = 0.9; streak.lineCapStyle = .round
+                    NSColor(white: 1, alpha: 0.85 * sin(.pi * sweep)).set(); streak.stroke()
+                }
+                ctx.restoreGraphicsState()
+            }
             ink.set(); glass.lineWidth = 0.5; glass.stroke()
             NSColor(white: 1, alpha: 0.9).set(); oval(NSPoint(x: lc.x - 0.9, y: lc.y + 0.9), 0.7, 0.7).fill()
         }
+    }
+
+    /// How long Manny's once-a-minute focus lasts.
+    public static let camcorderFocusDuration: TimeInterval = 0.9
+
+    /// How far Manny's iris has closed at `progress` (0 … 1) through his focus,
+    /// 0 open to 1 stopped down: in quickly, a beat, then out more slowly.
+    public static func camcorderIrisClosure(at progress: CGFloat) -> CGFloat {
+        let closing: CGFloat = 0.3, hold: CGFloat = 0.12, opening: CGFloat = 0.45
+        let p = progress
+        if p <= 0 { return 0 }
+        if p < closing { let x = p / closing; return x * x * (3 - 2 * x) }
+        if p <= closing + hold { return 1 }
+        if p < closing + hold + opening { let x = (p - closing - hold) / opening; return 1 - x * x * (3 - 2 * x) }
+        return 0
     }
 }

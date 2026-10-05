@@ -769,8 +769,12 @@ public enum CharacterIcon {
     ///     empty sky, the glyph as it always was. Only a reachable house has
     ///     weather: a hollow one is not reporting any.
     ///   - night: the moon instead of the sun.
+    ///   - door: progress through the once-a-minute welcome, 0 … 1: the front
+    ///     door swings open a crack on its left hinge and shuts again, warm
+    ///     light in the gap when any light is on. 0 and 1 are the resting
+    ///     glyph; an unreachable or unconfigured house ignores it.
     public static func house(lightsOn: Int, fanOn: Bool, reachable: Bool, configured: Bool,
-                             weather: HouseWeather? = nil, night: Bool = false) -> NSImage {
+                             weather: HouseWeather? = nil, night: Bool = false, door doorProgress: CGFloat = 0) -> NSImage {
         canvas(width: 26, height: 22) { ctx in
             let wallLight = NSColor(srgbRed: 0.96, green: 0.93, blue: 0.86, alpha: 1)
             let wallShade = NSColor(srgbRed: 0.85, green: 0.81, blue: 0.72, alpha: 1)
@@ -882,7 +886,6 @@ public enum CharacterIcon {
 
             // Door: a panelled slab with a step and a knob.
             let door = NSRect(x: 11.4, y: 2.4, width: 3.2, height: 5.0)
-            doorColor.set()
             let doorPath = NSBezierPath()
             doorPath.move(to: NSPoint(x: door.minX, y: door.minY))
             doorPath.line(to: NSPoint(x: door.minX, y: door.maxY - 0.9))
@@ -891,11 +894,37 @@ public enum CharacterIcon {
                            controlPoint2: NSPoint(x: door.maxX, y: door.maxY + 0.5))
             doorPath.line(to: NSPoint(x: door.maxX, y: door.minY))
             doorPath.close()
+            // Swinging in on its left hinge, the slab foreshortens towards the
+            // hinge and the doorway behind it shows: lamplight if any light is
+            // on, the dark hall if not.
+            let ajar = houseDoorOpening(at: doorProgress.isFinite ? doorProgress : 0)
+            if ajar > 0 {
+                (lightsOn > 0 ? glassLit : glassDark).set()
+                doorPath.fill()
+                if lightsOn > 0 {   // the light falls brightest at the floor
+                    glassLitTop.withAlphaComponent(0.8).set()
+                    NSBezierPath(rect: NSRect(x: door.minX, y: door.minY, width: door.width, height: 1.4)).fill()
+                }
+            }
+            ctx.saveGraphicsState()
+            if ajar > 0 {
+                let swing = NSAffineTransform()
+                swing.translateX(by: door.minX, yBy: 0)
+                swing.scaleX(by: 1 - 0.62 * ajar, yBy: 1)
+                swing.translateX(by: -door.minX, yBy: 0)
+                swing.concat()
+            }
+            doorColor.set()
             doorPath.fill()
             NSColor(white: 0, alpha: 0.18).set()
             NSBezierPath(rect: NSRect(x: door.midX - 0.25, y: door.minY + 0.6, width: 0.5, height: 3.2)).fill()
+            if ajar > 0 {   // the swinging edge catches the light
+                NSColor(white: 1, alpha: 0.22 * ajar).set()
+                NSBezierPath(rect: NSRect(x: door.maxX - 0.6, y: door.minY, width: 0.6, height: door.height - 0.9)).fill()
+            }
             knob.set()
             NSBezierPath(ovalIn: NSRect(x: door.maxX - 1.1, y: door.minY + 2.1, width: 0.7, height: 0.7)).fill()
+            ctx.restoreGraphicsState()
             wallShade.set()
             NSBezierPath(rect: NSRect(x: door.minX - 0.9, y: wall.minY - 0.5, width: door.width + 1.8, height: 0.6)).fill()
 
@@ -929,6 +958,21 @@ public enum CharacterIcon {
             // Hub, so the three blades read as one spinning thing.
             NSBezierPath(ovalIn: NSRect(x: centre.x - 0.45, y: centre.y - 0.45, width: 0.9, height: 0.9)).fill()
         }
+    }
+
+    /// How long Gertie's once-a-minute welcome lasts: the door opens a crack and shuts.
+    public static let houseDoorDuration: TimeInterval = 1.2
+
+    /// How far ajar Gertie's front door is at `progress` (0 … 1) through her
+    /// welcome, 0 shut to 1 open a crack: eased open, held a beat, eased shut.
+    public static func houseDoorOpening(at progress: CGFloat) -> CGFloat {
+        let opening: CGFloat = 0.3, hold: CGFloat = 0.3, closing: CGFloat = 0.36
+        let p = progress
+        if p <= 0 { return 0 }
+        if p < opening { let x = p / opening; return x * x * (3 - 2 * x) }
+        if p <= opening + hold { return 1 }
+        if p < opening + hold + closing { let x = (p - opening - hold) / closing; return 1 - x * x * (3 - 2 * x) }
+        return 0
     }
 
     // MENU CRANE: Mendoza's head side-on — red cap, two big touching eyes, a long beak to the
