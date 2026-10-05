@@ -702,7 +702,22 @@ public enum CharacterIcon {
     // the mouth, and two squircle buttons above it are the eyes. The arc runs
     // from bottom-left over the top to bottom-right, ticks lighting green with
     // the level. Everything dims when the level cannot be changed.
-    public static func apollo(level: CGFloat, online: Bool) -> NSImage {
+    /// How long Apollo's once-a-minute blink lasts, the same 550 ms as Archimedes'.
+    public static let apolloBlinkDuration: TimeInterval = 0.55
+
+    /// How shut Apollo's eyes are `t` seconds into his blink, 0 open to 1 shut:
+    /// a quick close, a beat shut, a slower open.
+    public static func apolloBlinkClosure(at t: TimeInterval) -> CGFloat {
+        let closing = 0.14, hold = 0.05, opening = 0.36
+        if t <= 0 { return 0 }
+        if t < closing { let p = t / closing; return CGFloat(p * p * p) }
+        if t <= closing + hold { return 1 }
+        if t < closing + hold + opening { let p = (t - closing - hold) / opening; return CGFloat(pow(1 - p, 3)) }
+        return 0
+    }
+
+    /// - Parameter blink: 0 eyes open … 1 shut (see `apolloBlinkClosure`).
+    public static func apollo(level: CGFloat, online: Bool, blink: CGFloat = 0) -> NSImage {
         canvas(width: 22, height: 22) { ctx in
             let grey = online ? body : NSColor(white: 0.45, alpha: 1)
             let dim = NSColor(white: 0.62, alpha: 0.35)
@@ -723,10 +738,15 @@ public enum CharacterIcon {
             grey.set(); NSBezierPath(ovalIn: NSRect(x: c.x - 4, y: c.y - 4, width: 8, height: 8)).fill()
             NSColor(white: 1, alpha: online ? 0.28 : 0.12).set()
             NSBezierPath(ovalIn: NSRect(x: c.x - 2.9, y: c.y - 2.9, width: 5.8, height: 5.8)).fill()
-            // eyes: two low, wide squircle buttons with small dark pupils
+            // eyes: two low, wide squircle buttons with small dark pupils. A
+            // blink squashes each button down to a slit and hides the pupil.
+            let shut = max(0, min(1, blink))
+            let eyeH = 2.8 - 2.0 * shut
             for x in [CGFloat(3.4), CGFloat(13.4)] {
                 grey.set()
-                NSBezierPath(roundedRect: NSRect(x: x, y: 18, width: 5.2, height: 2.8), xRadius: 1.3, yRadius: 1.3).fill()
+                NSBezierPath(roundedRect: NSRect(x: x, y: 19.4 - eyeH / 2, width: 5.2, height: eyeH),
+                             xRadius: min(1.3, eyeH / 2), yRadius: min(1.3, eyeH / 2)).fill()
+                guard shut < 0.5 else { continue }
                 cut(ctx, NSBezierPath(ovalIn: NSRect(x: x + 1.95, y: 18.75, width: 1.3, height: 1.3)))
                 NSColor.black.withAlphaComponent(online ? 1 : 0.5).set()
                 NSBezierPath(ovalIn: NSRect(x: x + 1.95, y: 18.75, width: 1.3, height: 1.3)).fill()

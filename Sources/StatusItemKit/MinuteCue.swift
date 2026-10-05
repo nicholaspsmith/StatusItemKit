@@ -27,6 +27,7 @@ public final class MinuteCue {
         "com.nicholaspsmith.VPNDNSMenuBar",   // Iguanamous licks
         "com.nicholaspsmith.MonitorLizard",   // Armonitor laps his monitor
         "com.nicholaspsmith.BatteryTime",     // Volta blinks and sloshes
+        "com.nicholaspsmith.ApolloMonitor",   // Apollo blinks
     ]
 
     /// Seconds after the minute `bundleID` should start: one per animated app
