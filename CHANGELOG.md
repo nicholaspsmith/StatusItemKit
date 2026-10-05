@@ -8,6 +8,10 @@ without one is refused (`[no release]` in the tip commit is the only exception).
 Versions follow [Semantic Versioning](https://semver.org/). The full rule:
 [StatusItemKit — Releases](https://github.com/nicholaspsmith/StatusItemKit#releases-every-push-is-one).
 
+## [0.20.0] - 2026-10-05
+
+- Apollo blinks: `apollo(level:online:blink:)` squashes his eye buttons shut, and `apolloBlinkDuration` / `apolloBlinkClosure(at:)` give the 550 ms blink. Apollo Monitor takes its turn in `MinuteCue.order`, last
+
 ## [0.19.0] - 2026-10-05
 
 - Battery Time takes its turn in the once-a-minute animations, after Monitor Lizard (`MinuteCue.order`)

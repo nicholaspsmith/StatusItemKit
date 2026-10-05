@@ -167,10 +167,10 @@ deprecated forwarders to `iguana(…)` and `iguanaLickDuration`.
 
 ### Once-a-minute animations
 
-Six mascots animate once a minute: Archimedes blinks (Claude Usage), Menu
+Seven mascots animate once a minute: Archimedes blinks (Claude Usage), Menu
 Pimp grins with a gold gleam (Mac Daddy), Carol runs (SoundChain), Iguanamous
-licks (VPN & DNS), Armonitor laps his monitor (Monitor Lizard) and Volta blinks
-while his charge sloshes (Battery Time).
+licks (VPN & DNS), Armonitor laps his monitor (Monitor Lizard), Volta blinks
+while his charge sloshes (Battery Time) and Apollo blinks (Apollo Monitor).
 
 `MinuteCue` keeps them from moving at once. Every app wakes on the wall-clock
 minute and waits one second for each app ahead of it in `MinuteCue.order` that
