@@ -4,39 +4,12 @@
 
 <p align="center">Part of <strong><a href="https://menumon.nicksmith.software">Menumon</a></strong>.</p>
 
-A small framework for building **standalone macOS menu-bar apps** in Swift, with
-no plugin host such as SwiftBar. It provides what every such app needs: the
+A small framework for building **standalone macOS menu-bar apps** in Swift.
+It provides what every such app needs: the
 status-item lifecycle, a polling loop, a lazily rebuilt menu, a text/icon
 render funnel, Start at Login, notifications, data-driven meter icons, the
 Menumon mascot glyphs, and a build-and-sign script that produces a proper
 `.app` bundle. Every Menumon app is built on it.
-
-## Why not SwiftBar?
-
-[SwiftBar](https://github.com/swiftbar/SwiftBar) is a fine way to get a script
-into the menu bar. A standalone app does several things a plugin cannot:
-
-- **No host process.** Each app is its own `.app` with its own icon, process
-  and Start at Login toggle (`SMAppService`). There is nothing to install
-  first, no shared plugin directory where a stray file becomes a phantom icon,
-  and one app hanging cannot take the others down.
-- **Real AppKit menus, not rendered stdout.** A plugin's dropdown is whatever
-  its text protocol can express. Here it is a native `NSMenu`: sliders,
-  checkmarks, submenus, custom views, images, keyboard shortcuts, the system
-  colour picker.
-- **Event-driven, not re-run on a timer.** A plugin is a script run again every
-  N seconds. An app can sit on IOKit power-source notifications (Battery Time),
-  a `CGEventTap` (KeyLight, Apollo Monitor), `mullvad status listen`
-  (VPN & DNS) or ScreenCaptureKit (MacRecorder), and react the instant
-  something changes.
-- **The icon stays put.** A native status item keeps its position in the bar;
-  a plugin's refresh re-creates its item, which moves it around under menu-bar
-  managers. Signing with a stable identity (`make-app.sh`) also keeps TCC
-  grants such as Accessibility across rebuilds.
-- **Testable.** The logic lives in Swift libraries with unit tests (for example
-  `BatteryTimeCore`), not in a shell script.
-- **Data-driven icons.** `MeterIcon` and `CharacterIcon` draw live state in
-  colour from code. A plugin is limited to text and pre-rendered images.
 
 ## Requirements
 
