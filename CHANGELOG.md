@@ -8,6 +8,10 @@ without one is refused (`[no release]` in the tip commit is the only exception).
 Versions follow [Semantic Versioning](https://semver.org/). The full rule:
 [StatusItemKit — Releases](https://github.com/nicholaspsmith/StatusItemKit#releases-every-push-is-one).
 
+## [0.19.0] - 2026-10-05
+
+- Battery Time takes its turn in the once-a-minute animations, after Monitor Lizard (`MinuteCue.order`)
+
 ## [0.18.0] - 2026-10-05
 
 - VPN & DNS's mascot is now Iguanamous, an iguana: dewlap, a crest of spines, a ringed tail and clawed feet. The tail and tongue still wrap the branch for Tailscale and Mullvad, the eye still turns cyan for accept-dns, and the colours are unchanged
