@@ -8,6 +8,10 @@ without one is refused (`[no release]` in the tip commit is the only exception).
 Versions follow [Semantic Versioning](https://semver.org/). The full rule:
 [StatusItemKit — Releases](https://github.com/nicholaspsmith/StatusItemKit#releases-every-push-is-one).
 
+## [0.22.0] - 2026-10-05
+
+- The mascots animate twice a minute, on the minute and the half minute, instead of once. `MinuteCue.interval` and `MinuteCue.nextCue(after:)` give the cadence; `nextMinute(after:)` is unchanged
+
 ## [0.21.0] - 2026-10-05
 
 - Lumen shimmers: `lumen(keycap:level:active:shimmer:)` sweeps a gleam once round his rays, each lit ray flaring and the unlit ones glowing faintly as it passes (`lumenShimmerDuration`, 1.2 s)
