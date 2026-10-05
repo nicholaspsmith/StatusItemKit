@@ -395,6 +395,101 @@ final class CharacterIconTests: XCTestCase {
         XCTAssertTrue(seen.insert(bitmap(night)).inserted, "the moon draws the same as the sun")
     }
 
+    // MARK: - Homestead's weather in motion
+
+    private func house(_ weather: HouseWeather, night: Bool = false, phase: CGFloat? = nil,
+                       intensity: CGFloat? = nil) -> Data {
+        if let phase {
+            return bitmap(CharacterIcon.house(lightsOn: 1, fanOn: false, reachable: true, configured: true,
+                                              weather: weather, night: night, weatherPhase: phase, intensity: intensity))
+        }
+        return bitmap(CharacterIcon.house(lightsOn: 1, fanOn: false, reachable: true, configured: true,
+                                          weather: weather, night: night))
+    }
+
+    private func largestChannelDifference(_ a: Data, _ b: Data) -> Int {
+        zip(a, b).reduce(0) { max($0, abs(Int($1.0) - Int($1.1))) }
+    }
+
+    private let skies: [(HouseWeather, Bool)] = HouseWeather.allCases.map { ($0, false) } + [(.clear, true), (.partlyCloudy, true)]
+
+    func testPhaseZeroIsTheStillGlyphAndALoopEndsWhereItBegan() {
+        for (weather, night) in skies {
+            let still = house(weather, night: night)
+            XCTAssertEqual(house(weather, night: night, phase: 0), still, "\(weather) night=\(night) at phase 0")
+            XCTAssertEqual(house(weather, night: night, phase: 1), still, "\(weather) night=\(night) at phase 1")
+            XCTAssertEqual(house(weather, night: night, phase: 3), still, "\(weather) night=\(night) at phase 3")
+            // The last instant of the loop is all but the first: no seam.
+            XCTAssertLessThanOrEqual(largestChannelDifference(house(weather, night: night, phase: 0.99995), still), 12,
+                                     "\(weather) night=\(night) jumps where the loop wraps")
+            XCTAssertEqual(house(weather, night: night, phase: .nan), still)
+        }
+    }
+
+    func testDefaultIntensityIsTheStillGlyphs() {
+        XCTAssertEqual(house(.rain, phase: 0, intensity: 0.2), house(.rain))
+        XCTAssertEqual(house(.heavyRain, phase: 0, intensity: 0.6), house(.heavyRain))
+        XCTAssertEqual(house(.heavyRain, phase: 0, intensity: 0), house(.heavyRain), "heavy rain is never drawn lighter")
+        XCTAssertEqual(house(.storm, phase: 0, intensity: 0.2), house(.storm))
+        XCTAssertEqual(house(.snow, phase: 0, intensity: 0.5), house(.snow))
+        XCTAssertEqual(house(.sleet, phase: 0, intensity: 0.2), house(.sleet))
+    }
+
+    func testEveryWeatherMoves() {
+        for (weather, night) in skies {
+            let still = house(weather, night: night)
+            let moved = [0.2, 0.45, 0.7].map { house(weather, night: night, phase: $0) }
+            XCTAssertTrue(moved.contains { $0 != still }, "\(weather) night=\(night) never moves")
+        }
+    }
+
+    func testIntensitySetsHowManyDropsFall() {
+        func drops(_ weather: HouseWeather, _ given: CGFloat?) -> Int {
+            CharacterIcon.rainDropCount(weather, CharacterIcon.precipitationIntensity(weather, given))
+        }
+        func flakes(_ weather: HouseWeather, _ given: CGFloat?) -> Int {
+            CharacterIcon.snowFlakeCount(weather, CharacterIcon.precipitationIntensity(weather, given))
+        }
+        // The still glyph's counts.
+        XCTAssertEqual(drops(.rain, nil), 5)
+        XCTAssertEqual(drops(.heavyRain, nil), 9)
+        XCTAssertEqual(drops(.storm, nil), 5)
+        XCTAssertEqual(drops(.sleet, nil), 3)
+        XCTAssertEqual(flakes(.snow, nil), 6)
+        XCTAssertEqual(flakes(.sleet, nil), 3)
+        // A drizzle to a downpour.
+        XCTAssertEqual(drops(.rain, 0), 3)
+        XCTAssertEqual(drops(.rain, 1), 13)
+        XCTAssertLessThan(drops(.rain, 0.3), drops(.rain, 0.7))
+        XCTAssertEqual(drops(.heavyRain, 0.1), 9)
+        XCTAssertEqual(drops(.heavyRain, 1), 13)
+        XCTAssertLessThan(flakes(.snow, 0), flakes(.snow, 1))
+        XCTAssertEqual(drops(.snow, 1), 0)
+        XCTAssertEqual(flakes(.rain, 1), 0)
+        XCTAssertNotEqual(house(.rain, phase: 0.3, intensity: 0), house(.rain, phase: 0.3, intensity: 1))
+        XCTAssertNotEqual(house(.snow, phase: 0.3, intensity: 0), house(.snow, phase: 0.3, intensity: 1))
+    }
+
+    func testTheBoltFlickersRarely() {
+        // Photosensitivity: one flash at a time, seconds apart, and brief.
+        let flashes = CharacterIcon.boltFlashes.sorted()
+        for (index, start) in flashes.enumerated() {
+            let next = index + 1 < flashes.count ? flashes[index + 1] : flashes[0] + 1
+            XCTAssertGreaterThanOrEqual(Double(next - start) * CharacterIcon.houseWeatherLoopDuration, 5)
+        }
+        XCTAssertEqual(CharacterIcon.boltFlash(at: 0), 0)
+        let lit = stride(from: 0.0, to: 1.0, by: 0.0005).filter { CharacterIcon.boltFlash(at: CGFloat($0)) != 0 }
+        XCTAssertLessThan(Double(lit.count) * 0.0005 * CharacterIcon.houseWeatherLoopDuration, 2.5)
+    }
+
+    func testFrameRatesFitTheLoop() {
+        for weather in HouseWeather.allCases {
+            let frames = CharacterIcon.houseWeatherFrameRate(weather) * CharacterIcon.houseWeatherLoopDuration
+            XCTAssertEqual(frames, frames.rounded(), "\(weather)")
+            XCTAssertLessThanOrEqual(CharacterIcon.houseWeatherFrameRate(weather), 15)
+        }
+    }
+
     func testAnUnreachableHouseHasNoWeather() {
         let hollow = CharacterIcon.house(lightsOn: 0, fanOn: false, reachable: false, configured: true)
         let rainy = CharacterIcon.house(lightsOn: 0, fanOn: false, reachable: false, configured: true, weather: .rain)

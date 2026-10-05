@@ -8,6 +8,12 @@ without one is refused (`[no release]` in the tip commit is the only exception).
 Versions follow [Semantic Versioning](https://semver.org/). The full rule:
 [StatusItemKit — Releases](https://github.com/nicholaspsmith/StatusItemKit#releases-every-push-is-one).
 
+## [0.24.0] - 2026-10-05
+
+- Gertie's weather moves: `house(…, weatherPhase:intensity:)` loops gently over `houseWeatherLoopDuration` (24 s). The sun gleams and slowly turns, the moon glows and a star twinkles, clouds drift or pass behind the roof, rain and snow fall beside the walls (from under the eaves, never across the windows), fog banks slide, gusts blow out and fade, and a storm's bolt flickers about every eleven seconds. Phase 0 is the still glyph, unchanged
+- `intensity` (0 … 1) sets how hard it rains or snows: from a few drops to a downpour, and how fast the rain falls. Nil keeps each weather's usual look
+- `houseWeatherFrameRate(_:)` says how many frames a second each weather is worth drawing (8–12), so an app can skip the frames in between
+
 ## [0.23.0] - 2026-10-05
 
 - Manny (MacRecorder's camcorder) has one lens, the one in his face: the second lens hood out his side is gone, and the glyph is 20 pt wide instead of 24
