@@ -312,27 +312,36 @@ public enum CharacterIcon {
             // The branch runs the full width, rising slightly, and everything
             // else is positioned off it: feet stand on it, the tail wraps under
             // it, the tongue catches it ahead of the snout.
-            func branchY(_ x: CGFloat) -> CGFloat { 5.0 + x * 0.05 }
+            // The animal sits `shift` right of the canvas's left edge so the
+            // tongue's wrap round the branch is never cut off; the branch itself
+            // spans the whole width. `branchY` takes animal coordinates.
+            let shift: CGFloat = 1.2
+            func branchLine(_ x: CGFloat) -> CGFloat { 5.0 + x * 0.05 }
+            func branchY(_ x: CGFloat) -> CGFloat { branchLine(x + shift) }
             let branchThickness: CGFloat = 2.5
 
             let branch = NSBezierPath()
-            branch.move(to: NSPoint(x: -0.5, y: branchY(-0.5)))
-            branch.line(to: NSPoint(x: 30.5, y: branchY(30.5)))
+            branch.move(to: NSPoint(x: -0.5, y: branchLine(-0.5)))
+            branch.line(to: NSPoint(x: 30.5, y: branchLine(30.5)))
             branch.lineWidth = branchThickness
             branch.lineCapStyle = .round
             stick.set(); branch.stroke()
             barkDark.set(); branch.lineWidth = 0.7
             let underside = NSBezierPath()
-            underside.move(to: NSPoint(x: 0, y: branchY(0) - 0.85))
-            underside.line(to: NSPoint(x: 30, y: branchY(30) - 0.85))
+            underside.move(to: NSPoint(x: 0, y: branchLine(0) - 0.85))
+            underside.line(to: NSPoint(x: 30, y: branchLine(30) - 0.85))
             underside.lineWidth = 0.6; underside.lineCapStyle = .round; underside.stroke()
             barkLight.set()
             for x in [CGFloat(3.0), 12.0, 24.0] {
                 let nub = NSBezierPath()
-                nub.move(to: NSPoint(x: x, y: branchY(x) + 0.2))
-                nub.line(to: NSPoint(x: x + 1.2, y: branchY(x) + 0.5))
+                nub.move(to: NSPoint(x: x, y: branchLine(x) + 0.2))
+                nub.line(to: NSPoint(x: x + 1.2, y: branchLine(x) + 0.5))
                 nub.lineWidth = 0.45; nub.lineCapStyle = .round; nub.stroke()
             }
+
+            let animal = NSAffineTransform()
+            animal.translateX(by: shift, yBy: 0)
+            animal.concat()
 
             /// Redraw a span of the branch on top of whatever has been drawn.
             /// A limb that crosses the wood and comes back is what reads as
@@ -387,7 +396,8 @@ public enum CharacterIcon {
             if tail {
                 // The far side of the curl goes behind the wood, and the tip
                 // comes back over it.
-                branchOver(from: 22.8, to: 27.6)
+                // Past the curl's right side, which goes behind the wood.
+                branchOver(from: 22.8, to: 25.0 + 2.7 + 1.1)
                 let tip = NSBezierPath()
                 tip.appendArc(withCenter: NSPoint(x: 25.0, y: branchY(25.0)), radius: 2.7,
                               startAngle: 200, endAngle: 100, clockwise: true)
@@ -593,7 +603,8 @@ public enum CharacterIcon {
                 shot.appendArc(withCenter: catchPoint, radius: wrapRadius,
                                startAngle: 20, endAngle: -300, clockwise: true)
                 strokeTongue(shot)
-                branchOver(from: -0.5, to: 3.4)
+                // Past the wrap's right side, which goes behind the wood.
+                branchOver(from: -0.5 - shift, to: catchPoint.x + wrapRadius + 0.7)
                 let curlBack = NSBezierPath()
                 curlBack.appendArc(withCenter: catchPoint, radius: wrapRadius,
                                    startAngle: 190, endAngle: 60, clockwise: true)
@@ -652,7 +663,8 @@ public enum CharacterIcon {
             }
             strokeTongue(polyline(shown[...]))
             if let front = frontFrom, shown.count > front + 1 {
-                branchOver(from: -0.5, to: 3.4)
+                // Past the wrap's right side, which goes behind the wood.
+                branchOver(from: -0.5 - shift, to: catchPoint.x + wrapRadius + 0.7)
                 strokeTongue(polyline(shown[front...]))
             }
             // The club tip.

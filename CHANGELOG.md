@@ -8,6 +8,11 @@ without one is refused (`[no release]` in the tip commit is the only exception).
 Versions follow [Semantic Versioning](https://semver.org/). The full rule:
 [StatusItemKit — Releases](https://github.com/nicholaspsmith/StatusItemKit#releases-every-push-is-one).
 
+## [0.23.0] - 2026-10-05
+
+- Manny (MacRecorder's camcorder) has one lens, the one in his face: the second lens hood out his side is gone, and the glyph is 20 pt wide instead of 24
+- Iguanamous sits a little further right on his branch, so the tongue's wrap round it is never cut off, and the backs of the tongue's and tail's curls now pass fully behind the wood
+
 ## [0.22.0] - 2026-10-05
 
 - The mascots animate twice a minute, on the minute and the half minute, instead of once. `MinuteCue.interval` and `MinuteCue.nextCue(after:)` give the cadence; `nextMinute(after:)` is unchanged
