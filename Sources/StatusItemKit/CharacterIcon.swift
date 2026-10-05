@@ -785,8 +785,20 @@ public enum CharacterIcon {
     ///     door swings open a crack on its left hinge and shuts again, warm
     ///     light in the gap when any light is on. 0 and 1 are the resting
     ///     glyph; an unreachable or unconfigured house ignores it.
+    ///   - weatherPhase: how far through the weather's loop of
+    ///     `houseWeatherLoopDuration` seconds, 0 ..< 1 (wrapped, so 1 is 0).
+    ///     The sun gleams, clouds drift or pass behind the roof, rain and snow
+    ///     fall, fog banks slide, gusts blow out and fade, and a storm's bolt
+    ///     flickers now and then. 0 is the still glyph.
+    ///   - intensity: how hard it is raining or snowing, 0 (a drizzle, a few
+    ///     flakes) … 1 (a downpour): the number of drops, and how fast rain
+    ///     falls. Nil is the weather's own default — the still glyph's count.
+    ///     Heavy rain is never drawn lighter than its default.
     public static func house(lightsOn: Int, fanOn: Bool, reachable: Bool, configured: Bool,
-                             weather: HouseWeather? = nil, night: Bool = false, door doorProgress: CGFloat = 0) -> NSImage {
+                             weather: HouseWeather? = nil, night: Bool = false, door doorProgress: CGFloat = 0,
+                             weatherPhase: CGFloat = 0, intensity: CGFloat? = nil) -> NSImage {
+        let motion = SkyMotion(phase: weatherPhase, intensity: intensity)
+        return
         canvas(width: 26, height: 22) { ctx in
             let wallLight = NSColor(srgbRed: 0.96, green: 0.93, blue: 0.86, alpha: 1)
             let wallShade = NSColor(srgbRed: 0.85, green: 0.81, blue: 0.72, alpha: 1)
@@ -834,7 +846,7 @@ public enum CharacterIcon {
                 return
             }
 
-            if let weather { drawSky(weather, night: night, ctx: ctx) }
+            if let weather { drawSky(weather, night: night, ctx: ctx, motion: motion) }
 
             // Walls, lit from above.
             wallLight.set()
@@ -940,7 +952,7 @@ public enum CharacterIcon {
             wallShade.set()
             NSBezierPath(rect: NSRect(x: door.minX - 0.9, y: wall.minY - 0.5, width: door.width + 1.8, height: 0.6)).fill()
 
-            if let weather { drawWeatherFront(weather) }
+            if let weather { drawWeatherFront(weather, ctx: ctx, motion: motion) }
 
             guard fanOn else { return }
             // Blades in the right window, contrasting with the glass behind them.
