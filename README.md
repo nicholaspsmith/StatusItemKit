@@ -26,7 +26,7 @@ Menumon mascot glyphs, and a build-and-sign script that produces a proper
 | `MenuBuilder` | `labelWidth(...)` and a view-based `textView(...)` that avoids NSMenu's keyboard-shortcut column (explicit frames, not Auto Layout). |
 | `MeterIcon` | Full-colour status glyphs drawn in code: `dot`, `symbol` (an SF Symbol, falling back to a dot), and the proportional `gauge` / `arc` / `pie` / `wedge` meters, which take a `0...1` fraction and a colour. |
 | `CharacterIcon` | The Menumon mascots as status glyphs that carry the app's data. See [Character icons](#character-icons). |
-| `MinuteCue` / `IconAnimation` | The once-a-minute mascot animations, taken in turn. See [Once-a-minute animations](#once-a-minute-animations). |
+| `MinuteCue` / `IconAnimation` | The mascot animations, twice a minute, taken in turn. See [Mascot animations](#mascot-animations). |
 | `MonitorLizardLap` | Monitor Lizard's full-screen lap: a 3.4 s click-through overlay in which Armonitor leaves his menu-bar slot, runs counterclockwise round the screen and returns. |
 | `IllustratedIcon` | Menu-bar images from mascot art rather than code: `compose` builds a 1× + 2× non-template image from a base PNG, desaturates it, recolours a masked region keeping its shading, and draws live overlays on top; `load(named:in:)` reads a `name.png` + `name@2x.png` pair from a bundle. |
 | `Severity` | `level(pct:warnPct:)` → `.normal` / `.elevated` / `.high`, each with a `.color`. |
@@ -165,25 +165,26 @@ app's state. Each app offers it as `MeterStyle.character` in the Icon picker.
 Since StatusItemKit 0.18.0, `chameleon(…)` and `chameleonLickDuration` are
 deprecated forwarders to `iguana(…)` and `iguanaLickDuration`.
 
-### Once-a-minute animations
+### Mascot animations
 
-Ten mascots animate once a minute: Archimedes blinks (Claude Usage), Menu
+Ten mascots animate twice a minute, on the minute and the half minute: Archimedes blinks (Claude Usage), Menu
 Pimp grins with a gold gleam (Mac Daddy), Carol runs (SoundChain), Iguanamous
 licks (VPN & DNS), Armonitor laps his monitor (Monitor Lizard), Volta blinks
 while his charge sloshes (Battery Time), Apollo blinks (Apollo Monitor), a
 gleam sweeps round Lumen's rays (KeyLight), Manny focuses his lens (MacRecorder)
 and Gertie opens her front door a crack (Homestead).
 
-`MinuteCue` keeps them from moving at once. Every app wakes on the wall-clock
-minute and waits one second for each app ahead of it in `MinuteCue.order` that
-is running, in the order above. No coordination is needed beyond that list:
-every app reads the same running set at the same moment. The timer is
-re-aimed each minute and after wake or a clock change, so it never drifts.
+`MinuteCue` keeps them from moving at once. Every app wakes on each cue (the
+wall clock's :00 and :30, `MinuteCue.interval` apart) and waits one second for
+each app ahead of it in `MinuteCue.order` that is running, in the order above.
+No coordination is needed beyond that list: every app reads the same running
+set at the same moment. The timer is re-aimed each cue and after wake or a
+clock change, so it never drifts.
 Everything is skipped under Reduce Motion. `IconAnimation` drives the frames
 at 60 fps whether or not a menu is open.
 
 Monitor Lizard also plays `MonitorLizardLap` at launch, when a new display
-appears and when Night Shift turns on or off; his once-a-minute lap stays in
+appears and when Night Shift turns on or off; his regular lap stays in
 the icon (`monitorLizard(…, lap:)`).
 
 ## The Icon menu

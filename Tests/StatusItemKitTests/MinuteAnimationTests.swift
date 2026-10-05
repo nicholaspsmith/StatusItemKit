@@ -34,6 +34,9 @@ final class MinuteCueTests: XCTestCase {
     func testNextMinute() {
         XCTAssertEqual(MinuteCue.nextMinute(after: Date(timeIntervalSince1970: 1_000_000_030.4)).timeIntervalSince1970, 1_000_000_080)
         XCTAssertEqual(MinuteCue.nextMinute(after: Date(timeIntervalSince1970: 1_000_000_020)).timeIntervalSince1970, 1_000_000_080)
+        // Cues fall on the half minute as well as the minute.
+        XCTAssertEqual(MinuteCue.nextCue(after: Date(timeIntervalSince1970: 1_000_000_030.4)).timeIntervalSince1970, 1_000_000_050)
+        XCTAssertEqual(MinuteCue.nextCue(after: Date(timeIntervalSince1970: 1_000_000_050)).timeIntervalSince1970, 1_000_000_080)
     }
 }
 

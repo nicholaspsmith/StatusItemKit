@@ -6,18 +6,19 @@
 
 import AppKit
 
-/// Once a minute, each animated mascot does its thing — and when several are
-/// running they take turns, a second apart, rather than all moving at once.
+/// Twice a minute, on the minute and the half minute, each animated mascot
+/// does its thing — and when several are running they take turns, a second
+/// apart, rather than all moving at once. (The name predates the second cue.)
 ///
-/// Every app wakes on the wall-clock minute and counts how many of the
-/// animated apps ahead of it in `order` are running; that count is how many
-/// seconds it waits. With Archimedes and Carol running, Archimedes goes at
-/// :00 and Carol at :01; add Menu Pimp and he takes :01, Carol moving to :02.
+/// Every app wakes on the cue and counts how many of the animated apps ahead
+/// of it in `order` are running; that count is how many seconds it waits.
+/// With Archimedes and Carol running, Archimedes goes at :00 and :30 and Carol
+/// at :01 and :31; add Menu Pimp and he takes :01, Carol moving to :02.
 /// No coordination beyond the list: every app reads the same running set at
 /// the same moment, so they agree without talking.
 ///
 /// Skipped entirely under Reduce Motion. The timer is one-shot and re-aimed
-/// each minute, and again after wake or a clock change, so it never drifts.
+/// each cue, and again after wake or a clock change, so it never drifts.
 public final class MinuteCue {
     /// The animated apps, in the order they take their turn.
     public static let order = [
@@ -33,12 +34,20 @@ public final class MinuteCue {
         "com.nicholaspsmith.Homestead",       // Gertie opens her door a crack
     ]
 
-    /// Seconds after the minute `bundleID` should start: one per animated app
+    /// Seconds after the cue `bundleID` should start: one per animated app
     /// ahead of it that is running. An app missing from `order` goes after
     /// every one that is in it.
     public static func slot(of bundleID: String, running: Set<String>, order: [String] = order) -> Int {
         let ahead = order.firstIndex(of: bundleID).map { order[..<$0] } ?? order[...]
         return ahead.filter(running.contains).count
+    }
+
+    /// Seconds between cues: every mascot animates twice a minute.
+    public static let interval: TimeInterval = 30
+
+    /// The next cue — the wall clock's next :00 or :30 — strictly after `date`.
+    public static func nextCue(after date: Date) -> Date {
+        Date(timeIntervalSince1970: (floor(date.timeIntervalSince1970 / interval) + 1) * interval)
     }
 
     /// The next whole minute of the wall clock strictly after `date`.
@@ -78,7 +87,7 @@ public final class MinuteCue {
 
     private func schedule() {
         minuteTimer?.invalidate()
-        let timer = Timer(fire: Self.nextMinute(after: Date()), interval: 0, repeats: false) { [weak self] _ in
+        let timer = Timer(fire: Self.nextCue(after: Date()), interval: 0, repeats: false) { [weak self] _ in
             self?.minute()
             self?.schedule()
         }
