@@ -366,4 +366,38 @@ final class CharacterIconTests: XCTestCase {
             }
         } }
     }
+
+    // MARK: - Homestead's weather
+
+    private func bitmap(_ image: NSImage) -> Data {
+        let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 52, pixelsHigh: 44, bitsPerSample: 8,
+                                   samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+                                   colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)!
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+        image.draw(in: NSRect(x: 0, y: 0, width: 52, height: 44))
+        NSGraphicsContext.restoreGraphicsState()
+        return Data(bytes: rep.bitmapData!, count: rep.bytesPerRow * rep.pixelsHigh)
+    }
+
+    func testEveryWeatherLooksDifferentAndNoneChangesTheBareHouse() {
+        let bare = bitmap(CharacterIcon.house(lightsOn: 1, fanOn: false, reachable: true, configured: true))
+        XCTAssertEqual(bitmap(CharacterIcon.house(lightsOn: 1, fanOn: false, reachable: true, configured: true,
+                                                  weather: nil)), bare)
+        var seen: Set<Data> = [bare]
+        for weather in HouseWeather.allCases {
+            let image = CharacterIcon.house(lightsOn: 1, fanOn: false, reachable: true, configured: true, weather: weather)
+            XCTAssertEqual(image.size, NSSize(width: 26, height: 22))
+            XCTAssertTrue(seen.insert(bitmap(image)).inserted, "\(weather) draws the same as another weather")
+        }
+        let night = CharacterIcon.house(lightsOn: 1, fanOn: false, reachable: true, configured: true,
+                                        weather: .clear, night: true)
+        XCTAssertTrue(seen.insert(bitmap(night)).inserted, "the moon draws the same as the sun")
+    }
+
+    func testAnUnreachableHouseHasNoWeather() {
+        let hollow = CharacterIcon.house(lightsOn: 0, fanOn: false, reachable: false, configured: true)
+        let rainy = CharacterIcon.house(lightsOn: 0, fanOn: false, reachable: false, configured: true, weather: .rain)
+        XCTAssertEqual(bitmap(rainy), bitmap(hollow))
+    }
 }

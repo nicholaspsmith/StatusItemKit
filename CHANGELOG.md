@@ -8,6 +8,10 @@ without one is refused (`[no release]` in the tip commit is the only exception).
 Versions follow [Semantic Versioning](https://semver.org/). The full rule:
 [StatusItemKit — Releases](https://github.com/nicholaspsmith/StatusItemKit#releases-every-push-is-one).
 
+## [0.17.0] - 2026-10-05
+
+- feat: Homestead's house has weather. `house(…, weather:night:)` draws a `HouseWeather` around the cottage — sun or moon behind the roof, clouds over it, rain, snow, sleet or lightning beside the walls, fog, wind — and never across the windows. Without a weather the glyph is unchanged
+
 ## [0.16.3] - 2026-10-02
 
 - Builds again with Swift 6.2: the Bernstein sum in a mascot's tongue curve is split so the compiler can type-check it (every app depending on StatusItemKit failed to build). The drawing is unchanged
