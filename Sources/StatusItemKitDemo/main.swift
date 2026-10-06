@@ -41,18 +41,10 @@ final class DemoApp: NSObject, NSApplicationDelegate {
         notifyItem.target = self
         menu.addItem(notifyItem)
 
-        let login = NSMenuItem(title: "Start at Login", action: #selector(toggleLogin), keyEquivalent: "")
-        login.target = self
-        login.state = LoginItem.isEnabled ? .on : .off
-        menu.addItem(login)
-
-        menu.addItem(NSMenuItem.separator())
-        // No target: terminate(_:) travels the responder chain to NSApp.
-        menu.addItem(NSMenuItem(title: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+        SettingsMenu.addFooter(to: menu, appName: "StatusItemKit Demo")
     }
 
     @objc private func notifyTest() { notifier.post(title: "StatusItemKit", body: "Test notification.") }
-    @objc private func toggleLogin() { LoginItem.toggle() }
 }
 
 let app = NSApplication.shared
