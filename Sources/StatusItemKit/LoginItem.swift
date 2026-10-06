@@ -31,8 +31,13 @@ public enum LoginItem {
     /// Toggle registration. On failure (most often: app not in /Applications),
     /// shows a warning alert.
     public static func toggle() {
+        set(!isEnabled)
+    }
+
+    /// Register or unregister; on failure, shows the same warning alert.
+    public static func set(_ enabled: Bool) {
         do {
-            try setEnabled(!isEnabled)
+            try setEnabled(enabled)
         } catch {
             let alert = NSAlert()
             alert.messageText = "Couldn't toggle Start at Login"

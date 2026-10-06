@@ -8,6 +8,11 @@ without one is refused (`[no release]` in the tip commit is the only exception).
 Versions follow [Semantic Versioning](https://semver.org/). The full rule:
 [StatusItemKit — Releases](https://github.com/nicholaspsmith/StatusItemKit#releases-every-push-is-one).
 
+## [0.26.0] - 2026-10-06
+
+- feat: `ToggleMenuItem`: a checkbox menu item that keeps the menu open. Click it, or highlight it with the arrow keys and press Return or Space, and the tick flips and `onToggle` runs while the menu stays up. It looks exactly like a native checkbox row, light and dark
+- Settings ▸ Start at Login uses it, so turning it on or off no longer closes the menu
+
 ## [0.25.0] - 2026-10-05
 
 - feat: `SettingsMenu`: one Settings submenu for every app (the app's own settings, Icon, Start at Login, and the version in grey at the bottom), and `addFooter` for Settings + Quit

@@ -35,10 +35,7 @@ public enum SettingsMenu {
         var shared: [NSMenuItem] = []
         if let appearance { shared.append(appearance.menuItem()) }
         if startAtLogin {
-            let login = NSMenuItem(title: "Start at Login", action: #selector(Target.toggleLogin), keyEquivalent: "")
-            login.target = Target.shared
-            login.state = LoginItem.isEnabled ? .on : .off
-            shared.append(login)
+            shared.append(loginItem())
         }
         if !shared.isEmpty {
             if submenu.numberOfItems > 0 { submenu.addItem(.separator()) }
@@ -64,8 +61,23 @@ public enum SettingsMenu {
         menu.addItem(quit)
     }
 
-    private final class Target: NSObject {
-        static let shared = Target()
-        @objc func toggleLogin() { LoginItem.toggle() }
+    /// Start at Login as a keep-open checkbox. When macOS refuses (the app is
+    /// not in an Applications folder) the tick snaps back to the real state,
+    /// the menu closes, and the usual alert explains why.
+    static func loginItem() -> NSMenuItem {
+        weak var row: ToggleMenuItemView?
+        let item = ToggleMenuItem.make(title: "Start at Login", isOn: LoginItem.isEnabled) { on in
+            do {
+                try LoginItem.setEnabled(on)
+            } catch {
+                row?.isOn = LoginItem.isEnabled
+                row?.enclosingMenuItem?.menu?.cancelTracking()
+                // An alert cannot run inside menu tracking; show it once the
+                // menu has gone.
+                DispatchQueue.main.async { LoginItem.set(on) }
+            }
+        }
+        row = ToggleMenuItem.view(of: item)
+        return item
     }
 }
