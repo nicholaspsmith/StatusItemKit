@@ -16,18 +16,18 @@ final class CharacterIconTests: XCTestCase {
         XCTAssertEqual(CharacterIcon.key(level: 0.5).size, NSSize(width: 22, height: 22))
         XCTAssertEqual(CharacterIcon.apollo(level: 0.5, online: true).size, NSSize(width: 22, height: 22))
         XCTAssertEqual(CharacterIcon.camcorder(recording: true).size, NSSize(width: 20, height: 22))
+        XCTAssertEqual(CharacterIcon.raccoon(active: false).size, NSSize(width: 26, height: 22))
+        XCTAssertEqual(CharacterIcon.bin(active: true).size, NSSize(width: 24, height: 22))
         XCTAssertFalse(owl.isTemplate)
+        XCTAssertFalse(CharacterIcon.raccoon(active: false).isTemplate)
+        XCTAssertFalse(CharacterIcon.bin(active: true).isTemplate)
     }
 
     func testCharactersAreNonTemplate18pt() {
-        for img in [
-            CharacterIcon.battery(charge: 0.7, color: .systemGreen),
-            CharacterIcon.raccoon(active: false), CharacterIcon.bin(active: true),
-        ] {
-            XCTAssertFalse(img.isTemplate)
-            XCTAssertEqual(img.size.width, 18, accuracy: 0.001)
-            XCTAssertEqual(img.size.height, 18, accuracy: 0.001)
-        }
+        let img = CharacterIcon.battery(charge: 0.7, color: .systemGreen)
+        XCTAssertFalse(img.isTemplate)
+        XCTAssertEqual(img.size.width, 18, accuracy: 0.001)
+        XCTAssertEqual(img.size.height, 18, accuracy: 0.001)
     }
 
     func testSeaStagesByQuarter() {
