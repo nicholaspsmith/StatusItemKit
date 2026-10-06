@@ -68,6 +68,11 @@ final class ToggleMenuItemTests: XCTestCase {
         let view = ToggleMenuItem.view(of: item)
         XCTAssertNotNil(view)
         XCTAssertEqual(item.title, "Show Sessions")
+        XCTAssertTrue(view!.isOn)
+        // The item always reports .on, so AppKit keeps the checkmark column
+        // whatever the tick (it would relayout the whole menu otherwise).
+        XCTAssertEqual(item.state, .on)
+        view!.isOn = false
         XCTAssertEqual(item.state, .on)
         XCTAssertEqual(item.toolTip, "tip")
         XCTAssertTrue(view!.autoresizingMask.contains(.width))

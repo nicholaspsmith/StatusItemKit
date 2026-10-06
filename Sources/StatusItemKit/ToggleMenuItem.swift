@@ -45,7 +45,13 @@ public enum ToggleMenuItem {
         // AppKit itself performs the item, e.g. VoiceOver pressing the row.
         item.target = view
         item.view = view
-        item.state = isOn ? .on : .off
+        // AppKit lays out the whole menu around whether any item has a state:
+        // with one it reserves the checkmark column (titles at 30 pt), with
+        // none it drops it (titles at ~16 pt). So the item always says `.on`,
+        // whatever its tick: the column stays reserved and every row stays
+        // put when a box is ticked or unticked. AppKit draws nothing for a
+        // view item's state; the view draws and reports its own tick.
+        item.state = .on
         item.isEnabled = enabled
         item.toolTip = toolTip
         view.toolTip = toolTip
@@ -114,7 +120,7 @@ public struct ToggleMenuMetrics: Equatable {
 /// title in place while the menu is open (`isOn`, `title`).
 public final class ToggleMenuItemView: NSView, NSMenuItemValidation {
     public var title: String { didSet { needsDisplay = true; enclosingMenuItem?.title = title } }
-    public var isOn: Bool { didSet { needsDisplay = true; enclosingMenuItem?.state = isOn ? .on : .off } }
+    public var isOn: Bool { didSet { needsDisplay = true } }
     public var isEnabled: Bool { didSet { needsDisplay = true; enclosingMenuItem?.isEnabled = isEnabled } }
     private let onToggle: (Bool) -> Void
     private let metrics = ToggleMenuMetrics.current
