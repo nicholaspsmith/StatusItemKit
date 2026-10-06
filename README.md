@@ -35,6 +35,7 @@ Menumon mascot glyphs, and a build-and-sign script that produces a proper
 | `MeterAppearance` | The user's chosen shape and colour, persisted in the app's own defaults (`MeterStyle`, `MeterColorHex`). |
 | `AppearanceMenu` | The shared **Icon** submenu: shapes, colour presets and the system colour picker, or an app's own colour block in their place. See [The Icon menu](#the-icon-menu). |
 | `AppVersion` | The version `make-app.sh` stamped into the bundle; `menuItem()` is a disabled "Version …" row. |
+| `SettingsMenu` | The Settings submenu every app's menu ends with (just above Quit): the app's own settings, then Icon and Start at Login, then the version in grey. `addFooter` adds Settings and Quit together. |
 | `MenuBarYield` / `YieldClient` | Lets a menu-bar manager (Barn) ask apps to hide their item briefly while it reveals hidden icons. One line opts an app in: `YieldClient(item: controller).start()`. The hide expires on its own after the TTL in the message, so a crashed manager cannot leave an icon hidden. |
 | `LoginItem` | `SMAppService.mainApp` register/unregister, plus the "must live in /Applications" alert. |
 | `LoginRequest` | Parses `--login [on\|off\|status]` from a command line. A bare flag or `status` only reports, so a mistyped command never changes Start at Login. Unit-tested. |
@@ -88,7 +89,8 @@ final class App: NSObject, NSApplicationDelegate {
     }
 
     func build(_ menu: NSMenu) {
-        menu.addItem(NSMenuItem(title: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+        // …the app's own rows, then Settings ▸ and Quit.
+        SettingsMenu.addFooter(to: menu, appName: "Demo")
     }
 }
 ```
@@ -271,8 +273,9 @@ see [Releases](#releases-every-push-is-one).
 | `CFBundleVersion` | `abc1234` | `abc1234.dirty` |
 | `StatusItemKitVersion` | `1.2.0` | `1.2.0+3.gabc1234.dirty` |
 
-`menu.addItem(AppVersion.menuItem())` adds a disabled "Version …" row showing
-`StatusItemKitVersion`, so any two builds can be told apart from the menu.
+The Settings submenu (`SettingsMenu`) ends with a disabled "Version …" row
+showing `StatusItemKitVersion`, so any two builds can be told apart from the
+menu.
 Bump MAJOR for a breaking change in behaviour or settings, MINOR for a
 feature, PATCH for a fix.
 

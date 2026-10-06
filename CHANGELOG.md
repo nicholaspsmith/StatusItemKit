@@ -8,6 +8,10 @@ without one is refused (`[no release]` in the tip commit is the only exception).
 Versions follow [Semantic Versioning](https://semver.org/). The full rule:
 [StatusItemKit — Releases](https://github.com/nicholaspsmith/StatusItemKit#releases-every-push-is-one).
 
+## [0.25.0] - 2026-10-05
+
+- feat: `SettingsMenu`: one Settings submenu for every app (the app's own settings, Icon, Start at Login, and the version in grey at the bottom), and `addFooter` for Settings + Quit
+
 ## [0.24.0] - 2026-10-05
 
 - Gertie's weather moves: `house(…, weatherPhase:intensity:)` loops gently over `houseWeatherLoopDuration` (24 s). The sun gleams and slowly turns, the moon glows and a star twinkles, clouds drift or pass behind the roof, rain and snow fall beside the walls (from under the eaves, never across the windows), fog banks slide, gusts blow out and fade, and a storm's bolt flickers about every eleven seconds. Phase 0 is the still glyph, unchanged
