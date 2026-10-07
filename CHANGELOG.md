@@ -8,6 +8,10 @@ without one is refused (`[no release]` in the tip commit is the only exception).
 Versions follow [Semantic Versioning](https://semver.org/). The full rule:
 [StatusItemKit — Releases](https://github.com/nicholaspsmith/StatusItemKit#releases-every-push-is-one).
 
+## [0.27.0] - 2026-10-07
+
+- `CharacterIcon.apollo` takes a `tickColor` for the lit ticks (default green), so an app can show muted or dimmed in the arc itself
+
 ## [0.26.1] - 2026-10-06
 
 - Ticking or unticking a checkbox in a menu no longer shifts the other items sideways: the checkmark column now stays put whatever is ticked

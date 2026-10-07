@@ -728,12 +728,15 @@ public enum CharacterIcon {
         return 0
     }
 
-    /// - Parameter blink: 0 eyes open … 1 shut (see `apolloBlinkClosure`).
-    public static func apollo(level: CGFloat, online: Bool, blink: CGFloat = 0) -> NSImage {
+    /// - Parameters:
+    ///   - blink: 0 eyes open … 1 shut (see `apolloBlinkClosure`).
+    ///   - tickColor: the lit ticks' colour while online — e.g. red for muted.
+    public static func apollo(level: CGFloat, online: Bool, blink: CGFloat = 0,
+                              tickColor: NSColor = .systemGreen) -> NSImage {
         canvas(width: 22, height: 22) { ctx in
             let grey = online ? body : NSColor(white: 0.45, alpha: 1)
             let dim = NSColor(white: 0.62, alpha: 0.35)
-            let lit = online ? NSColor.systemGreen : NSColor(white: 0.55, alpha: 1)
+            let lit = online ? tickColor : NSColor(white: 0.55, alpha: 1)
             let c = NSPoint(x: 11, y: 8)
             // volume ticks: 13 of them across 270°, starting bottom-left
             let ticks = 13
