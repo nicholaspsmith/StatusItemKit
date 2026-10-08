@@ -9,7 +9,11 @@
 # "## [X.Y.Z] - YYYY-MM-DD" section (scripts/release/check-release.sh).
 #
 #   pull_request  check: the PR fails unless its CHANGELOG.md carries that
-#                 section, so a PR that skips the rule shows red before merge
+#                 section, so a PR that skips the rule shows red before merge;
+#                 then (macOS runner) scripts/build-app.sh builds the app
+#                 against StatusItemKit and HotkeyKit main and
+#                 scripts/release/smoke-launch.sh requires it to stay up 5 s
+#                 after launch, so an app that dies at launch can't merge
 #   push to main  release: tag vX.Y.Z on the pushed commit and publish a
 #                 GitHub Release titled "vX.Y.Z" with the section as its notes;
 #                 a push that breaks the rule fails loudly
@@ -21,6 +25,11 @@ name: Menumon release
 
 on:
   workflow_call:
+    inputs:
+      kit-ref:
+        description: StatusItemKit ref whose scripts/release (and package) the check uses
+        type: string
+        default: main
 
 permissions:
   contents: write
@@ -28,30 +37,67 @@ permissions:
 jobs:
   check:
     if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
+    # macOS: the check builds the app and launches it (smoke-launch.sh).
+    runs-on: macos-26
+    timeout-minutes: 30
     steps:
+      # The app and its frameworks side by side, as on a Mac's ~/Code:
+      # Package.swift says ../StatusItemKit and ../HotkeyKit.
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
+          path: app
       - uses: actions/checkout@v4
         with:
           repository: nicholaspsmith/StatusItemKit
-          path: .menumon-kit
-          sparse-checkout: scripts/release
+          ref: ${{ inputs.kit-ref }}
+          path: StatusItemKit
+      - uses: actions/checkout@v4
+        with:
+          repository: nicholaspsmith/HotkeyKit
+          path: HotkeyKit
       - name: The PR carries a new release
+        id: rule
+        working-directory: app
         run: |
           git fetch --quiet --tags --force origin
           if git log -1 --format=%B HEAD | grep -qF '[no release]'; then
             echo "::notice::[no release] — this PR will not be released."
+            echo "release=no" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          if ! version="$(.menumon-kit/scripts/release/check-release.sh HEAD 2>err.txt)"; then
+          if ! version="$(../StatusItemKit/scripts/release/check-release.sh HEAD 2>err.txt)"; then
             echo "::error::$(head -1 err.txt)"
             cat err.txt
             exit 1
           fi
+          echo "release=yes" >> "$GITHUB_OUTPUT"
           echo "::notice::Merging this PR releases v$version."
+      - name: The app stays up after launch
+        if: steps.rule.outputs.release == 'yes'
+        working-directory: app
+        run: |
+          if [ ! -x scripts/build-app.sh ]; then
+            echo "::notice::No scripts/build-app.sh: nothing to launch."
+            exit 0
+          fi
+          set -o pipefail
+          ./scripts/build-app.sh
+          shopt -s nullglob
+          apps=(build/*.app)
+          if [ ${#apps[@]} -eq 0 ]; then
+            echo "::error::scripts/build-app.sh made no build/*.app"
+            exit 1
+          fi
+          status=0
+          for a in "${apps[@]}"; do
+            if ! ../StatusItemKit/scripts/release/smoke-launch.sh "$a" 5 | tee smoke.txt; then
+              echo "::error::$(head -1 smoke.txt)"
+              status=1
+            fi
+          done
+          exit $status
 
   naming:
     if: github.event_name == 'release'
