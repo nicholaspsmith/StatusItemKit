@@ -8,6 +8,11 @@ without one is refused (`[no release]` in the tip commit is the only exception).
 Versions follow [Semantic Versioning](https://semver.org/). The full rule:
 [StatusItemKit — Releases](https://github.com/nicholaspsmith/StatusItemKit#releases-every-push-is-one).
 
+## [0.28.0] - 2026-10-08
+
+- Mendoza grabs once a minute: `CharacterIcon.menuCrane(state:grab:)` drops the bucket open, snaps it shut and lifts it home over `menuCraneGrabDuration`, with `craneGrab(at:)` giving the phases
+- Menu Crane and Panes take their turns in `MinuteCue.order`, after Homestead
+
 ## [0.27.0] - 2026-10-07
 
 - `CharacterIcon.apollo` takes a `tickColor` for the lit ticks (default green), so an app can show muted or dimmed in the arc itself

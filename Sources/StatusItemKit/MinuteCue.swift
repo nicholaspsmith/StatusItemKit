@@ -32,6 +32,8 @@ public final class MinuteCue {
         "com.nicholaspsmith.KeyLight",        // Lumen's rays shimmer
         "com.nicholaspsmith.MacRecorder",     // Manny focuses his lens
         "com.nicholaspsmith.Homestead",       // Gertie opens her door a crack
+        "com.nicholaspsmith.MenuCrane",       // Mendoza drops his bucket and grabs
+        "com.nicholaspsmith.Panes",           // the windows slide into their tiles
     ]
 
     /// Seconds after the cue `bundleID` should start: one per animated app

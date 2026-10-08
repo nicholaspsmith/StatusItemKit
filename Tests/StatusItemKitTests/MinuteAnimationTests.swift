@@ -139,3 +139,45 @@ final class MascotAnimationTests: XCTestCase {
         XCTAssertEqual(png(house(0.45, false)), png(house(0, false)))
     }
 }
+
+// Mendoza's once-a-minute grab: the bucket drops open, snaps shut, and lifts
+// back to where it hangs, with the end frame the resting glyph.
+final class CraneGrabTests: XCTestCase {
+    func testGrabStartsAndEndsAtRest() {
+        for t in [0, CharacterIcon.menuCraneGrabDuration] {
+            let g = CharacterIcon.craneGrab(at: t)
+            XCTAssertEqual(g.drop, 0, "t=\(t)"); XCTAssertEqual(g.jaw, 0, "t=\(t)"); XCTAssertFalse(g.happy, "t=\(t)")
+        }
+    }
+
+    func testBucketDropsOpenThenSnapsShutAtTheBottom() {
+        let lowering = CharacterIcon.craneGrab(at: 0.3)
+        XCTAssertGreaterThan(lowering.drop, 0.3); XCTAssertGreaterThan(lowering.jaw, 0.5); XCTAssertFalse(lowering.happy)
+        let bottom = CharacterIcon.craneGrab(at: 0.55)
+        XCTAssertEqual(bottom.drop, 1); XCTAssertEqual(bottom.jaw, 0); XCTAssertTrue(bottom.happy)
+        let lifting = CharacterIcon.craneGrab(at: 0.9)
+        XCTAssertLessThan(lifting.drop, 1); XCTAssertGreaterThan(lifting.drop, 0); XCTAssertEqual(lifting.jaw, 0); XCTAssertTrue(lifting.happy)
+    }
+
+    func testGrabEndFrameIsTheRestingGlyph() {
+        func png(_ i: NSImage) -> Data? {
+            let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 44, pixelsHigh: 44, bitsPerSample: 8,
+                                       samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)!
+            rep.size = i.size
+            NSGraphicsContext.saveGraphicsState(); NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+            i.draw(in: NSRect(origin: .zero, size: i.size)); NSGraphicsContext.restoreGraphicsState()
+            return rep.representation(using: .png, properties: [:])
+        }
+        let rest = png(CharacterIcon.menuCrane(state: .idle))
+        XCTAssertEqual(png(CharacterIcon.menuCrane(state: .idle, grab: CharacterIcon.menuCraneGrabDuration)), rest)
+        XCTAssertEqual(png(CharacterIcon.menuCrane(state: .idle, grab: nil)), rest)
+        XCTAssertNotEqual(png(CharacterIcon.menuCrane(state: .idle, grab: 0.4)), rest)
+    }
+
+    func testMendozaAndPanesTakeTheirTurnsAfterGertie() {
+        let order = MinuteCue.order
+        let gertie = order.firstIndex(of: "com.nicholaspsmith.Homestead")!
+        XCTAssertEqual(order.firstIndex(of: "com.nicholaspsmith.MenuCrane"), gertie + 1)
+        XCTAssertEqual(order.firstIndex(of: "com.nicholaspsmith.Panes"), gertie + 2)
+    }
+}

@@ -1012,8 +1012,39 @@ public enum CharacterIcon {
     static let craneBucket = NSColor(red: 0.97, green: 0.78, blue: 0.22, alpha: 1)
     static let craneInk = NSColor(white: 0.12, alpha: 1)
 
-    public static func menuCrane(state: CraneState) -> NSImage {
-        canvas(width: 22, height: 22) { _ in
+    /// How long Mendoza's once-a-minute grab lasts: the bucket drops open,
+    /// snaps shut, and lifts back to where it hangs.
+    public static let menuCraneGrabDuration: TimeInterval = 1.4
+
+    /// Where the bucket is `t` seconds into the grab.
+    public struct CraneGrab: Equatable, Sendable {
+        /// 0 hanging where it rests … 1 lowered as far as it goes.
+        public var drop: CGFloat
+        /// 0 shut … 1 jaws wide open.
+        public var jaw: CGFloat
+        /// Eyes closed in happy crescents: from the snap until the bucket is home.
+        public var happy: Bool
+        public static let rest = CraneGrab(drop: 0, jaw: 0, happy: false)
+    }
+
+    /// The grab's phases: lower with the jaws opening, snap shut at the bottom,
+    /// a beat, lift, and a short settle so the last frame is the resting glyph.
+    public static func craneGrab(at t: TimeInterval) -> CraneGrab {
+        let lower = 0.4, snap = 0.1, hold = 0.2, lift = 0.5
+        func smooth(_ x: Double) -> CGFloat { let x = min(max(x, 0), 1); return CGFloat(x * x * (3 - 2 * x)) }
+        guard t > 0, t < menuCraneGrabDuration else { return .rest }
+        if t < lower { return CraneGrab(drop: smooth(t / lower), jaw: smooth(t / (lower * 0.75)), happy: false) }
+        if t < lower + snap { let x = (t - lower) / snap; return CraneGrab(drop: 1, jaw: CGFloat(pow(1 - x, 3)), happy: false) }
+        if t < lower + snap + hold { return CraneGrab(drop: 1, jaw: 0, happy: true) }
+        if t < lower + snap + hold + lift { return CraneGrab(drop: 1 - smooth((t - lower - snap - hold) / lift), jaw: 0, happy: true) }
+        return .rest
+    }
+
+    /// - Parameter grab: seconds into the once-a-minute grab (see
+    ///   `craneGrab(at:)`), or nil when the bucket just hangs.
+    public static func menuCrane(state: CraneState, grab: TimeInterval? = nil) -> NSImage {
+        let grab = grab.map(craneGrab(at:)) ?? .rest
+        return canvas(width: 22, height: 22) { _ in
             let line: CGFloat = 0.9
             func inked(_ p: NSBezierPath, _ fill: NSColor) {
                 fill.set(); p.fill()
@@ -1051,7 +1082,7 @@ public enum CharacterIcon {
 
             let eyes = [NSPoint(x: 5.6, y: 14.8), NSPoint(x: 9.8, y: 15.2)]
             for c in eyes { inked(NSBezierPath(ovalIn: NSRect(x: c.x - 2.7, y: c.y - 2.7, width: 5.4, height: 5.4)), .white) }
-            if state == .grabbed {
+            if state == .grabbed || grab.happy {
                 for c in eyes {   // happy closed crescents
                     let arc = NSBezierPath()
                     arc.appendArc(withCenter: NSPoint(x: c.x, y: c.y - 0.6), radius: 1.4, startAngle: 20, endAngle: 160)
@@ -1063,7 +1094,9 @@ public enum CharacterIcon {
                 switch state {
                 case .searching: look = [CGSize(width: 0.9, height: -1.1), CGSize(width: 0.9, height: -1.1)]
                 case .miss: look = [CGSize(width: -1.0, height: 0.8), CGSize(width: 1.0, height: -0.6)]
-                default: look = [CGSize(width: 1.1, height: 0), CGSize(width: 1.1, height: 0)]
+                default:   // following the bucket down as it drops
+                    let d = CGSize(width: 1.1 - 0.2 * grab.drop, height: -1.1 * grab.drop)
+                    look = [d, d]
                 }
                 craneInk.set()
                 for (c, d) in zip(eyes, look) {
@@ -1076,17 +1109,21 @@ public enum CharacterIcon {
             let ring = NSBezierPath(ovalIn: NSRect(x: ringC.x - 1.1, y: ringC.y - 1.1, width: 2.2, height: 2.2))
             ring.lineWidth = 0.9; NSColor(white: 0.55, alpha: 1).set(); ring.stroke()
             let open = state == .searching || state == .miss
-            let top: CGFloat = open ? 6.8 : 7.8
+            let top: CGFloat = (open ? 6.8 : 7.8) - 2.2 * grab.drop
             let cable = NSBezierPath()
             cable.move(to: NSPoint(x: ringC.x, y: ringC.y - 1.1)); cable.line(to: NSPoint(x: ringC.x, y: top))
             cable.lineWidth = 0.8; craneInk.set(); cable.stroke()
-            if open {
+            if open || grab.jaw > 0 {
+                // Each jaw swings between its half of the shut bucket and wide open.
+                let shut: [CGPoint] = [CGPoint(x: 0, y: 0), CGPoint(x: 3.4, y: 0), CGPoint(x: 2.2, y: -4.6), CGPoint(x: 0, y: -4.6)]
+                let wide: [CGPoint] = [CGPoint(x: 0, y: 0), CGPoint(x: 3.8, y: -1.4), CGPoint(x: 2.6, y: -5.2), CGPoint(x: 0.6, y: -3.4)]
+                let k = open ? 1 : grab.jaw
                 for side: CGFloat in [-1, 1] {
                     let jaw = NSBezierPath()
-                    jaw.move(to: NSPoint(x: ringC.x, y: top))
-                    jaw.line(to: NSPoint(x: ringC.x + side * 3.8, y: top - 1.4))
-                    jaw.line(to: NSPoint(x: ringC.x + side * 2.6, y: top - 5.2))
-                    jaw.line(to: NSPoint(x: ringC.x + side * 0.6, y: top - 3.4))
+                    for (i, (a, b)) in zip(shut, wide).enumerated() {
+                        let pt = NSPoint(x: ringC.x + side * (a.x + (b.x - a.x) * k), y: top + a.y + (b.y - a.y) * k)
+                        if i == 0 { jaw.move(to: pt) } else { jaw.line(to: pt) }
+                    }
                     jaw.close()
                     inked(jaw, craneBucket)
                 }
