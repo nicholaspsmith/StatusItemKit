@@ -328,6 +328,16 @@ section must be new, dated, non-empty and above every existing tag.
   it required: a PR whose `CHANGELOG.md` has no new, correctly formatted
   version **cannot be merged**, unless its tip commit says `[no release]`,
   which passes the check without a version bump (and so without a tag).
+- **The app must launch.** On a PR that carries a release, the check (on a
+  GitHub macOS runner) also builds the app with `scripts/build-app.sh`,
+  against StatusItemKit and HotkeyKit `main`, and runs
+  [`scripts/release/smoke-launch.sh`](scripts/release/smoke-launch.sh) on each
+  `build/*.app`: it must still be running 5 s after it appears. An app that
+  dies at launch (Menu Crane 1.3.0) **cannot be merged**; the log shows why
+  (the crash report's exception and top frames on a Mac; the runner writes
+  none, so there the crashing thread's backtrace under `lldb`). Repos without `build-app.sh`
+  (StatusItemKit, HotkeyKit) skip it. On a Mac, parity runs the same check on
+  every build before installing it.
 
 **One naming convention.** Versions are `vX.Y.Z` tags, changelog sections are
 `## [X.Y.Z] - YYYY-MM-DD`, and a GitHub Release is titled with its tag,
@@ -360,14 +370,24 @@ commit its files with `[no release]`.
   version makes the run fail. After a merge, `git pull` to fetch the tag, then
   rebuild so the menu shows a clean version instead of `+N.gSHA`.
 - **The workflow uses StatusItemKit `main`.** Every app's run checks out
-  StatusItemKit's `main` for `check-release.sh`, so merge a fix to the release
-  scripts here before relying on it in another repo.
+  StatusItemKit's `main` for `check-release.sh` and `smoke-launch.sh` (and
+  builds against it), so merge a fix to the release scripts here before
+  relying on it in another repo. To try a branch of them from an app's PR,
+  point its `release.yml` at `menumon-release.yml@<branch>` with
+  `with: {kit-ref: <branch>}`, and don't merge that.
 - **The hook is per repo, per machine.** It lives in each repo's local git
   config, not a global `core.hooksPath`, which would disable every other
   repo's own hooks. A fresh clone has no hook until it is re-armed: every
   app's `install.sh` and the macOS setup suite run
   `scripts/release/adopt.sh --hooks-only`, which you can also run by hand. The
   GitHub check applies regardless.
+- **Run the launch check by hand** with
+  `../StatusItemKit/scripts/release/smoke-launch.sh "build/<App>.app"`. It is
+  safe beside the installed copy: a new hidden instance with a scratch `HOME`
+  and `CFFIXED_USER_HOME`, its defaults domain put back if the launch changed
+  it, stopped after 5 s. Apps without `LSUIElement` are not launched.
+  `scripts/release/test-smoke-launch.sh` tests it with tiny compiled fixtures.
+  It runs on PRs, not in the pre-push hook: a release build takes minutes.
 - **Push over SSH.** Pushing a change to `.github/workflows/` over HTTPS needs
   a token with the `workflow` scope; the SSH remotes (`git@github.com:…`) need
   nothing extra.
