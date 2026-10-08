@@ -333,8 +333,9 @@ section must be new, dated, non-empty and above every existing tag.
   against StatusItemKit and HotkeyKit `main`, and runs
   [`scripts/release/smoke-launch.sh`](scripts/release/smoke-launch.sh) on each
   `build/*.app`: it must still be running 5 s after it appears. An app that
-  dies at launch (Menu Crane 1.3.0) **cannot be merged**; the log shows the
-  crash report's exception and top frames. Repos without `build-app.sh`
+  dies at launch (Menu Crane 1.3.0) **cannot be merged**; the log shows why
+  (the crash report's exception and top frames on a Mac; the runner writes
+  none, so there the crashing thread's backtrace under `lldb`). Repos without `build-app.sh`
   (StatusItemKit, HotkeyKit) skip it. On a Mac, parity runs the same check on
   every build before installing it.
 

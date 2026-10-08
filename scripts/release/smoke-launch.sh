@@ -129,6 +129,17 @@ if [ "${verdict#quit}" != "$verdict" ]; then
             [ -n "$src" ] && [ "${src#/<}" = "$src" ] && sym="$sym ($(basename "$src"):$line)"
             echo "    $sym"
         done
+    elif [ "${CI:-}" = true ] && command -v lldb >/dev/null; then
+        # CI runners write no crash reports: launch it once more under lldb
+        # for the crashing thread's backtrace. Only on CI: on a Mac, attaching
+        # a debugger asks for Developer Tools access.
+        echo "  no crash report; the crash under lldb:"
+        mkdir -p "$work/home2"
+        perl -e 'alarm shift; exec @ARGV' $((secs + 30)) \
+            lldb --batch -o "process launch --environment HOME=$work/home2 --environment CFFIXED_USER_HOME=$work/home2" \
+                 -k "thread backtrace" -k "kill" -k "quit" -- "$exe" 2>&1 \
+            | grep -E "stop reason|^ *(\* )?frame #[0-9]" | head -8 | sed 's/^/    /'
+        "$LSREGISTER" -u "$app" >/dev/null 2>&1
     else
         echo "  no crash report"
     fi
