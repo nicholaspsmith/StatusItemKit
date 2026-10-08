@@ -160,7 +160,7 @@ app's state. Each app offers it as `MeterStyle.character` in the Icon picker.
 | `monitorLizard(brightness:nightShift:tongue:…)` | Monitor Lizard | Armonitor on a monitor whose screen fills blue with brightness, amber under Night Shift. |
 | `caterpillar(effects:state:running:)` | SoundChain | Carol in headphones: one lit segment per running effect (up to five); colour is the state. |
 | `house(lightsOn:fanOn:reachable:configured:weather:night:door:weatherPhase:intensity:)` | Homestead | Gertie, a cottage whose windows light with the lights on, a fan in one window while a fan runs, hollow when Home Assistant is unreachable, and an optional `HouseWeather` drawn around it; `door` swings the front door open a crack. `weatherPhase` (0 ..< 1 through `houseWeatherLoopDuration`) sets the weather moving — gleaming sun, drifting clouds, falling rain and snow, sliding fog, gusts, a flickering bolt — and `intensity` (0 … 1) how hard it rains or snows. |
-| `menuCrane(state:)` | Menu Crane | Mendoza's head with a grab bucket: open while searching, shut on a copy, open and empty on no results. |
+| `menuCrane(state:grab:)` | Menu Crane | Mendoza's head with a grab bucket: open while searching, shut on a copy, open and empty on no results. `grab` (seconds into `menuCraneGrabDuration`, see `craneGrab(at:)`) drops the bucket open, snaps it shut and lifts it home. |
 | `apollo(level:online:)` | Apollo Monitor | An Apollo Twin face whose knob's tick ring lights with the monitor level; dimmed when the level cannot be changed. |
 | `camcorder(recording:focus:)` | MacRecorder | Manny, a camcorder whose tally light and lens turn red while recording; `focus` closes and reopens his lens's iris. |
 | `octopus(fraction:)`, `raccoon(active:)`, `bin(active:)`, `battery(charge:color:)` | — | Not used by a current app: an octopus that gains arms and reddens with load, a raccoon and a wheelie bin that sleep when paused, and a battery with a face that fills with the charge (Battery Time draws its own glyph). |
@@ -170,12 +170,13 @@ deprecated forwarders to `iguana(…)` and `iguanaLickDuration`.
 
 ### Mascot animations
 
-Ten mascots animate twice a minute, on the minute and the half minute: Archimedes blinks (Claude Usage), Menu
+Twelve glyphs animate twice a minute, on the minute and the half minute: Archimedes blinks (Claude Usage), Menu
 Pimp grins with a gold gleam (Mac Daddy), Carol runs (SoundChain), Iguanamous
 licks (VPN & DNS), Armonitor laps his monitor (Monitor Lizard), Volta blinks
 while his charge sloshes (Battery Time), Apollo blinks (Apollo Monitor), a
-gleam sweeps round Lumen's rays (KeyLight), Manny focuses his lens (MacRecorder)
-and Gertie opens her front door a crack (Homestead).
+gleam sweeps round Lumen's rays (KeyLight), Manny focuses his lens (MacRecorder),
+Gertie opens her front door a crack (Homestead), Mendoza drops his bucket and
+grabs (Menu Crane) and the windows slide into their tiles (Panes).
 
 `MinuteCue` keeps them from moving at once. Every app wakes on each cue (the
 wall clock's :00 and :30, `MinuteCue.interval` apart) and waits one second for
