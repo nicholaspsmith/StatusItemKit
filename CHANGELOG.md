@@ -8,6 +8,10 @@ without one is refused (`[no release]` in the tip commit is the only exception).
 Versions follow [Semantic Versioning](https://semver.org/). The full rule:
 [StatusItemKit — Releases](https://github.com/nicholaspsmith/StatusItemKit#releases-every-push-is-one).
 
+## [0.29.0] - 2026-10-09
+
+- `CharacterIcon.caterpillar` takes `headphones:` (default on): off, Carol wears them round her neck, the band a collar under her chin with the earpad hanging from it, for SoundChain to show when it is not keeping her headphones to this Mac
+
 ## [0.28.0] - 2026-10-08
 
 - Mendoza grabs once a minute: `CharacterIcon.menuCrane(state:grab:)` drops the bucket open, snaps it shut and lifts it home over `menuCraneGrabDuration`, with `craneGrab(at:)` giving the phases

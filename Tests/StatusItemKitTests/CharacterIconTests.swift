@@ -322,6 +322,18 @@ final class CharacterIconTests: XCTestCase {
         XCTAssertEqual(pixels(5), pixels(9))
     }
 
+    func testCaterpillarHeadphonesOffIsADifferentDrawingOfTheSameSize() {
+        func png(headphones: Bool) -> Data? {
+            CharacterIcon.caterpillar(effects: 3, state: .processing, headphones: headphones)
+                .representations.compactMap { $0 as? NSBitmapImageRep }.first { $0.pixelsWide == 72 }?
+                .representation(using: .png, properties: [:])
+        }
+        let off = CharacterIcon.caterpillar(effects: 3, state: .processing, headphones: false)
+        XCTAssertEqual(off.size, NSSize(width: 36, height: 22))
+        XCTAssertNotEqual(png(headphones: true), png(headphones: false))
+        XCTAssertEqual(png(headphones: false), png(headphones: false), "cached per state")
+    }
+
     func testMacDaddyIsOneWidthInEveryState() {
         var seen = Set<Data>()
         for level in [MacDaddyLevel.cool, .sweating, .redHot] {
