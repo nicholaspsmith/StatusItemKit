@@ -1164,11 +1164,14 @@ extension CharacterIcon {
     /// 8x and downsampled to 2x and 1x bitmaps (smoother than drawing at bar size),
     /// and cached.
     ///
-    /// - Parameter running: seconds into her once-a-minute run (see
-    ///   `caterpillarRunDuration`), or nil standing still. Running frames
-    ///   are not cached.
-    public static func caterpillar(effects: Int, state: CaterpillarState, running: TimeInterval? = nil) -> NSImage {
-        CaterpillarGlyph.image(effects: effects, state: state, running: running)
+    /// - Parameters:
+    ///   - running: seconds into her once-a-minute run (see
+    ///     `caterpillarRunDuration`), or nil standing still. Running frames
+    ///     are not cached.
+    ///   - headphones: on her ears (true) or off, hanging round her neck.
+    public static func caterpillar(effects: Int, state: CaterpillarState, running: TimeInterval? = nil,
+                                   headphones: Bool = true) -> NSImage {
+        CaterpillarGlyph.image(effects: effects, state: state, running: running, headphones: headphones)
     }
 
     /// How long Carol's run lasts.
@@ -1232,17 +1235,17 @@ private enum CaterpillarGlyph {
     static let gridScale: CGFloat = 1.34
     static let gridOffset = NSPoint(x: -0.3, y: 1 - 2.05 * 1.34)
 
-    private struct Key: Hashable { let lit: Int; let state: State }
+    private struct Key: Hashable { let lit: Int; let state: State; let headphones: Bool }
     private static var cache: [Key: NSImage] = [:]
 
-    static func image(effects: Int, state: State, running: TimeInterval? = nil) -> NSImage {
-        let key = Key(lit: max(0, min(effects, bodySegments)), state: state)
+    static func image(effects: Int, state: State, running: TimeInterval? = nil, headphones: Bool = true) -> NSImage {
+        let key = Key(lit: max(0, min(effects, bodySegments)), state: state, headphones: headphones)
         let gait = running.flatMap { t in
             t > 0 && t < CharacterIcon.caterpillarRunDuration
                 ? CaterpillarGait(time: t, duration: CharacterIcon.caterpillarRunDuration) : nil
         }
         if gait == nil, let cached = cache[key] { return cached }
-        let big = render(lit: key.lit, palette: Palette(state), gait: gait, scale: supersample)
+        let big = render(lit: key.lit, palette: Palette(state), gait: gait, headphones: headphones, scale: supersample)
         let image = NSImage(size: size)
         for scale in [2, 1] as [CGFloat] {
             if let rep = downsample(big, scale: scale) { image.addRepresentation(rep) }
@@ -1279,7 +1282,8 @@ private enum CaterpillarGlyph {
 
     // MARK: Rendering
 
-    private static func render(lit: Int, palette: Palette, gait: CaterpillarGait?, scale: CGFloat) -> NSBitmapImageRep {
+    private static func render(lit: Int, palette: Palette, gait: CaterpillarGait?, headphones: Bool,
+                               scale: CGFloat) -> NSBitmapImageRep {
         let rep = NSBitmapImageRep(bitmapDataPlanes: nil,
                                    pixelsWide: Int(size.width * scale), pixelsHigh: Int(size.height * scale),
                                    bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
@@ -1293,7 +1297,7 @@ private enum CaterpillarGlyph {
         t.translateX(by: gridOffset.x, yBy: gridOffset.y)
         t.scale(by: gridScale)
         t.concat()
-        draw(lit: lit, palette: palette, gait: gait)
+        draw(lit: lit, palette: palette, gait: gait, headphones: headphones)
         NSGraphicsContext.restoreGraphicsState()
         return rep
     }
@@ -1331,6 +1335,21 @@ private enum CaterpillarGlyph {
     static let bandSplit: CGFloat = 0.6
     static let cupRect = NSRect(x: 16.1, y: 6.8, width: 3.4, height: 5.0)
 
+    /// Headphones off: the band hangs round her neck, a collar under the chin from
+    /// the body side round to the far side of the head, and the near earpad dangles
+    /// from its low point.
+    static let neckBand = (p0: NSPoint(x: 17.3, y: 8.4), p1: NSPoint(x: 17.4, y: 4.3),
+                           p2: NSPoint(x: 21.6, y: 3.9), p3: NSPoint(x: 26.4, y: 6.2))
+    static let neckCupRect = NSRect(x: 19.6, y: 1.9, width: 3.2, height: 2.9)
+
+    static func neckBandPath() -> NSBezierPath {
+        let path = NSBezierPath()
+        path.move(to: neckBand.p0)
+        path.curve(to: neckBand.p3, controlPoint1: neckBand.p1, controlPoint2: neckBand.p2)
+        path.lineCapStyle = .round
+        return path
+    }
+
     /// The part of the band's cubic between parameters `t0` and `t1` (de Casteljau).
     static func bandPath(from t0: CGFloat, to t1: CGFloat) -> NSBezierPath {
         func split(_ p: [NSPoint], at t: CGFloat) -> (left: [NSPoint], right: [NSPoint]) {
@@ -1349,7 +1368,7 @@ private enum CaterpillarGlyph {
         return path
     }
 
-    private static func draw(lit: Int, palette: Palette, gait: CaterpillarGait?) {
+    private static func draw(lit: Int, palette: Palette, gait: CaterpillarGait?, headphones: Bool) {
         let groundY: CGFloat = 3.2
         // The head rides last in the wave, after the segment behind it.
         let headBob = gait?.bob(-1) ?? 0
@@ -1359,10 +1378,17 @@ private enum CaterpillarGlyph {
         NSGraphicsContext.saveGraphicsState()
         lift(headBob)
         Palette.rim.set()
-        let rimBand = bandPath(from: 0, to: 1)
-        rimBand.lineWidth = 1.9; rimBand.stroke()
-        let rimCup = NSBezierPath(roundedRect: cupRect.insetBy(dx: -0.3, dy: -0.3), xRadius: 1.6, yRadius: 1.6)
-        rimCup.fill()
+        if headphones {
+            let rimBand = bandPath(from: 0, to: 1)
+            rimBand.lineWidth = 1.9; rimBand.stroke()
+            let rimCup = NSBezierPath(roundedRect: cupRect.insetBy(dx: -0.3, dy: -0.3), xRadius: 1.6, yRadius: 1.6)
+            rimCup.fill()
+        } else {
+            let rimBand = neckBandPath()
+            rimBand.lineWidth = 1.9; rimBand.stroke()
+            let rimCup = NSBezierPath(roundedRect: neckCupRect.insetBy(dx: -0.3, dy: -0.3), xRadius: 1.4, yRadius: 1.4)
+            rimCup.fill()
+        }
         NSGraphicsContext.restoreGraphicsState()
 
         // Body: tail first so each segment overlaps the one behind it.
@@ -1404,9 +1430,11 @@ private enum CaterpillarGlyph {
         lift(headBob)
 
         // Back piece of the band: goes behind the head.
-        Palette.phones.set()
-        let back = bandPath(from: bandSplit, to: 1)
-        back.lineWidth = 1.3; back.stroke()
+        if headphones {
+            Palette.phones.set()
+            let back = bandPath(from: bandSplit, to: 1)
+            back.lineWidth = 1.3; back.stroke()
+        }
 
         // Head.
         let head = NSBezierPath(ovalIn: NSRect(x: 16.6, y: 4.4, width: 10.2, height: 10.2))
@@ -1429,18 +1457,31 @@ private enum CaterpillarGlyph {
         smile.curve(to: NSPoint(x: 25.6, y: 7.7), controlPoint1: NSPoint(x: 23.4, y: 5.9), controlPoint2: NSPoint(x: 25.0, y: 6.2))
         smile.lineWidth = 0.55; smile.lineCapStyle = .round; smile.stroke()
 
-        // Front piece of the band and the near earpad, over the head.
         Palette.phones.set()
-        let front = bandPath(from: 0, to: bandSplit)
-        front.lineWidth = 1.3; front.stroke()
-        let cup = NSBezierPath(roundedRect: cupRect, xRadius: 1.4, yRadius: 1.4)
-        NSGradient(starting: Palette.phonesSheen, ending: Palette.phones)?.draw(in: cup, angle: -70)
-        // sheen along the band
-        Palette.phonesSheen.withAlphaComponent(0.8).set()
-        let sheen = NSBezierPath()
-        sheen.move(to: NSPoint(x: 19.0, y: 14.8))
-        sheen.curve(to: NSPoint(x: 22.6, y: 16.4), controlPoint1: NSPoint(x: 19.8, y: 16.0), controlPoint2: NSPoint(x: 21.2, y: 16.5))
-        sheen.lineWidth = 0.35; sheen.lineCapStyle = .round; sheen.stroke()
+        if headphones {
+            // Front piece of the band and the near earpad, over the head.
+            let front = bandPath(from: 0, to: bandSplit)
+            front.lineWidth = 1.3; front.stroke()
+            let cup = NSBezierPath(roundedRect: cupRect, xRadius: 1.4, yRadius: 1.4)
+            NSGradient(starting: Palette.phonesSheen, ending: Palette.phones)?.draw(in: cup, angle: -70)
+            // sheen along the band
+            Palette.phonesSheen.withAlphaComponent(0.8).set()
+            let sheen = NSBezierPath()
+            sheen.move(to: NSPoint(x: 19.0, y: 14.8))
+            sheen.curve(to: NSPoint(x: 22.6, y: 16.4), controlPoint1: NSPoint(x: 19.8, y: 16.0), controlPoint2: NSPoint(x: 21.2, y: 16.5))
+            sheen.lineWidth = 0.35; sheen.lineCapStyle = .round; sheen.stroke()
+        } else {
+            // Off: the band is a collar under the chin, the earpad hangs from it.
+            let collar = neckBandPath()
+            collar.lineWidth = 1.3; collar.stroke()
+            let cup = NSBezierPath(roundedRect: neckCupRect, xRadius: 1.2, yRadius: 1.2)
+            NSGradient(starting: Palette.phonesSheen, ending: Palette.phones)?.draw(in: cup, angle: -70)
+            Palette.phonesSheen.withAlphaComponent(0.8).set()
+            let sheen = NSBezierPath()
+            sheen.move(to: NSPoint(x: 18.6, y: 4.6))
+            sheen.curve(to: NSPoint(x: 23.4, y: 4.4), controlPoint1: NSPoint(x: 19.8, y: 4.0), controlPoint2: NSPoint(x: 22.0, y: 3.9))
+            sheen.lineWidth = 0.35; sheen.lineCapStyle = .round; sheen.stroke()
+        }
         NSGraphicsContext.restoreGraphicsState()
     }
 
