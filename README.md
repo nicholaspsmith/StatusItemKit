@@ -176,7 +176,8 @@ licks (VPN & DNS), Armonitor laps his monitor (Monitor Lizard), Volta blinks
 while his charge sloshes (Battery Time), Apollo blinks (Apollo Monitor), a
 gleam sweeps round Lumen's rays (KeyLight), Manny focuses his lens (MacRecorder),
 Gertie opens her front door a crack (Homestead), Mendoza drops his bucket and
-grabs (Menu Crane) and the windows slide into their tiles (Panes).
+grabs (Menu Crane) and Major Pane salutes (Panes; with its grid icon chosen,
+the windows slide into their tiles instead).
 
 `MinuteCue` keeps them from moving at once. Every app wakes on each cue (the
 wall clock's :00 and :30, `MinuteCue.interval` apart) and waits one second for
