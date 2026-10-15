@@ -8,6 +8,11 @@ without one is refused (`[no release]` in the tip commit is the only exception).
 Versions follow [Semantic Versioning](https://semver.org/). The full rule:
 [StatusItemKit — Releases](https://github.com/nicholaspsmith/StatusItemKit#releases-every-push-is-one).
 
+## [0.31.0] - 2026-10-15
+
+- Carol walks as hard as she is told: `CaterpillarWalk.advance(by:drive:)` takes a drive of 0 … 1 that sets both how high she steps and how fast (0.6 to 1.8 strides a second). She rises to it within 0.1 s and settles over 0.4 s. `advance(by:walking:)` stays, as drive 1 or 0
+- Her height is drawn in six steps, so every pose of the walk is cached, not just full stride; she is advanced 24 times a second (`frameInterval`)
+
 ## [0.30.0] - 2026-10-15
 
 - Carol can walk: `CharacterIcon.caterpillar` takes `walking:`, a `CaterpillarWalk` the app advances for as long as it likes. A hump rolls from her tail to her head, each segment stepping its feet forward as it lifts, and she eases in and out over 0.3 s. Slower than her once-a-minute run and a different motion. The 18 frames of a stride are each drawn once and cached, so a long walk costs next to nothing
