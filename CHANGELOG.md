@@ -8,6 +8,10 @@ without one is refused (`[no release]` in the tip commit is the only exception).
 Versions follow [Semantic Versioning](https://semver.org/). The full rule:
 [StatusItemKit — Releases](https://github.com/nicholaspsmith/StatusItemKit#releases-every-push-is-one).
 
+## [0.32.0] - 2026-10-15
+
+- Carol can sleep: `CharacterIcon.caterpillar` takes `sleeping:` (seconds into her sleep, looping every `caterpillarSleepLoop`, 3.2 s). Her eye shuts, her body swells and settles with each breath while her head lifts a little and nods back, and two Zs take turns rising over her back, growing and fading. In Polly's dozing manner; 24 frames a loop (`caterpillarSleepFrames`), each drawn once and cached. Asleep wins over a run or a walk, and she never leaves the icon, headphones on or off
+
 ## [0.31.1] - 2026-10-15
 
 - Fix: Carol's once-a-minute run no longer cuts the top of her headband off flat. Her head now nods as little as it does when she walks, which keeps it inside the icon

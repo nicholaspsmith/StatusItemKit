@@ -1170,11 +1170,25 @@ extension CharacterIcon {
     ///     are not cached. A run takes precedence over a walk.
     ///   - walking: her walk (see `CaterpillarWalk`), or nil standing still.
     ///     Each of its poses (frame and height) is drawn once and cached.
+    ///   - sleeping: seconds into her sleep, or nil awake. Asleep her eyes are shut,
+    ///     she breathes and nods, and Zs rise over her back; it loops every
+    ///     `caterpillarSleepLoop` (any number of seconds will do) and wins over a
+    ///     run or a walk. Each of its `caterpillarSleepFrames` frames is cached.
     ///   - headphones: on her ears (true) or off, hanging round her neck.
     public static func caterpillar(effects: Int, state: CaterpillarState, running: TimeInterval? = nil,
-                                   walking: CaterpillarWalk? = nil, headphones: Bool = true) -> NSImage {
+                                   walking: CaterpillarWalk? = nil, sleeping: TimeInterval? = nil,
+                                   headphones: Bool = true) -> NSImage {
         CaterpillarGlyph.image(effects: effects, state: state, running: running, walking: walking,
-                               headphones: headphones)
+                               sleeping: sleeping, headphones: headphones)
+    }
+
+    /// One breath of Carol's sleep, and how often a Z rises (twice a loop).
+    public static let caterpillarSleepLoop: TimeInterval = 3.2
+    /// Frames in one loop of her sleep.
+    public static let caterpillarSleepFrames = 24
+    /// How often to redraw her asleep: one frame of the loop.
+    public static var caterpillarSleepFrameInterval: TimeInterval {
+        caterpillarSleepLoop / Double(caterpillarSleepFrames)
     }
 
     /// How long Carol's run lasts.
@@ -1352,6 +1366,58 @@ public struct CaterpillarWalk: Equatable, Sendable {
 
 extension CaterpillarWalk: CaterpillarPose {}
 
+/// Carol asleep at one frame of the loop, in the manner of Polly's doze: her body
+/// swells on the in-breath, her head lifts a little less and settles back on the
+/// out-breath, a slow nod, and two Zs take turns rising from just behind her head,
+/// up over her back, growing and fading as they go. Nothing goes below where she
+/// sits awake (her dangling earpad is a hair off the bottom of the canvas) or the
+/// head higher than its run's nod (the headband is a hair off the top).
+struct CaterpillarDoze: Equatable {
+    /// How far her body rises at the top of a breath, and her head.
+    static let chest: CGFloat = 0.3
+    static let nod: CGFloat = 0.15
+
+    struct Z: Equatable {
+        let id: Int
+        let center: NSPoint
+        let size: CGFloat
+        let alpha: CGFloat
+    }
+
+    let frame: Int
+
+    static func at(_ seconds: TimeInterval) -> CaterpillarDoze {
+        let loop = (seconds / CharacterIcon.caterpillarSleepLoop).truncatingRemainder(dividingBy: 1)
+        let phase = loop < 0 ? loop + 1 : loop
+        let n = CharacterIcon.caterpillarSleepFrames
+        return CaterpillarDoze(frame: min(n - 1, Int(phase * Double(n))))
+    }
+
+    private var phase: Double { Double(frame) / Double(CharacterIcon.caterpillarSleepFrames) }
+
+    /// 0 at the end of the out-breath, 1 at the top of the in-breath.
+    var breath: CGFloat { CGFloat((1 - cos(2 * .pi * phase)) / 2) }
+
+    /// The Zs in the air now: each spends nine tenths of its half of the loop rising.
+    var zs: [Z] {
+        (0..<2).compactMap { id in
+            let p = (phase + Double(id) / 2).truncatingRemainder(dividingBy: 1)
+            guard p < 0.9 else { return nil }
+            let t = CGFloat(p / 0.9)
+            let alpha = max(0, min(1, t / 0.15, (1 - t) / 0.25))
+            guard alpha > 0 else { return nil }
+            let center = NSPoint(x: 14.4 - 3.8 * t + 0.35 * CGFloat(sin(2 * .pi * Double(t))), y: 11.8 + 3.8 * t)
+            return Z(id: id, center: center, size: 1.2 + 0.8 * t, alpha: alpha)
+        }
+    }
+}
+
+extension CaterpillarDoze: CaterpillarPose {
+    func bob(_ index: Int) -> CGFloat { (index == -1 ? Self.nod : Self.chest) * breath }
+    func foot(_ index: Int) -> CGFloat { 0 }
+    func footLift(_ index: Int) -> CGFloat { 0 }
+}
+
 /// The caterpillar's drawing. See `CharacterIcon.caterpillar(effects:state:)`.
 private enum CaterpillarGlyph {
     typealias State = CaterpillarState
@@ -1364,26 +1430,30 @@ private enum CaterpillarGlyph {
     static let gridScale: CGFloat = 1.34
     static let gridOffset = NSPoint(x: -0.3, y: 1 - 2.05 * 1.34)
 
-    /// `walkFrame` and `walkHeight` are the walk's pose, nil and 0 standing.
+    /// `walkFrame` and `walkHeight` are the walk's pose, nil and 0 standing;
+    /// `sleepFrame` is the frame of her sleep, nil awake.
     private struct Key: Hashable {
         let lit: Int; let state: State; let headphones: Bool; let walkFrame: Int?; let walkHeight: Int
+        let sleepFrame: Int?
     }
     private static var cache: [Key: NSImage] = [:]
 
     static func image(effects: Int, state: State, running: TimeInterval? = nil, walking: CaterpillarWalk? = nil,
-                      headphones: Bool = true) -> NSImage {
-        let gait = running.flatMap { t in
+                      sleeping: TimeInterval? = nil, headphones: Bool = true) -> NSImage {
+        let doze = sleeping.map(CaterpillarDoze.at)
+        let gait = doze != nil ? nil : running.flatMap { t in
             t > 0 && t < CharacterIcon.caterpillarRunDuration
                 ? CaterpillarGait(time: t, duration: CharacterIcon.caterpillarRunDuration) : nil
         }
-        let walk = gait == nil ? walking.flatMap { $0.isResting ? nil : $0 } : nil
-        let pose = (gait as CaterpillarPose?) ?? walk
-        // A run is a passing pose; a walk's poses and standing are drawn once.
+        let walk = gait == nil && doze == nil ? walking.flatMap { $0.isResting ? nil : $0 } : nil
+        let pose = (doze as CaterpillarPose?) ?? (gait as CaterpillarPose?) ?? walk
+        // A run is a passing pose; a walk's poses, her sleep and standing are drawn once.
         let cacheable = gait == nil
         let key = Key(lit: max(0, min(effects, bodySegments)), state: state, headphones: headphones,
-                      walkFrame: walk?.frame, walkHeight: walk?.heightStep ?? 0)
+                      walkFrame: walk?.frame, walkHeight: walk?.heightStep ?? 0, sleepFrame: doze?.frame)
         if cacheable, let cached = cache[key] { return cached }
-        let big = render(lit: key.lit, palette: Palette(state), pose: pose, headphones: headphones, scale: supersample)
+        let big = render(lit: key.lit, palette: Palette(state), pose: pose, doze: doze, headphones: headphones,
+                         scale: supersample)
         let image = NSImage(size: size)
         for scale in [2, 1] as [CGFloat] {
             if let rep = downsample(big, scale: scale) { image.addRepresentation(rep) }
@@ -1420,8 +1490,8 @@ private enum CaterpillarGlyph {
 
     // MARK: Rendering
 
-    private static func render(lit: Int, palette: Palette, pose: CaterpillarPose?, headphones: Bool,
-                               scale: CGFloat) -> NSBitmapImageRep {
+    private static func render(lit: Int, palette: Palette, pose: CaterpillarPose?, doze: CaterpillarDoze?,
+                               headphones: Bool, scale: CGFloat) -> NSBitmapImageRep {
         let rep = NSBitmapImageRep(bitmapDataPlanes: nil,
                                    pixelsWide: Int(size.width * scale), pixelsHigh: Int(size.height * scale),
                                    bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
@@ -1435,7 +1505,7 @@ private enum CaterpillarGlyph {
         t.translateX(by: gridOffset.x, yBy: gridOffset.y)
         t.scale(by: gridScale)
         t.concat()
-        draw(lit: lit, palette: palette, pose: pose, headphones: headphones)
+        draw(lit: lit, palette: palette, pose: pose, doze: doze, headphones: headphones)
         NSGraphicsContext.restoreGraphicsState()
         return rep
     }
@@ -1506,7 +1576,8 @@ private enum CaterpillarGlyph {
         return path
     }
 
-    private static func draw(lit: Int, palette: Palette, pose: CaterpillarPose?, headphones: Bool) {
+    private static func draw(lit: Int, palette: Palette, pose: CaterpillarPose?, doze: CaterpillarDoze?,
+                             headphones: Bool) {
         let groundY: CGFloat = 3.2
         // The head rides last in the wave, after the segment behind it.
         let headBob = pose?.bob(-1) ?? 0
@@ -1579,13 +1650,22 @@ private enum CaterpillarGlyph {
         Palette.cheek.set()
         NSBezierPath(ovalIn: NSRect(x: 20.6, y: 6.2, width: 2.4, height: 1.5)).fill()
 
-        // Eye: white, pupil, glint.
-        let eye = NSBezierPath(ovalIn: NSRect(x: 22.3, y: 9.0, width: 2.7, height: 3.1))
-        NSColor.white.set(); eye.fill()
-        Palette.ink.set(); eye.lineWidth = 0.4; eye.stroke()
-        NSBezierPath(ovalIn: NSRect(x: 23.5, y: 9.6, width: 1.3, height: 1.7)).fill()
-        NSColor.white.set()
-        NSBezierPath(ovalIn: NSRect(x: 24.0, y: 10.6, width: 0.5, height: 0.5)).fill()
+        if doze != nil {
+            // Asleep: the eye shut, one curve dipping where the pupil was.
+            Palette.ink.set()
+            let lid = NSBezierPath()
+            lid.move(to: NSPoint(x: 22.4, y: 10.7))
+            lid.curve(to: NSPoint(x: 25.0, y: 10.7), controlPoint1: NSPoint(x: 23.0, y: 9.6), controlPoint2: NSPoint(x: 24.4, y: 9.6))
+            lid.lineWidth = 0.6; lid.lineCapStyle = .round; lid.stroke()
+        } else {
+            // Eye: white, pupil, glint.
+            let eye = NSBezierPath(ovalIn: NSRect(x: 22.3, y: 9.0, width: 2.7, height: 3.1))
+            NSColor.white.set(); eye.fill()
+            Palette.ink.set(); eye.lineWidth = 0.4; eye.stroke()
+            NSBezierPath(ovalIn: NSRect(x: 23.5, y: 9.6, width: 1.3, height: 1.7)).fill()
+            NSColor.white.set()
+            NSBezierPath(ovalIn: NSRect(x: 24.0, y: 10.6, width: 0.5, height: 0.5)).fill()
+        }
 
         // Smile.
         Palette.ink.set()
@@ -1620,6 +1700,19 @@ private enum CaterpillarGlyph {
             sheen.lineWidth = 0.35; sheen.lineCapStyle = .round; sheen.stroke()
         }
         NSGraphicsContext.restoreGraphicsState()
+
+        // Zs over her back, ink with a light rim so they read on a dark bar too.
+        for z in doze?.zs ?? [] {
+            let h = z.size / 2, c = z.center
+            let path = NSBezierPath()
+            path.move(to: NSPoint(x: c.x - h, y: c.y + h)); path.line(to: NSPoint(x: c.x + h, y: c.y + h))
+            path.line(to: NSPoint(x: c.x - h, y: c.y - h)); path.line(to: NSPoint(x: c.x + h, y: c.y - h))
+            path.lineJoinStyle = .round; path.lineCapStyle = .round
+            Palette.rim.withAlphaComponent(0.85 * z.alpha).set()
+            path.lineWidth = 1.15; path.stroke()
+            Palette.ink.withAlphaComponent(z.alpha).set()
+            path.lineWidth = 0.5; path.stroke()
+        }
     }
 
     /// Shifts everything drawn after it up by `dy`, until the state is restored.

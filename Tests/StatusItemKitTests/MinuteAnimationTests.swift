@@ -78,6 +78,68 @@ final class MascotAnimationTests: XCTestCase {
         }
     }
 
+    // MARK: Carol asleep
+
+    private func bottomRowAlpha(_ image: NSImage) -> CGFloat {
+        let rep = image.representations.compactMap { $0 as? NSBitmapImageRep }.max { $0.pixelsWide < $1.pixelsWide }!
+        return (0..<rep.pixelsWide).map { rep.colorAt(x: $0, y: rep.pixelsHigh - 1)?.alphaComponent ?? 0 }.max() ?? 0
+    }
+
+    // Asleep she loops: the same moment of each loop is the same cached image,
+    // and it is not her awake pose.
+    func testSleepLoopsAndIsCached() {
+        let loop = CharacterIcon.caterpillarSleepLoop
+        for t in [0.0, 0.4, 1.7] {
+            let a = CharacterIcon.caterpillar(effects: 0, state: .bypassed, sleeping: t)
+            XCTAssertTrue(a === CharacterIcon.caterpillar(effects: 0, state: .bypassed, sleeping: t + loop * 3))
+            XCTAssertFalse(a === CharacterIcon.caterpillar(effects: 0, state: .bypassed))
+            XCTAssertEqual(a.size, NSSize(width: 36, height: 22))
+        }
+        // Asleep wins over a walk or a run.
+        var w = CaterpillarWalk(); w.advance(by: 1, walking: true)
+        XCTAssertTrue(CharacterIcon.caterpillar(effects: 0, state: .bypassed, running: 0.3, walking: w, sleeping: 0.4)
+                      === CharacterIcon.caterpillar(effects: 0, state: .bypassed, sleeping: 0.4))
+    }
+
+    // She breathes in and out over one loop: her body rises on the in-breath and
+    // her head nods lowest at the end of the out-breath. A Z is always rising.
+    func testSleepBreathesNodsAndZsRise() {
+        let n = CharacterIcon.caterpillarSleepFrames
+        let doze = (0..<n).map { CaterpillarDoze(frame: $0) }
+        XCTAssertEqual(doze[0].breath, 0, accuracy: 1e-9)
+        XCTAssertEqual(doze.map(\.breath).max()!, 1, accuracy: 0.05)
+        XCTAssertGreaterThan(doze[n / 2].bob(2), doze[0].bob(2))
+        XCTAssertLessThan(doze[0].bob(-1), doze[n / 2].bob(-1))
+        for d in doze {
+            XCTAssertFalse(d.zs.isEmpty, "frame \(d.frame)")
+            XCTAssertEqual(d.foot(1), 0)
+            XCTAssertEqual(d.footLift(1), 0)
+        }
+        // Following one Z frame to frame: it climbs, and grows.
+        let first = doze.compactMap { $0.zs.first { $0.id == 0 } }
+        XCTAssertGreaterThan(first.count, n / 2)
+        for (a, b) in zip(first, first.dropFirst()) {
+            XCTAssertGreaterThan(b.center.y, a.center.y)
+            XCTAssertGreaterThanOrEqual(b.size, a.size)
+        }
+        XCTAssertEqual(CaterpillarDoze.at(CharacterIcon.caterpillarSleepLoop * 2.5).frame, n / 2)
+        XCTAssertEqual(CaterpillarDoze.at(-0.0001).frame, n - 1)
+    }
+
+    // Asleep she stays inside the icon, headphones on or off: no higher than the
+    // top, and no lower at the bottom than she sits awake.
+    func testSleepStaysInsideTheCanvas() {
+        for headphones in [true, false] {
+            let awake = bottomRowAlpha(CharacterIcon.caterpillar(effects: 0, state: .bypassed, headphones: headphones))
+            for k in 0..<CharacterIcon.caterpillarSleepFrames {
+                let t = Double(k) * CharacterIcon.caterpillarSleepFrameInterval
+                let frame = CharacterIcon.caterpillar(effects: 0, state: .bypassed, sleeping: t, headphones: headphones)
+                XCTAssertLessThan(topRowAlpha(frame), 0.05, "frame \(k), headphones \(headphones)")
+                XCTAssertLessThanOrEqual(bottomRowAlpha(frame), awake + 0.1, "frame \(k), headphones \(headphones)")
+            }
+        }
+    }
+
     // MARK: Carol's walk
 
     /// A walk brought to `drive` and then on to the middle of `frame`.
