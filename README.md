@@ -158,7 +158,7 @@ app's state. Each app offers it as `MeterStyle.character` in the Icon picker.
 | `macDaddy(art:level:asleep:flourish:grin:)` | Mac Daddy | Menu Pimp from his illustrated art (`MacDaddyArt.load(from:)`): the hat is purple when cool, amber with a sweat drop when sweating, red with two drops when red-hot; greyed with a "z" when asleep. `macDaddy(level:asleep:flourish:grin:)` is the code-drawn fallback. |
 | `lumen(keycap:level:active:shimmer:)` | KeyLight | Lumen, a keycap in sunglasses from illustrated art, with eight rays drawn in code that light clockwise with the backlight level; `shimmer` sweeps a gleam round them. `key(level:active:)` is the code-drawn fallback. |
 | `monitorLizard(brightness:nightShift:tongue:…)` | Monitor Lizard | Armonitor on a monitor whose screen fills blue with brightness, amber under Night Shift. |
-| `caterpillar(effects:state:running:)` | SoundChain | Carol in headphones: one lit segment per running effect (up to five); colour is the state. |
+| `caterpillar(effects:state:running:walking:headphones:)` | SoundChain | Carol in headphones: one lit segment per running effect (up to five); colour is the state; `headphones: false` hangs them round her neck. `walking` (a `CaterpillarWalk`, advanced by the app each `frameInterval`) walks her on the spot for as long as it likes, a hump rolling from tail to head, easing in and out over `ramp`; each full-stride frame is drawn once and cached. |
 | `house(lightsOn:fanOn:reachable:configured:weather:night:door:weatherPhase:intensity:)` | Homestead | Gertie, a cottage whose windows light with the lights on, a fan in one window while a fan runs, hollow when Home Assistant is unreachable, and an optional `HouseWeather` drawn around it; `door` swings the front door open a crack. `weatherPhase` (0 ..< 1 through `houseWeatherLoopDuration`) sets the weather moving — gleaming sun, drifting clouds, falling rain and snow, sliding fog, gusts, a flickering bolt — and `intensity` (0 … 1) how hard it rains or snows. |
 | `menuCrane(state:grab:)` | Menu Crane | Mendoza's head with a grab bucket: open while searching, shut on a copy, open and empty on no results. `grab` (seconds into `menuCraneGrabDuration`, see `craneGrab(at:)`) drops the bucket open, snaps it shut and lifts it home. |
 | `apollo(level:online:)` | Apollo Monitor | An Apollo Twin face whose knob's tick ring lights with the monitor level; dimmed when the level cannot be changed. |
@@ -187,6 +187,9 @@ set at the same moment. The timer is re-aimed each cue and after wake or a
 clock change, so it never drifts.
 Everything is skipped under Reduce Motion. `IconAnimation` drives the frames
 at 60 fps whether or not a menu is open.
+
+Carol also walks outside the cue, for as long as sound is passing through
+SoundChain (`CaterpillarWalk`); she skips her run while she walks.
 
 Monitor Lizard also plays `MonitorLizardLap` at launch, when a new display
 appears and when Night Shift turns on or off; his regular lap stays in
