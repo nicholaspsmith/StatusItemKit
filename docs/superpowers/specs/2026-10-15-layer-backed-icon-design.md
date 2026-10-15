@@ -64,6 +64,9 @@ path tints them itself: the template drawn in the button's effective appearance
 AppKit's vibrant rendering can only be judged by eye. If it does, templates use
 the layer too and the old path is gone entirely; if any difference shows, they
 alone keep AppKit's path, and the spec is updated to say so.
+Result (2026-10-15, `scripts/icon-compare.sh`, five templates old and new side
+by side): Nick saw no difference, so templates use the layer too and the old
+path is gone.
 
 **Before a window exists** (the first `setIcon`, during launch) the icon is set
 the old way and moved onto the layer once the button has a window. `setTitle`
