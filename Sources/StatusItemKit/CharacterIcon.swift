@@ -1183,9 +1183,11 @@ extension CharacterIcon {
     }
 
     /// One breath of Carol's sleep, and how often a Z rises (twice a loop).
-    public static let caterpillarSleepLoop: TimeInterval = 3.2
-    /// Frames in one loop of her sleep.
-    public static let caterpillarSleepFrames = 24
+    public static let caterpillarSleepLoop: TimeInterval = 3.0
+    /// Frames in one loop of her sleep: 6 a second, Polly's dozing rate. Each frame
+    /// set in the bar costs a redraw (about 0.7% of a core per frame a second on an
+    /// M5 Pro), and she may sleep for hours.
+    public static let caterpillarSleepFrames = 18
     /// How often to redraw her asleep: one frame of the loop.
     public static var caterpillarSleepFrameInterval: TimeInterval {
         caterpillarSleepLoop / Double(caterpillarSleepFrames)

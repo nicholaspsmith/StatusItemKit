@@ -10,7 +10,7 @@ Versions follow [Semantic Versioning](https://semver.org/). The full rule:
 
 ## [0.32.0] - 2026-10-15
 
-- Carol can sleep: `CharacterIcon.caterpillar` takes `sleeping:` (seconds into her sleep, looping every `caterpillarSleepLoop`, 3.2 s). Her eye shuts, her body swells and settles with each breath while her head lifts a little and nods back, and two Zs take turns rising over her back, growing and fading. In Polly's dozing manner; 24 frames a loop (`caterpillarSleepFrames`), each drawn once and cached. Asleep wins over a run or a walk, and she never leaves the icon, headphones on or off
+- Carol can sleep: `CharacterIcon.caterpillar` takes `sleeping:` (seconds into her sleep, looping every `caterpillarSleepLoop`, 3 s). Her eye shuts, her body swells and settles with each breath while her head lifts a little and nods back, and two Zs take turns rising over her back, growing and fading. In Polly's dozing manner and at her 6 frames a second (`caterpillarSleepFrames`, 18 a loop), each drawn once and cached. Asleep wins over a run or a walk, and she never leaves the icon, headphones on or off
 
 ## [0.31.1] - 2026-10-15
 
