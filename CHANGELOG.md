@@ -8,6 +8,10 @@ without one is refused (`[no release]` in the tip commit is the only exception).
 Versions follow [Semantic Versioning](https://semver.org/). The full rule:
 [StatusItemKit — Releases](https://github.com/nicholaspsmith/StatusItemKit#releases-every-push-is-one).
 
+## [0.30.0] - 2026-10-15
+
+- Carol can walk: `CharacterIcon.caterpillar` takes `walking:`, a `CaterpillarWalk` the app advances for as long as it likes. A hump rolls from her tail to her head, each segment stepping its feet forward as it lifts, and she eases in and out over 0.3 s. Slower than her once-a-minute run and a different motion. The 18 frames of a stride are each drawn once and cached, so a long walk costs next to nothing
+
 ## [0.29.0] - 2026-10-09
 
 - `CharacterIcon.caterpillar` takes `headphones:` (default on): off, Carol wears them round her neck, the band a collar under her chin with the earpad hanging from it, for SoundChain to show when it is not keeping her headphones to this Mac

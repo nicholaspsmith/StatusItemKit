@@ -1167,11 +1167,15 @@ extension CharacterIcon {
     /// - Parameters:
     ///   - running: seconds into her once-a-minute run (see
     ///     `caterpillarRunDuration`), or nil standing still. Running frames
-    ///     are not cached.
+    ///     are not cached. A run takes precedence over a walk.
+    ///   - walking: her walk (see `CaterpillarWalk`), or nil standing still.
+    ///     Frames at full stride are cached, so a long walk draws each of its
+    ///     `CaterpillarWalk.framesPerStride` frames once.
     ///   - headphones: on her ears (true) or off, hanging round her neck.
     public static func caterpillar(effects: Int, state: CaterpillarState, running: TimeInterval? = nil,
-                                   headphones: Bool = true) -> NSImage {
-        CaterpillarGlyph.image(effects: effects, state: state, running: running, headphones: headphones)
+                                   walking: CaterpillarWalk? = nil, headphones: Bool = true) -> NSImage {
+        CaterpillarGlyph.image(effects: effects, state: state, running: running, walking: walking,
+                               headphones: headphones)
     }
 
     /// How long Carol's run lasts.
@@ -1221,7 +1225,107 @@ struct CaterpillarGait: Equatable {
         let side: CGFloat = index.isMultiple(of: 2) ? 1 : -1
         return strength * Self.footSwing * side * CGFloat(sin(2 * .pi * Self.stride * time))
     }
+
+    /// How far foot `index` is off the ground: it leaves it as it comes forward.
+    func footLift(_ index: Int) -> CGFloat { max(0, foot(index)) * 0.35 }
 }
+
+/// Where each of Carol's parts is at a moment of a run or a walk. Part 0 is the
+/// segment behind the head, rising toward the tail; the head is -1.
+protocol CaterpillarPose {
+    func bob(_ index: Int) -> CGFloat
+    func foot(_ index: Int) -> CGFloat
+    func footLift(_ index: Int) -> CGFloat
+}
+
+extension CaterpillarGait: CaterpillarPose {}
+
+/// Carol walking on the spot, for as long as the app likes: SoundChain walks
+/// her while sound is passing through it.
+///
+/// A real caterpillar walks by a hump that travels from tail to head: each
+/// segment in turn lifts, steps its feet forward and sets down, while the
+/// segments on the ground hold still. Here the hump takes `raise` of a stride
+/// at each part and reaches the next part toward the head `lag` of a stride
+/// later, so two or three parts are up at a time and the head nods last (a
+/// small nod, which keeps her headband inside the canvas). A
+/// foot steps forward while its segment is up and slides back while it is
+/// down, as on a treadmill. Slower than her once-a-minute run, and a different
+/// motion, so the two are never confused.
+///
+/// The walk is quantised to `framesPerStride` frames, so at full stride each
+/// frame is drawn once and cached. Call `advance(by:walking:)` every
+/// `frameInterval` or so: it moves her on and eases her in or out over
+/// `ramp`, from wherever she had got to.
+public struct CaterpillarWalk: Equatable, Sendable {
+    public static let stridesPerSecond: Double = 1.2
+    public static let framesPerStride = 18
+    /// About how often to advance her; one frame of the walk.
+    public static var frameInterval: TimeInterval { 1 / (stridesPerSecond * Double(framesPerStride)) }
+    /// How long she takes to get up to full stride, and to settle back to standing.
+    public static let ramp: TimeInterval = 0.3
+
+    /// Frames between neighbouring parts doing the same thing.
+    static let lagFrames = 3
+    static var lag: Double { Double(lagFrames) / Double(framesPerStride) }
+    /// The share of a stride each part spends lifted.
+    static let raise: Double = 0.4
+    static let bobHeight: CGFloat = 0.9
+    /// The head's nod is small: her headband is a hair from the top of the canvas.
+    static let headNod: CGFloat = 0.25
+    static let footSwing: CGFloat = 0.7
+    static let footHeight: CGFloat = 0.45
+
+    /// How far through the current stride she is, 0 ..< 1.
+    public private(set) var cycle: Double = 0
+    /// 0 standing, 1 at full stride.
+    public private(set) var strength: CGFloat = 0
+
+    public init() {}
+
+    /// Moves her on by `seconds`, easing toward full stride while `walking` and
+    /// toward standing while not.
+    public mutating func advance(by seconds: TimeInterval, walking: Bool) {
+        let step = CGFloat(max(0, seconds) / Self.ramp)
+        strength = walking ? min(1, strength + step) : max(0, strength - step)
+        cycle = (cycle + max(0, seconds) * Self.stridesPerSecond).truncatingRemainder(dividingBy: 1)
+    }
+
+    /// Standing still: nothing more to draw until she walks again.
+    public var isResting: Bool { strength == 0 }
+
+    /// Which of the stride's frames she is on.
+    public var frame: Int { min(Self.framesPerStride - 1, Int(cycle * Double(Self.framesPerStride))) }
+
+    /// Where part `index` is in its own stride, 0 ..< 1. Parts nearer the tail lead.
+    private func phase(_ index: Int) -> Double {
+        let p = (Double(frame) / Double(Self.framesPerStride) + Double(index) * Self.lag)
+            .truncatingRemainder(dividingBy: 1)
+        return p < 0 ? p + 1 : p
+    }
+
+    /// The hump at part `index`: 0 on the ground, up to 1 at its height.
+    private func hump(_ index: Int) -> CGFloat {
+        let p = phase(index)
+        return p < Self.raise ? CGFloat(sin(.pi * p / Self.raise)) : 0
+    }
+
+    func bob(_ index: Int) -> CGFloat { strength * (index == -1 ? Self.headNod : Self.bobHeight) * hump(index) }
+
+    /// Forward (toward the head) while lifted, easing from back to front; back
+    /// at an even pace while on the ground.
+    func foot(_ index: Int) -> CGFloat {
+        let p = phase(index)
+        let x = p < Self.raise
+            ? -cos(.pi * p / Self.raise)
+            : 1 - 2 * (p - Self.raise) / (1 - Self.raise)
+        return strength * Self.footSwing * CGFloat(x)
+    }
+
+    func footLift(_ index: Int) -> CGFloat { strength * Self.footHeight * hump(index) }
+}
+
+extension CaterpillarWalk: CaterpillarPose {}
 
 /// The caterpillar's drawing. See `CharacterIcon.caterpillar(effects:state:)`.
 private enum CaterpillarGlyph {
@@ -1235,23 +1339,30 @@ private enum CaterpillarGlyph {
     static let gridScale: CGFloat = 1.34
     static let gridOffset = NSPoint(x: -0.3, y: 1 - 2.05 * 1.34)
 
-    private struct Key: Hashable { let lit: Int; let state: State; let headphones: Bool }
+    /// `walkFrame` is the walk's frame at full stride, nil standing.
+    private struct Key: Hashable { let lit: Int; let state: State; let headphones: Bool; let walkFrame: Int? }
     private static var cache: [Key: NSImage] = [:]
 
-    static func image(effects: Int, state: State, running: TimeInterval? = nil, headphones: Bool = true) -> NSImage {
-        let key = Key(lit: max(0, min(effects, bodySegments)), state: state, headphones: headphones)
+    static func image(effects: Int, state: State, running: TimeInterval? = nil, walking: CaterpillarWalk? = nil,
+                      headphones: Bool = true) -> NSImage {
         let gait = running.flatMap { t in
             t > 0 && t < CharacterIcon.caterpillarRunDuration
                 ? CaterpillarGait(time: t, duration: CharacterIcon.caterpillarRunDuration) : nil
         }
-        if gait == nil, let cached = cache[key] { return cached }
-        let big = render(lit: key.lit, palette: Palette(state), gait: gait, headphones: headphones, scale: supersample)
+        let walk = gait == nil ? walking.flatMap { $0.isResting ? nil : $0 } : nil
+        let pose = (gait as CaterpillarPose?) ?? walk
+        // Easing in or out is a passing pose; everything else is drawn once.
+        let cacheable = gait == nil && (walk == nil || walk?.strength == 1)
+        let key = Key(lit: max(0, min(effects, bodySegments)), state: state, headphones: headphones,
+                      walkFrame: walk?.frame)
+        if cacheable, let cached = cache[key] { return cached }
+        let big = render(lit: key.lit, palette: Palette(state), pose: pose, headphones: headphones, scale: supersample)
         let image = NSImage(size: size)
         for scale in [2, 1] as [CGFloat] {
             if let rep = downsample(big, scale: scale) { image.addRepresentation(rep) }
         }
         image.isTemplate = false
-        if gait == nil { cache[key] = image }
+        if cacheable { cache[key] = image }
         return image
     }
 
@@ -1282,7 +1393,7 @@ private enum CaterpillarGlyph {
 
     // MARK: Rendering
 
-    private static func render(lit: Int, palette: Palette, gait: CaterpillarGait?, headphones: Bool,
+    private static func render(lit: Int, palette: Palette, pose: CaterpillarPose?, headphones: Bool,
                                scale: CGFloat) -> NSBitmapImageRep {
         let rep = NSBitmapImageRep(bitmapDataPlanes: nil,
                                    pixelsWide: Int(size.width * scale), pixelsHigh: Int(size.height * scale),
@@ -1297,7 +1408,7 @@ private enum CaterpillarGlyph {
         t.translateX(by: gridOffset.x, yBy: gridOffset.y)
         t.scale(by: gridScale)
         t.concat()
-        draw(lit: lit, palette: palette, gait: gait, headphones: headphones)
+        draw(lit: lit, palette: palette, pose: pose, headphones: headphones)
         NSGraphicsContext.restoreGraphicsState()
         return rep
     }
@@ -1368,10 +1479,10 @@ private enum CaterpillarGlyph {
         return path
     }
 
-    private static func draw(lit: Int, palette: Palette, gait: CaterpillarGait?, headphones: Bool) {
+    private static func draw(lit: Int, palette: Palette, pose: CaterpillarPose?, headphones: Bool) {
         let groundY: CGFloat = 3.2
         // The head rides last in the wave, after the segment behind it.
-        let headBob = gait?.bob(-1) ?? 0
+        let headBob = pose?.bob(-1) ?? 0
 
         // Light rims for the headphones go down first, so they show only against the
         // background (keeping the parts readable on a dark bar), never over the face.
@@ -1396,12 +1507,11 @@ private enum CaterpillarGlyph {
         for i in (0..<bodySegments).reversed() {
             let cx = firstX - CGFloat(i) * spacing
             let r: CGFloat = 3.25 - CGFloat(max(0, i - 2)) * 0.35
-            let lift: CGFloat = (i % 2 == 0 ? 0.5 : 0) + (gait?.bob(i) ?? 0)
+            let lift: CGFloat = (i % 2 == 0 ? 0.5 : 0) + (pose?.bob(i) ?? 0)
             let bottom = groundY + 0.6 + lift
-            // Running, each foot swings forward and back (the head is to the
-            // right) and leaves the ground as it comes forward.
-            let swing = gait?.foot(i) ?? 0
-            let footX = cx + swing, footY = groundY + max(0, swing) * 0.35
+            // Running or walking, each foot swings forward and back (the head is
+            // to the right) and leaves the ground as it comes forward.
+            let footX = cx + (pose?.foot(i) ?? 0), footY = groundY + (pose?.footLift(i) ?? 0)
 
             // leg with a little round foot, rimmed in light so it reads on a dark bar
             let leg = NSBezierPath()

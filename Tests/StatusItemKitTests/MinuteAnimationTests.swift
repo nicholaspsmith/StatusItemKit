@@ -58,6 +58,116 @@ final class MascotAnimationTests: XCTestCase {
         XCTAssertNotEqual(g.foot(0), 0)
     }
 
+    // MARK: Carol's walk
+
+    /// A walk advanced to full stride and then on to the middle of `frame`.
+    private func walk(at frame: Int) -> CaterpillarWalk {
+        var w = CaterpillarWalk()
+        w.advance(by: CaterpillarWalk.ramp, walking: true)
+        let n = Double(CaterpillarWalk.framesPerStride)
+        let target = (Double(frame) + 0.5) / n
+        w.advance(by: (target - w.cycle + 1).truncatingRemainder(dividingBy: 1) / CaterpillarWalk.stridesPerSecond,
+                  walking: true)
+        XCTAssertEqual(w.frame, frame)
+        return w
+    }
+
+    func testWalkStartsStanding() {
+        let rest = CaterpillarWalk()
+        XCTAssertEqual(rest.strength, 0)
+        XCTAssertTrue(rest.isResting)
+        for i in -1..<5 {
+            XCTAssertEqual(rest.bob(i), 0)
+            XCTAssertEqual(rest.foot(i), 0)
+            XCTAssertEqual(rest.footLift(i), 0)
+        }
+    }
+
+    // She eases in over `ramp`, and back out over `ramp` once the sound stops,
+    // from wherever she had got to.
+    func testWalkRampsInAndOut() {
+        var w = CaterpillarWalk()
+        w.advance(by: CaterpillarWalk.ramp / 2, walking: true)
+        XCTAssertEqual(w.strength, 0.5, accuracy: 1e-9)
+        XCTAssertFalse(w.isResting)
+        w.advance(by: CaterpillarWalk.ramp, walking: true)
+        XCTAssertEqual(w.strength, 1)
+        w.advance(by: CaterpillarWalk.ramp / 4, walking: false)
+        XCTAssertEqual(w.strength, 0.75, accuracy: 1e-9)
+        w.advance(by: CaterpillarWalk.ramp / 4, walking: true)
+        XCTAssertEqual(w.strength, 1)
+        w.advance(by: CaterpillarWalk.ramp * 2, walking: false)
+        XCTAssertEqual(w.strength, 0)
+        XCTAssertTrue(w.isResting)
+    }
+
+    // The stride loops: after a whole stride she is in the same pose, however
+    // long she has been walking.
+    func testWalkLoopsEachStride() {
+        var w = walk(at: 5)
+        let before = (-1..<5).map { [w.bob($0), w.foot($0), w.footLift($0)] }
+        for _ in 0..<1000 { w.advance(by: 1 / CaterpillarWalk.stridesPerSecond, walking: true) }
+        XCTAssertEqual(w.frame, 5)
+        XCTAssertLessThan(w.cycle, 1)
+        let after = (-1..<5).map { [w.bob($0), w.foot($0), w.footLift($0)] }
+        for (a, b) in zip(before.joined(), after.joined()) { XCTAssertEqual(a, b, accuracy: 1e-9) }
+    }
+
+    // The wave travels from tail to head: each part does what the part behind
+    // it did `lagFrames` earlier, and the head (-1) goes last, with a smaller nod.
+    func testWalkWaveRunsTailToHead() {
+        let n = CaterpillarWalk.framesPerStride, lag = CaterpillarWalk.lagFrames
+        for frame in 0..<n {
+            let now = walk(at: frame), later = walk(at: (frame + lag) % n)
+            for i in 0..<4 {
+                XCTAssertEqual(later.bob(i), now.bob(i + 1), accuracy: 1e-9, "part \(i) at frame \(frame)")
+                XCTAssertEqual(later.foot(i), now.foot(i + 1), accuracy: 1e-9)
+            }
+            XCTAssertEqual(later.bob(-1) > 0, now.bob(0) > 0, "head at frame \(frame)")
+            XCTAssertLessThan(later.bob(-1), CaterpillarWalk.bobHeight / 2)
+        }
+    }
+
+    // A hump, not a wobble: a few parts are up at any moment, never most of her.
+    func testWalkLiftsOnlyAHump() {
+        for frame in 0..<CaterpillarWalk.framesPerStride {
+            let w = walk(at: frame)
+            let up = (-1..<5).filter { w.bob($0) > 0 }.count
+            XCTAssertTrue((1...3).contains(up), "frame \(frame): \(up) parts up")
+            for i in -1..<5 { XCTAssertGreaterThanOrEqual(w.bob(i), 0) }
+        }
+    }
+
+    // Each foot steps forward (toward the head) while its segment is up, and
+    // slides back while it is down, so she walks on the spot.
+    func testWalkFeetStepForwardWhileLifted() {
+        let n = CaterpillarWalk.framesPerStride
+        for frame in 0..<n {
+            let now = walk(at: frame), next = walk(at: (frame + 1) % n)
+            for i in 0..<5 where now.bob(i) > 0 && next.bob(i) > 0 {
+                XCTAssertGreaterThan(next.foot(i), now.foot(i), "foot \(i) at frame \(frame)")
+                XCTAssertGreaterThan(now.footLift(i), 0)
+            }
+            for i in 0..<5 where now.bob(i) == 0 && next.bob(i) == 0 {
+                XCTAssertLessThan(next.foot(i), now.foot(i), "foot \(i) at frame \(frame)")
+                XCTAssertEqual(now.footLift(i), 0)
+            }
+        }
+    }
+
+    // Full-stride frames are drawn once and reused; at rest she is the
+    // standing image.
+    func testWalkFramesAreCached() {
+        let a = CharacterIcon.caterpillar(effects: 2, state: .processing, walking: walk(at: 3))
+        let b = CharacterIcon.caterpillar(effects: 2, state: .processing, walking: walk(at: 3))
+        let c = CharacterIcon.caterpillar(effects: 2, state: .processing, walking: walk(at: 9))
+        XCTAssertTrue(a === b)
+        XCTAssertFalse(a === c)
+        XCTAssertEqual(c.size, NSSize(width: 36, height: 22))
+        let standing = CharacterIcon.caterpillar(effects: 2, state: .processing)
+        XCTAssertTrue(CharacterIcon.caterpillar(effects: 2, state: .processing, walking: CaterpillarWalk()) === standing)
+    }
+
     func testTongueLickReturnsToWhereItStarted() {
         let d = CharacterIcon.iguanaLickDuration
         XCTAssertEqual(CharacterIcon.tongueExtent(lickAt: 0, wrapped: false), 0, accuracy: 0.01)
