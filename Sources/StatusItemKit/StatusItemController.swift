@@ -18,6 +18,9 @@ public final class StatusItemController: NSObject, NSMenuDelegate {
     private let onPrimaryClick: (() -> Void)?
     private let menu = NSMenu()
     private var timer: Timer?
+    /// Draws the icon on a layer of its own (see `IconLayer`), so animation frames
+    /// cost a layer swap instead of a redraw of the button.
+    private lazy var iconLayer: IconLayer? = statusItem.button.map { IconLayer(button: $0) }
 
     public var button: NSStatusBarButton? { statusItem.button }
 
@@ -110,6 +113,7 @@ public final class StatusItemController: NSObject, NSMenuDelegate {
     /// Text render path: clears any image, monospaced-digit font, red on warn.
     public func setTitle(_ text: String, warn: Bool) {
         guard let button = statusItem.button else { return }
+        iconLayer?.remove()
         button.image = nil
         button.imagePosition = .noImage
         button.contentTintColor = nil
@@ -123,6 +127,8 @@ public final class StatusItemController: NSObject, NSMenuDelegate {
     }
 
     /// Icon render path: clears title + tint (icons are full-color non-template).
+    /// The icon is drawn on a layer of its own; until the button has a window (the
+    /// first icon, during launch) it is set the old way and moved over shortly.
     public func setIcon(_ image: NSImage) {
         guard let button = statusItem.button else { return }
         // Touch only what changes: resetting the title or image position on a
@@ -131,7 +137,7 @@ public final class StatusItemController: NSObject, NSMenuDelegate {
         if button.attributedTitle.length != 0 { button.attributedTitle = NSAttributedString(string: "") }
         if button.imagePosition != .imageOnly { button.imagePosition = .imageOnly }
         if button.contentTintColor != nil { button.contentTintColor = nil }
-        button.image = image
+        if iconLayer?.show(image) != true { button.image = image }
     }
 
     /// Give up this item's width, or take it back. Used by `YieldClient` so a
