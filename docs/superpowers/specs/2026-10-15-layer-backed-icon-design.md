@@ -26,17 +26,18 @@ a core today and would cost about 0.4%; asleep (6 fps) 3.3% → about 0.1%.
 
 ## Goal
 
-Make a status icon's frame changes cost a layer swap instead of a button redraw,
-for every app built on StatusItemKit, without changing how apps draw or call it.
+Replace how `setIcon(_:)` draws, for every app built on StatusItemKit, so a frame
+change costs a layer swap instead of a button redraw — without changing how apps
+draw or call it, and only once testing shows no regressions anywhere.
 
 Non-goals: keyframe loops (the swap already brings a 6 fps loop to about 0.1%; a
-second API is not worth it now), text items (`setTitle`), template images.
+second API is not worth it now) and text items (`setTitle`, which stays as is).
+MacRecorder builds its own status item and is not affected.
 
 ## Design
 
-**One path, opt in per controller.** `StatusItemController` gains
-`init(…, layerIcon: Bool = false)`. With it on, `setIcon(_:)` keeps its signature
-and meaning but draws differently:
+**One path, replacing the old one.** `setIcon(_:)` keeps its signature and
+meaning; its implementation changes for every app at once, with no flag:
 
 - The button's own `image` becomes a transparent placeholder the size of the
   icon. It still sizes the item (variable length), so width, position and the
@@ -56,36 +57,57 @@ and meaning but draws differently:
   scale re-picks the bitmap and `contentsScale`).
 - Accessibility: the placeholder carries the icon's `accessibilityDescription`.
 
-**Falls back to today's path** when the image is a template (`isTemplate`: AppKit
-tints those for the bar's appearance and a layer cannot), when the button has no
-layer or window yet, and for `setTitle`, which removes the layer.
+**Template icons** (Battery Time's plain battery, KeyLight's non-key styles, Menu
+Crane's alternate) are tinted by AppKit with the menu bar's vibrancy. The layer
+path tints them itself: the template drawn in the button's effective appearance
+(`labelColor`), re-drawn when that appearance changes. Whether that matches
+AppKit's vibrant rendering can only be judged by eye. If it does, templates use
+the layer too and the old path is gone entirely; if any difference shows, they
+alone keep AppKit's path, and the spec is updated to say so.
+
+**Before a window exists** (the first `setIcon`, during launch) the icon is set
+the old way and moved onto the layer once the button has a window. `setTitle`
+removes the layer.
 
 **Highlight.** The button still draws its own highlight (menu open) underneath;
 the icon layer sits above it, so a full-colour mascot looks as it does today on
 the highlighted background. To be checked by eye (below).
 
-**Rollout.**
-1. StatusItemKit 0.33.0 adds `layerIcon`, default off. Nothing changes for any
-   app until it opts in.
-2. SoundChain 1.17.0 opts in (`layerIcon: true`). Its walk and sleep are the
-   heaviest animations, and are what the numbers above measure.
-3. After it has run on both Macs for a few days, the other apps opt in, or the
-   default flips in a later StatusItemKit release — a separate decision.
+**Rollout: tested in three stages, released only after all three pass.** Every
+push to StatusItemKit's `main` is a release that parity rolls into all eleven apps,
+so nothing reaches `main` until the change is confirmed.
+1. **Local, this Mac:** all eleven apps built against the `layer-icon` branch and
+   run in place of the installed copies; the checklist below, app by app.
+2. **Soak, both Macs:** the branch pushed while checked out, so parity merges it
+   into its StatusItemKit build and installs every app built with it on both
+   Macs (how it already carries a pushed feature branch). Lived with for two
+   days, including the M1's display. Rollback is checking out `main` and deleting
+   the branch: parity rebuilds without it.
+3. **Release:** merged to `main` as StatusItemKit 0.33.0 (a minor: same API,
+   new drawing). parity opens each app's release.
 
 ## Verification
 
 - **Unit tests** (StatusItemKit): the bitmap chosen for scales 1 and 2; template
-  and title fall back; the placeholder matches the icon's size and keeps its
-  accessibility description; the cache returns the same `CGImage` for the same
-  image and scale; `setVisible(false)` hides the layer.
-- **Cost:** SoundChain's CPU walking and asleep, before and after, measured the
-  same way as above. Pass: under 1% walking at 24 fps.
-- **By eye** (screen capture of the bar is blank on this display, so Nick looks):
-  Carol on the built-in display and on the Dell; the menu open over her (the
-  highlight); light and dark menu bars; moving the bar between displays while
-  she walks; parity's launch check of the build.
-- No other app is affected until it opts in, so their behaviour needs no checks
-  in this round.
+  tinting for light and dark appearances; the placeholder matches the icon's
+  size and keeps its accessibility description; the cache returns the same
+  `CGImage` for the same image and scale; `setVisible(false)` hides the layer;
+  `setTitle` removes it; an icon set before the window exists moves onto the
+  layer.
+- **Cost:** SoundChain walking (24 fps) and asleep (6 fps), before and after,
+  measured as above; pass under 1% walking. Every other app's idle CPU, before
+  and after: no increase.
+- **By eye, every app** (screen capture of the bar is blank on this display, so
+  Nick looks; a checklist per app with its states and animations):
+  - each icon state the app can show, and its minute animation at :00 and :30;
+  - the menu open over it (the highlight), and closed again;
+  - light and dark menu bars, and Reduce Transparency on;
+  - the built-in display and the Dell, and moving the bar between them while an
+    icon animates;
+  - template styles (Battery Time, KeyLight, Menu Crane) side by side with the
+    old path, for the vibrancy question above;
+  - Start at Login, Settings, Quit: unchanged; parity's launch check passes.
+- **Soak:** two days on both Macs with nothing found, before stage 3.
 
 ## Risks
 
@@ -96,3 +118,6 @@ the highlighted background. To be checked by eye (below).
   next swap, which re-reads the window's scale.
 - AppKit could, in some state, redraw the placeholder image over the layer. It is
   transparent, so nothing would show.
+- Because it changes every app at once, a regression found after release
+  reaches all of them; the soak exists to find it first, and a revert is one
+  patch release.
