@@ -58,6 +58,26 @@ final class MascotAnimationTests: XCTestCase {
         XCTAssertNotEqual(g.foot(0), 0)
     }
 
+    /// The most opaque pixel in the top row of the image's largest bitmap, 0 … 1.
+    private func topRowAlpha(_ image: NSImage) -> CGFloat {
+        let rep = image.representations.compactMap { $0 as? NSBitmapImageRep }.max { $0.pixelsWide < $1.pixelsWide }!
+        return (0..<rep.pixelsWide).map { rep.colorAt(x: $0, y: 0)?.alphaComponent ?? 0 }.max() ?? 0
+    }
+
+    // Her headband is a hair from the top of the canvas: no run frame or walk
+    // pose may lift it into the top row, where it would be cut flat.
+    func testCarolNeverLeavesTheCanvas() {
+        XCTAssertEqual(topRowAlpha(CharacterIcon.caterpillar(effects: 3, state: .processing)), 0)
+        for t in stride(from: 0.01, to: CharacterIcon.caterpillarRunDuration, by: 0.01) {
+            let frame = CharacterIcon.caterpillar(effects: 3, state: .processing, running: t)
+            XCTAssertLessThan(topRowAlpha(frame), 0.05, "run at \(t) s")
+        }
+        for frame in 0..<CaterpillarWalk.framesPerStride {
+            XCTAssertLessThan(topRowAlpha(CharacterIcon.caterpillar(effects: 3, state: .processing,
+                                                                    walking: walk(at: frame))), 0.05, "walk frame \(frame)")
+        }
+    }
+
     // MARK: Carol's walk
 
     /// A walk brought to `drive` and then on to the middle of `frame`.

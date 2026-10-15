@@ -8,6 +8,10 @@ without one is refused (`[no release]` in the tip commit is the only exception).
 Versions follow [Semantic Versioning](https://semver.org/). The full rule:
 [StatusItemKit — Releases](https://github.com/nicholaspsmith/StatusItemKit#releases-every-push-is-one).
 
+## [0.31.1] - 2026-10-15
+
+- Fix: Carol's once-a-minute run no longer cuts the top of her headband off flat. Her head now nods as little as it does when she walks, which keeps it inside the icon
+
 ## [0.31.0] - 2026-10-15
 
 - Carol walks as hard as she is told: `CaterpillarWalk.advance(by:drive:)` takes a drive of 0 … 1 that sets both how high she steps and how fast (0.6 to 1.8 strides a second). She rises to it within 0.1 s and settles over 0.4 s. `advance(by:walking:)` stays, as drive 1 or 0
