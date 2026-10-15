@@ -1197,6 +1197,9 @@ struct CaterpillarGait: Equatable {
     /// Phase lag between neighbouring parts, as a fraction of a stride.
     static let lag: Double = 0.16
     static let bobHeight: CGFloat = 0.75
+    /// The head's nod, run or walk, is small: her headband is a hair from the
+    /// top of the canvas, and any higher it is cut flat.
+    static let headNod: CGFloat = 0.25
     static let footSwing: CGFloat = 0.85
 
     let time: TimeInterval
@@ -1216,7 +1219,7 @@ struct CaterpillarGait: Equatable {
 
     /// How far part `index` is lifted. Only ever up: a bob, not a wobble.
     func bob(_ index: Int) -> CGFloat {
-        strength * Self.bobHeight * CGFloat(max(0, sin(phase(index))))
+        strength * (index == -1 ? Self.headNod : Self.bobHeight) * CGFloat(max(0, sin(phase(index))))
     }
 
     /// How far foot `index` is swung forward (positive, toward the head) or back.
@@ -1277,8 +1280,7 @@ public struct CaterpillarWalk: Equatable, Sendable {
     /// The share of a stride each part spends lifted.
     static let raise: Double = 0.4
     static let bobHeight: CGFloat = 0.9
-    /// The head's nod is small: her headband is a hair from the top of the canvas.
-    static let headNod: CGFloat = 0.25
+    static let headNod = CaterpillarGait.headNod
     static let footSwing: CGFloat = 0.7
     static let footHeight: CGFloat = 0.45
 
