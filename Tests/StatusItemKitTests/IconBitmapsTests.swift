@@ -38,6 +38,17 @@ final class IconBitmapsTests: XCTestCase {
         return image
     }
 
+    /// A full-colour 22x22 icon drawn in code with Battery Time's ink: a colour
+    /// that resolves when drawn, white under a dark appearance, black under a light one.
+    static func inked() -> NSImage {
+        let ink = NSColor(name: nil) { $0.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua ? .white : .black }
+        return NSImage(size: NSSize(width: 22, height: 22), flipped: false) { rect in
+            ink.set()
+            rect.insetBy(dx: 3, dy: 3).fill()
+            return true
+        }
+    }
+
     static func centre(_ cg: CGImage) -> (red: CGFloat, alpha: CGFloat) { pixel(cg, x: cg.width / 2, y: cg.height / 2) }
     static func corner(_ cg: CGImage) -> (red: CGFloat, alpha: CGFloat) { pixel(cg, x: 0, y: 0) }
     private static func pixel(_ cg: CGImage, x: Int, y: Int) -> (red: CGFloat, alpha: CGFloat) {

@@ -14,13 +14,16 @@ enum IconBitmaps {
     private static let cache = NSMapTable<NSImage, NSMutableDictionary>.weakToStrongObjects()
 
     /// `image` as a bitmap of `scale` pixels per point: its own representation of
-    /// exactly that size when it has one, else drawn at that scale. A template is
-    /// filled with `tint`; for any other image `tint` is ignored.
-    static func bitmap(for image: NSImage, scale: CGFloat, tint: NSColor? = nil) -> CGImage? {
+    /// exactly that size when it has one, else drawn at that scale under
+    /// `appearance`, the bar's, which is what a colour resolved at draw time
+    /// (Battery Time's ink) follows, as it did in the button's own drawing. A
+    /// template is filled with `tint`; for any other image `tint` is ignored.
+    static func bitmap(for image: NSImage, scale: CGFloat, tint: NSColor? = nil,
+                       appearance: NSAppearance? = nil) -> CGImage? {
         let tint = image.isTemplate ? tint : nil
-        let key = "\(scale)|\(tint.map(colorKey) ?? "-")" as NSString
+        let key = "\(scale)|\(tint.map(colorKey) ?? "-")|\(appearance?.name.rawValue ?? "-")" as NSString
         if let hit = cache.object(forKey: image)?[key] { return (hit as! CGImage) }
-        guard let made = make(image, scale: scale, tint: tint) else { return nil }
+        guard let made = make(image, scale: scale, tint: tint, appearance: appearance) else { return nil }
         let entry = cache.object(forKey: image) ?? {
             let fresh = NSMutableDictionary()
             cache.setObject(fresh, forKey: image)
@@ -38,7 +41,7 @@ enum IconBitmaps {
         return image
     }
 
-    private static func make(_ image: NSImage, scale: CGFloat, tint: NSColor?) -> CGImage? {
+    private static func make(_ image: NSImage, scale: CGFloat, tint: NSColor?, appearance: NSAppearance?) -> CGImage? {
         let w = Int((image.size.width * scale).rounded()), h = Int((image.size.height * scale).rounded())
         guard w > 0, h > 0 else { return nil }
         if tint == nil,
@@ -53,7 +56,8 @@ enum IconBitmaps {
         let rect = NSRect(x: 0, y: 0, width: CGFloat(w), height: CGFloat(h))
         NSGraphicsContext.saveGraphicsState()
         NSGraphicsContext.current = NSGraphicsContext(cgContext: ctx, flipped: false)
-        image.draw(in: rect, from: .zero, operation: .sourceOver, fraction: 1)
+        let draw = { image.draw(in: rect, from: .zero, operation: .sourceOver, fraction: 1) }
+        if let appearance { appearance.performAsCurrentDrawingAppearance(draw) } else { draw() }
         if let tint {
             tint.set()
             rect.fill(using: .sourceIn)

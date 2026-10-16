@@ -121,8 +121,8 @@ final class IconLayer {
         }
     }
 
-    /// Puts the icon's bitmap for the current scale (and appearance, for a
-    /// template) on the layer, and places it.
+    /// Puts the icon's bitmap for the current scale and the bar's appearance on
+    /// the layer, and places it.
     private func render() {
         guard let button, let image else { return }
         var tint: NSColor?
@@ -135,7 +135,7 @@ final class IconLayer {
         CATransaction.begin()
         CATransaction.setDisableActions(true)
         layer.contentsScale = scale
-        layer.contents = IconBitmaps.bitmap(for: image, scale: scale, tint: tint)
+        layer.contents = IconBitmaps.bitmap(for: image, scale: scale, tint: tint, appearance: button.effectiveAppearance)
         place()
         CATransaction.commit()
     }

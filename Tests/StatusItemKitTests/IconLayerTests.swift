@@ -70,6 +70,27 @@ final class IconLayerTests: XCTestCase {
         XCTAssertLessThan(IconBitmapsTests.centre(icons.shownBitmap!).red, 0.1)
     }
 
+    // Battery Time's ink resolves for the bar it is drawn in, as AppKit's own
+    // drawing did, not for the app: the system theme and the bar's (which
+    // follows the wallpaper) can disagree.
+    func testAFullColourIconResolvesItsColoursForTheBarNotTheApp() {
+        let icons = makeLayer()
+        button.appearance = NSAppearance(named: .darkAqua)
+        NSAppearance(named: .aqua)!.performAsCurrentDrawingAppearance {   // the app light, the bar dark
+            icons.show(IconBitmapsTests.inked())
+        }
+        XCTAssertGreaterThan(IconBitmapsTests.centre(icons.shownBitmap!).red, 0.9)
+    }
+
+    func testAFullColourIconIsRedrawnWhenTheBarsAppearanceChanges() {
+        let icons = makeLayer()
+        button.appearance = NSAppearance(named: .darkAqua)
+        icons.show(IconBitmapsTests.inked())
+        button.appearance = NSAppearance(named: .aqua)
+        settle()
+        XCTAssertLessThan(IconBitmapsTests.centre(icons.shownBitmap!).red, 0.1)
+    }
+
     // Review focus 3: an icon of another size (KeyLight's styles, a wider battery).
     func testAnotherSizeResizesThePlaceholderAndRecentres() {
         let icons = makeLayer()
