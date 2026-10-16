@@ -155,6 +155,38 @@ final class CharacterIconTests: XCTestCase {
         }
     }
 
+    // Per eye: the left eye's lid and colours follow its own fraction, the right's its own.
+    func testPerEyeOwlGivesEachEyeItsOwnFraction() {
+        let owl = CharacterIcon.owl(leftEye: 0, rightEye: 1)
+        XCTAssertEqual(owl.size, NSSize(width: 32, height: 22))
+        // Left eye open with a green pupil; right eye shut (brown over the pupil).
+        let left = sample(owl, 8.6, 11)
+        XCTAssertLessThan(left.redComponent, 0.05, "open left eye has a fresh green pupil")
+        XCTAssertGreaterThan(sample(owl, 8.6 + 0.87, 15.9).greenComponent, 0.7, "left eye open")
+        let right = sample(owl, 23.4, 11)
+        XCTAssertGreaterThan(right.redComponent, right.blueComponent, "right lid is brown")
+        XCTAssertLessThan(right.greenComponent, 0.4, "right eye shut")
+        // Half-spent right eye: lid half down, pupil reddening; the left is untouched.
+        let half = CharacterIcon.owl(leftEye: 0, rightEye: 0.5)
+        XCTAssertLessThan(sample(half, 23.4 - 0.87, 15.9).greenComponent, 0.4, "right lid half down")
+        XCTAssertGreaterThan(sample(half, 23.4, 11).redComponent, 0.3, "right pupil reddening")
+        XCTAssertGreaterThan(sample(half, 8.6 + 0.87, 15.9).greenComponent, 0.7, "left eye still open")
+        // Closure shuts both lids without recolouring: the pupil is hidden.
+        let blink = CharacterIcon.owl(leftEye: 0, rightEye: 0, closure: 1)
+        for x: CGFloat in [8.6, 23.4] { XCTAssertLessThan(sample(blink, x, 11).greenComponent, 0.4, "shut on closure") }
+    }
+
+    // An app-chosen pupil colour per eye wins over the green-to-red ramp, in either mode.
+    func testOwlPupilsCanTakeAColourEach() {
+        let pair = (NSColor(srgbRed: 0, green: 0, blue: 1, alpha: 1), NSColor(srgbRed: 1, green: 0, blue: 1, alpha: 1))
+        for owl in [CharacterIcon.owl(session: 0, weekly: 1, pupils: pair),
+                    CharacterIcon.owl(leftEye: 0, rightEye: 0, pupils: pair)] {
+            let l = sample(owl, 8.6, 11), r = sample(owl, 23.4, 11)
+            XCTAssertGreaterThan(l.blueComponent, 0.9); XCTAssertLessThan(l.redComponent, 0.1)
+            XCTAssertGreaterThan(r.blueComponent, 0.9); XCTAssertGreaterThan(r.redComponent, 0.9)
+        }
+    }
+
     func testMonitorLizardIsOneSizeInEveryStateWithTwoReps() {
         var seen = Set<Data>()
         for level in [0, 0.25, 0.8, 1] as [CGFloat] { for nightShift in [false, true] { for tongue in [false, true] {
