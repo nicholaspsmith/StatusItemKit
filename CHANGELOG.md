@@ -8,6 +8,11 @@ without one is refused (`[no release]` in the tip commit is the only exception).
 Versions follow [Semantic Versioning](https://semver.org/). The full rule:
 [StatusItemKit — Releases](https://github.com/nicholaspsmith/StatusItemKit#releases-every-push-is-one).
 
+## [0.33.0] - 2026-10-15
+
+- `CharacterIcon.owl(leftEye:rightEye:closure:)`: the owl with each eye its own meter. An eye's lid drops with its fraction and its white and pupil redden with that same fraction, as both do with `weekly` in `owl(session:weekly:)`; `closure` lowers both lids (a blink, eyes kept shut) without changing the colours. `owl(session:weekly:)` draws as before
+- Both owl calls take `pupils:`, a colour for each eye's pupil in place of the green-to-red ramp, for an app that lets the user pick them; the whites still go bloodshot with the data
+
 ## [0.32.0] - 2026-10-15
 
 - Carol can sleep: `CharacterIcon.caterpillar` takes `sleeping:` (seconds into her sleep, looping every `caterpillarSleepLoop`, 3 s). Her eye shuts, her body swells and settles with each breath while her head lifts a little and nods back, and two Zs take turns rising over her back, growing and fading. In Polly's dozing manner and at her 6 frames a second (`caterpillarSleepFrames`, 18 a loop), each drawn once and cached. Asleep wins over a run or a walk, and she never leaves the icon, headphones on or off
