@@ -134,6 +134,12 @@ so nothing reaches `main` until the change is confirmed.
 - SoundChain walking to music, main thread over a 10 s `sample`, menu closed:
   old 16.2% (CA commit and `drawRect` under each frame), new 0.35%. Pass.
 
+**Stage 2 results (soak, 2026-10-15 21:49 → 2026-10-16 07:42).** Cut short at
+Nick's request: he is travelling and the M1 is off the LAN for days. About ten
+hours on both Macs with the fix (the M1's mostly overnight): no crash report from
+any Menumon app on either Mac, no failed launch check in parity's log, nothing
+seen off. Released as 0.34.0, since another change took 0.33.0 meanwhile.
+
 ## Risks
 
 - A layer that does not track the button exactly would show Carol offset or
