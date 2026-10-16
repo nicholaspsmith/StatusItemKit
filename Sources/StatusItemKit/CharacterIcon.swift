@@ -53,6 +53,23 @@ public enum CharacterIcon {
     /// closed at 0.5, shut at 1. The `weekly` fraction is the owl's health: the whites go bloodshot
     /// past a quarter used, and both pupils run `MeterColor.health` from #005401 at 0 to #FF5401 at 1.
     public static func owl(session: CGFloat, weekly: CGFloat) -> NSImage {
+        owl(eyes: [(session, weekly), (session, weekly)])
+    }
+
+    /// The owl with each eye its own meter, the left for one fraction and the right for another
+    /// (Claude Usage: session and weekly). An eye's lid drops with its fraction — open at 0, half
+    /// closed at 0.5, shut at 1 — and its white goes bloodshot and its pupil reddens with that same
+    /// fraction, exactly as both eyes do with `weekly` in `owl(session:weekly:)`. `closure` lowers
+    /// both lids over whatever their fractions leave open (a blink, or eyes kept shut) without
+    /// touching the colours: 0 leaves them, 1 shuts them.
+    public static func owl(leftEye: CGFloat, rightEye: CGFloat, closure: CGFloat = 0) -> NSImage {
+        let shut = max(0, min(1, closure))
+        func lid(_ f: CGFloat) -> CGFloat { let f = max(0, min(1, f)); return f + (1 - f) * shut }
+        return owl(eyes: [(lid(leftEye), leftEye), (lid(rightEye), rightEye)])
+    }
+
+    /// Draws the owl from each eye's (lid, health) pair, left then right.
+    static func owl(eyes: [(lid: CGFloat, health: CGFloat)]) -> NSImage {
         canvas(width: 32, height: 22) { ctx in
             eyelid.set()
             // Head: a wide rounded block with soft ear tufts at the top corners.
@@ -67,11 +84,11 @@ public enum CharacterIcon {
             beak.move(to: NSPoint(x: 12.6, y: 9.2)); beak.line(to: NSPoint(x: 19.4, y: 9.2)); beak.line(to: NSPoint(x: 16, y: 0.3)); beak.close()
             cut(ctx, beak); NSColor.black.set(); beak.fill()
             // Eyes: two big eyes bulging past the sides of the head.
-            let closed = max(0, min(1, session))
-            let health = max(0, min(1, weekly))
-            // Pupils: dark green on a fresh week, reddening as it is spent.
-            let pupil = MeterColor.health(health)
-            for cx in [CGFloat(8.6), 23.4] {
+            for (cx, eyeState) in zip([CGFloat(8.6), 23.4], eyes) {
+                let closed = max(0, min(1, eyeState.lid))
+                let health = max(0, min(1, eyeState.health))
+                // Pupils: dark green on a fresh week, reddening as it is spent.
+                let pupil = MeterColor.health(health)
                 let c = NSPoint(x: cx, y: 11); let r: CGFloat = 7.4
                 cut(ctx, NSBezierPath(ovalIn: NSRect(x: c.x - r - 1, y: c.y - r - 1, width: (r + 1) * 2, height: (r + 1) * 2)))
                 eyelid.set(); NSBezierPath(ovalIn: NSRect(x: c.x - r - 0.8, y: c.y - r - 0.8, width: (r + 0.8) * 2, height: (r + 0.8) * 2)).fill()
