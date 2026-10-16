@@ -176,6 +176,17 @@ final class CharacterIconTests: XCTestCase {
         for x: CGFloat in [8.6, 23.4] { XCTAssertLessThan(sample(blink, x, 11).greenComponent, 0.4, "shut on closure") }
     }
 
+    // An app-chosen pupil colour per eye wins over the green-to-red ramp, in either mode.
+    func testOwlPupilsCanTakeAColourEach() {
+        let pair = (NSColor(srgbRed: 0, green: 0, blue: 1, alpha: 1), NSColor(srgbRed: 1, green: 0, blue: 1, alpha: 1))
+        for owl in [CharacterIcon.owl(session: 0, weekly: 1, pupils: pair),
+                    CharacterIcon.owl(leftEye: 0, rightEye: 0, pupils: pair)] {
+            let l = sample(owl, 8.6, 11), r = sample(owl, 23.4, 11)
+            XCTAssertGreaterThan(l.blueComponent, 0.9); XCTAssertLessThan(l.redComponent, 0.1)
+            XCTAssertGreaterThan(r.blueComponent, 0.9); XCTAssertGreaterThan(r.redComponent, 0.9)
+        }
+    }
+
     func testMonitorLizardIsOneSizeInEveryStateWithTwoReps() {
         var seen = Set<Data>()
         for level in [0, 0.25, 0.8, 1] as [CGFloat] { for nightShift in [false, true] { for tongue in [false, true] {

@@ -10,7 +10,8 @@ Versions follow [Semantic Versioning](https://semver.org/). The full rule:
 
 ## [0.33.0] - 2026-10-15
 
-- `CharacterIcon.owl(leftEye:rightEye:closure:)`: the owl with each eye its own meter. An eye's lid drops with its fraction and its white and pupil redden with that same fraction, as both do with `weekly` in `owl(session:weekly:)`; `closure` lowers both lids (a blink, eyes kept shut) without changing the colours. `owl(session:weekly:)` is unchanged
+- `CharacterIcon.owl(leftEye:rightEye:closure:)`: the owl with each eye its own meter. An eye's lid drops with its fraction and its white and pupil redden with that same fraction, as both do with `weekly` in `owl(session:weekly:)`; `closure` lowers both lids (a blink, eyes kept shut) without changing the colours. `owl(session:weekly:)` draws as before
+- Both owl calls take `pupils:`, a colour for each eye's pupil in place of the green-to-red ramp, for an app that lets the user pick them; the whites still go bloodshot with the data
 
 ## [0.32.0] - 2026-10-15
 
