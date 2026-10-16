@@ -112,6 +112,28 @@ so nothing reaches `main` until the change is confirmed.
   - Start at Login, Settings, Quit: unchanged; parity's launch check passes.
 - **Soak:** two days on both Macs with nothing found, before stage 3.
 
+**Stage 1 results (2026-10-15/16, this Mac).**
+- By eye: Battery Time's battery went the wrong colour. Its ink is a colour
+  resolved at draw time; the layer drew it under the app's appearance (the
+  system theme) instead of the bar's (the wallpaper's), and cached full-colour
+  icons whatever the appearance. Fixed in `1a4ae45`: every icon draws under the
+  button's `effectiveAppearance`, and the cache keys on it. After that, Nick:
+  everything on this Mac looks right.
+- parity pushed the checked-out branch itself and installed it on both Macs at
+  15:19–15:32, before stage 1 paused it, so stage 2 began early, and on the M1
+  without the fix until 21:49. The first "before" CPU figures were therefore
+  layer builds and are void; the baseline below is every app at its installed
+  commit built against `main`.
+- Idle CPU, 60 s per run, each run 90 s after its swap (new / old / new): Battery
+  Time 0.65 / 0.95 / 0.70%, Claude Usage 0.23 / 0.25 / 0.15, Homestead 2.40 /
+  2.03 / 1.02, KeyLight 1.37 / 1.53 / 1.45, Mac Daddy 0.63 / 0.55 / 0.40, Menu
+  Crane 0.38 / 0.57 / 0.28, Monitor Lizard 0.68 / 0.98 / 0.18, Panes 0.42 /
+  0.55 / 0.33, VPN & DNS 0.50 / 0.62 / 0.38. No app higher on the layer beyond
+  noise (±0.5). SoundChain is not comparable this way: its CPU follows what is
+  playing.
+- SoundChain walking to music, main thread over a 10 s `sample`, menu closed:
+  old 16.2% (CA commit and `drawRect` under each frame), new 0.35%. Pass.
+
 ## Risks
 
 - A layer that does not track the button exactly would show Carol offset or
