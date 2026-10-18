@@ -29,6 +29,8 @@ final class IconLayer {
     private var image: NSImage?
     private var pending: NSImage?
     private var retries = 0
+    /// The button's `wantsLayer` before the layer was attached, put back by `remove`.
+    private var wantedLayer: Bool?
 
     init(button: NSButton, scale: (() -> CGFloat)? = nil) {
         self.button = button
@@ -65,14 +67,17 @@ final class IconLayer {
         return true
     }
 
-    /// Takes the layer off the button and clears the placeholder (the item shows
-    /// text instead). `show` puts it back.
+    /// Takes the layer off the button, clears the placeholder and leaves the button
+    /// as layer-backed as it found it (the item shows text instead). `show` puts
+    /// it back.
     func remove() {
         observers.forEach(NotificationCenter.default.removeObserver)
         observers.removeAll()
         appearanceObservation = nil
         layer.removeFromSuperlayer()
         layer.contents = nil
+        if let button, let wantedLayer { button.wantsLayer = wantedLayer }
+        wantedLayer = nil
         if let button, button.image === placeholder { button.image = nil }
         placeholder = nil
         image = nil
@@ -103,6 +108,7 @@ final class IconLayer {
 
     private func attach(to button: NSButton) {
         guard layer.superlayer == nil else { return }
+        if wantedLayer == nil { wantedLayer = button.wantsLayer }
         button.wantsLayer = true
         button.layer?.addSublayer(layer)
         button.postsFrameChangedNotifications = true

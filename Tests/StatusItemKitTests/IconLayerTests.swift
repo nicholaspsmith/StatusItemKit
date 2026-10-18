@@ -129,6 +129,19 @@ final class IconLayerTests: XCTestCase {
         XCTAssertTrue(icons.isShowing)
     }
 
+    // setTitle stays as it was: a button that was not layer-backed goes back to not being.
+    func testRemoveLeavesTheButtonAsLayerBackedAsItFoundIt() {
+        let icons = makeLayer()
+        XCTAssertFalse(button.wantsLayer)
+        icons.show(IconBitmapsTests.icon())
+        icons.remove()
+        XCTAssertFalse(button.wantsLayer)
+        button.wantsLayer = true
+        icons.show(IconBitmapsTests.icon())
+        icons.remove()
+        XCTAssertTrue(button.wantsLayer)
+    }
+
     // Review focus 4: the first icon arrives before the button has a window (launch).
     func testBeforeAWindowItIsRefusedThenTakesOver() {
         let loose = NSButton(frame: NSRect(x: 0, y: 0, width: 36, height: 22))
