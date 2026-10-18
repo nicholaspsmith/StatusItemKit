@@ -22,7 +22,7 @@ Menumon mascot glyphs, and a build-and-sign script that produces a proper
 |------|---------|
 | `Shell.run(_:_:)` | Run a CLI tool and get stdout as `String?` (nil on launch failure or non-zero exit). The one I/O primitive. |
 | `StatusItemController` | Owns the `NSStatusItem`, a polling `Timer`, `.accessory` activation and lazy menu rebuild. Constructed with `onPoll` and `onBuildMenu` closures. |
-| `setTitle(_:warn:)` / `setIcon(_:)` | The render funnel: mutually exclusive text and image paths, so there is never stray title spacing. |
+| `setTitle(_:warn:)` / `setIcon(_:)` | The render funnel: mutually exclusive text and image paths, so there is never stray title spacing. `setIcon` draws on a layer of its own (`IconLayer`), so animation frames are cheap; the button keeps a same-size transparent placeholder. |
 | `MenuBuilder` | `labelWidth(...)` and a view-based `textView(...)` that avoids NSMenu's keyboard-shortcut column (explicit frames, not Auto Layout). |
 | `MeterIcon` | Full-colour status glyphs drawn in code: `dot`, `symbol` (an SF Symbol, falling back to a dot), and the proportional `gauge` / `arc` / `pie` / `wedge` meters, which take a `0...1` fraction and a colour. |
 | `CharacterIcon` | The Menumon mascots as status glyphs that carry the app's data. See [Character icons](#character-icons). |

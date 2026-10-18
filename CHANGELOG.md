@@ -8,6 +8,10 @@ without one is refused (`[no release]` in the tip commit is the only exception).
 Versions follow [Semantic Versioning](https://semver.org/). The full rule:
 [StatusItemKit — Releases](https://github.com/nicholaspsmith/StatusItemKit#releases-every-push-is-one).
 
+## [0.34.0] - 2026-10-16
+
+- `setIcon(_:)` draws the icon on a layer of its own, so an animation frame costs a layer swap instead of a redraw of the status button: SoundChain's main thread while Carol walks went from 16.2% of a core to 0.35% (measured 2026-10-16). Same API; every app gets it. The button keeps a transparent placeholder of the icon's size, so widths, menus and highlights are unchanged; the icon follows the display's scale and the bar's light or dark appearance, for templates and for colours resolved at draw time alike
+
 ## [0.33.0] - 2026-10-15
 
 - `CharacterIcon.owl(leftEye:rightEye:closure:)`: the owl with each eye its own meter. An eye's lid drops with its fraction and its white and pupil redden with that same fraction, as both do with `weekly` in `owl(session:weekly:)`; `closure` lowers both lids (a blink, eyes kept shut) without changing the colours. `owl(session:weekly:)` draws as before
