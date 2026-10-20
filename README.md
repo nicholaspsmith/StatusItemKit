@@ -396,6 +396,25 @@ commit its files with `[no release]`.
   a token with the `workflow` scope; the SSH remotes (`git@github.com:…`) need
   nothing extra.
 
+## Parity: install.sh hands off
+
+On a Mac parity syncs, `~/Applications/<App>.app` links to parity's staged
+build, so each app's `install.sh` asks parity instead of building:
+`scripts/parity/handoff.sh <repo-dir>` installs the app on this Mac if it
+lacks it, runs a cycle for the repo, waits for it (`PARITY_WAIT`, default
+900 s) and opens the app if it isn't running. Parity builds committed work
+only, so it warns about uncommitted changes and unpushed commits on `main`.
+
+A local build would be a second copy with the same bundle id: LaunchServices
+can launch it in place of parity's (Menu Crane ran a three-week-old
+`build/` copy that way, 2026-10-20), and once `~/Applications` links to it
+parity treats the app as installed by hand and stops syncing it.
+
+- `PARITY=off ./install.sh` builds and links locally anyway.
+- A repo parity doesn't sync (or leaves out) builds locally as before.
+- If parity syncs the app but the coordinator is unreachable, `install.sh`
+  fails and builds nothing.
+
 ## Development
 
 ```sh
