@@ -8,6 +8,14 @@ without one is refused (`[no release]` in the tip commit is the only exception).
 Versions follow [Semantic Versioning](https://semver.org/). The full rule:
 [StatusItemKit — Releases](https://github.com/nicholaspsmith/StatusItemKit#releases-every-push-is-one).
 
+## [0.35.0] - 2026-10-20
+
+### Changed
+
+- Icon moves out of Settings: `SettingsMenu.addFooter` now puts the `appearance:` picker in the main menu, directly below `Settings ▸` and above Quit, instead of inside the Settings submenu. Settings keeps the app's own items, Start at Login and the version. Apps passing `appearance:` get the new layout with no change
+- `addFooter` takes `belowSettings: (NSMenu) -> Void`, for an app's own top-level items in that same slot (a hand-built Icon picker, a Color submenu), after the shared Icon and before Quit
+- `SettingsMenu.item(appearance:)` is unchanged and still puts Icon inside the submenu (the old placement), for callers that build their own foot
+
 ## [0.34.0] - 2026-10-16
 
 - `setIcon(_:)` draws the icon on a layer of its own, so an animation frame costs a layer swap instead of a redraw of the status button: SoundChain's main thread while Carol walks went from 16.2% of a core to 0.35% (measured 2026-10-16). Same API; every app gets it. The button keeps a transparent placeholder of the icon's size, so widths, menus and highlights are unchanged; the icon follows the display's scale and the bar's light or dark appearance, for templates and for colours resolved at draw time alike

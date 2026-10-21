@@ -36,7 +36,7 @@ Menumon mascot glyphs, and a build-and-sign script that produces a proper
 | `AppearanceMenu` | The shared **Icon** submenu: shapes, colour presets and the system colour picker, or an app's own colour block in their place. See [The Icon menu](#the-icon-menu). |
 | `AppVersion` | The version `make-app.sh` stamped into the bundle; `menuItem()` is a disabled "Version …" row. |
 | `ToggleMenuItem` | A checkbox menu item that keeps the menu open: `ToggleMenuItem.make(title:isOn:enabled:toolTip:onToggle:)`. A click, or Return / Space on the row the arrow keys highlighted, flips the tick and calls `onToggle(newValue)` while the menu stays up. View based, drawn to match a native checkbox row exactly (menu font, native checkmark and column, same title inset, the native vibrant `.selection` highlight), an accessibility checkbox, and `ToggleMenuItem.view(of:)` gives back the view so `isOn` / `title` can change in place. Use it for every checkbox; actions (Open…, Quit) and radio choices stay ordinary items. |
-| `SettingsMenu` | The Settings submenu every app's menu ends with (just above Quit): the app's own settings, then Icon and Start at Login (a keep-open `ToggleMenuItem`), then the version in grey. `addFooter` adds Settings and Quit together. |
+| `SettingsMenu` | The foot every app's menu ends with: `Settings ▸` (the app's own settings, then Start at Login as a keep-open `ToggleMenuItem`, then the version in grey), then `Icon ▸` directly below it in the main menu, then Quit. `addFooter(to:appName:items:appearance:startAtLogin:belowSettings:)` adds them together; `appearance:` supplies the shared Icon picker, and `belowSettings:` lets an app put its own pickers (a hand-built Icon, a Color submenu) in that same slot, above Quit. |
 | `MenuBarYield` / `YieldClient` | Lets a menu-bar manager (Barn) ask apps to hide their item briefly while it reveals hidden icons. One line opts an app in: `YieldClient(item: controller).start()`. The hide expires on its own after the TTL in the message, so a crashed manager cannot leave an icon hidden. |
 | `LoginItem` | `SMAppService.mainApp` register/unregister, plus the "must live in /Applications" alert. |
 | `LoginRequest` | Parses `--login [on\|off\|status]` from a command line. A bare flag or `status` only reports, so a mistyped command never changes Start at Login. Unit-tested. |
@@ -90,7 +90,7 @@ final class App: NSObject, NSApplicationDelegate {
     }
 
     func build(_ menu: NSMenu) {
-        // …the app's own rows, then Settings ▸ and Quit.
+        // …the app's own rows, then Settings ▸, Icon ▸ (when given) and Quit.
         SettingsMenu.addFooter(to: menu, appName: "Demo")
     }
 }
@@ -208,6 +208,9 @@ lazy var appearanceMenu = AppearanceMenu(appearance: appearance) { [weak self] i
 
 // ...while building the menu:
 menu.addItem(appearanceMenu.menuItem())     // an "Icon" item with the picker under it
+
+// ...or, in the shared foot, where it lands right below Settings ▸:
+SettingsMenu.addFooter(to: menu, appName: "Demo", appearance: appearanceMenu)
 ```
 
 Then draw with what the user chose:
