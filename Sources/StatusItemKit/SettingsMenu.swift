@@ -6,23 +6,31 @@
 
 import AppKit
 
-/// The one Settings submenu every Menumon app ends its menu with, just above
-/// Quit. Same shape everywhere:
+/// The foot every Menumon app ends its menu with: the Settings submenu, the
+/// Icon picker beside it, then Quit. Same shape everywhere:
 ///
 ///     Settings ▸  <the app's own settings: modes, keys, bypass…>
 ///                 ─────────
-///                 Icon ▸
 ///                 Start at Login
 ///                 ─────────
 ///                 Version 1.2.0      (grey)
+///     Icon ▸      (AppearanceMenu, or the app's own pickers)
+///     Quit App
 ///
 /// An app passes its own items in `items`; anything it leaves out (no Icon
 /// picker, no Start at Login) is simply skipped.
 public enum SettingsMenu {
+    /// The Settings item on its own.
+    ///
+    /// `appearance:` here is the old placement: it puts Icon inside the
+    /// submenu, beside Start at Login. It still works, for callers that build
+    /// their own foot, but `addFooter` now puts Icon in the main menu, right
+    /// below Settings; prefer that.
+    ///
     /// - Parameters:
     ///   - items: the app's own settings, top of the submenu, in order. Called
     ///     each time the menu is built, so states are current.
-    ///   - appearance: the app's Icon picker, if it has one.
+    ///   - appearance: an Icon picker to show inside the submenu (old placement).
     ///   - startAtLogin: whether to offer Start at Login (SMAppService).
     public static func item(title: String = "Settings",
                             items: (NSMenu) -> Void = { _ in },
@@ -48,14 +56,26 @@ public enum SettingsMenu {
         return item
     }
 
-    /// Settings, then Quit: the foot of every Menumon menu.
+    /// Settings, the Icon picker, then Quit: the foot of every Menumon menu.
+    ///
+    /// - Parameters:
+    ///   - items: the app's own settings, top of the Settings submenu.
+    ///   - appearance: the app's Icon picker, if it has one. It goes in the
+    ///     main menu, directly below Settings.
+    ///   - startAtLogin: whether to offer Start at Login (SMAppService).
+    ///   - belowSettings: top-level items of the app's own for that same slot,
+    ///     below Settings (and below `appearance`'s Icon) and above Quit: an
+    ///     app's hand-built Icon or Color submenus.
     public static func addFooter(to menu: NSMenu,
                                  appName: String,
                                  items: (NSMenu) -> Void = { _ in },
                                  appearance: AppearanceMenu? = nil,
-                                 startAtLogin: Bool = true) {
+                                 startAtLogin: Bool = true,
+                                 belowSettings: (NSMenu) -> Void = { _ in }) {
         if menu.numberOfItems > 0, menu.items.last?.isSeparatorItem == false { menu.addItem(.separator()) }
-        menu.addItem(item(items: items, appearance: appearance, startAtLogin: startAtLogin))
+        menu.addItem(item(items: items, startAtLogin: startAtLogin))
+        if let appearance { menu.addItem(appearance.menuItem()) }
+        belowSettings(menu)
         let quit = NSMenuItem(title: "Quit \(appName)", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         quit.target = NSApp
         menu.addItem(quit)
