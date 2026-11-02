@@ -27,7 +27,7 @@ Menumon mascot glyphs, and a build-and-sign script that produces a proper
 | `MeterIcon` | Full-colour status glyphs drawn in code: `dot`, `symbol` (an SF Symbol, falling back to a dot), and the proportional `gauge` / `arc` / `pie` / `wedge` meters, which take a `0...1` fraction and a colour. |
 | `CharacterIcon` | The Menumon mascots as status glyphs that carry the app's data. See [Character icons](#character-icons). |
 | `MinuteCue` / `IconAnimation` | The mascot animations, twice a minute, taken in turn. See [Mascot animations](#mascot-animations). |
-| `MonitorLizardLap` | Monitor Lizard's full-screen lap: a 3.4 s click-through overlay in which Armonitor leaves his menu-bar slot, runs counterclockwise round the screen and returns. |
+| `MonitorLizardLap` | Armonitor's full-screen lap (Panes): a 3.4 s click-through overlay in which Armonitor leaves his menu-bar slot, runs counterclockwise round the screen and returns. |
 | `IllustratedIcon` | Menu-bar images from mascot art rather than code: `compose` builds a 1× + 2× non-template image from a base PNG, desaturates it, recolours a masked region keeping its shading, and draws live overlays on top; `load(named:in:)` reads a `name.png` + `name@2x.png` pair from a bundle. |
 | `Severity` | `level(pct:warnPct:)` → `.normal` / `.elevated` / `.high`, each with a `.color`. |
 | `MeterStyle` | The icon shapes as a value: `.arc` / `.gauge` / `.pie` / `.wedge` / `.dot`, and `.character` for the app's own mascot. `MeterIcon.image(style:fraction:color:)` draws any of them (`.character` falls back to an arc for callers that do not draw a mascot). |
@@ -157,7 +157,7 @@ app's state. Each app offers it as `MeterStyle.character` in the Icon picker.
 | `iguana(tailscale:mullvad:acceptDNS:alert:lick:)` | VPN & DNS | Iguanamous on a branch: tail wrapped round it = Tailscale, tongue wrapped round it = Mullvad, cyan eye = accept-dns. Olive when nothing is connected, green when anything is, `alert` colour for Mullvad connecting or blocked. `iguana(color:tail:tongue:eyeLit:lick:)` takes the parts directly. |
 | `macDaddy(art:level:asleep:flourish:grin:)` | Mac Daddy | Menu Pimp from his illustrated art (`MacDaddyArt.load(from:)`): the hat is purple when cool, amber with a sweat drop when sweating, red with two drops when red-hot; greyed with a "z" when asleep. `macDaddy(level:asleep:flourish:grin:)` is the code-drawn fallback. |
 | `lumen(keycap:level:active:shimmer:)` | KeyLight | Lumen, a keycap in sunglasses from illustrated art, with eight rays drawn in code that light clockwise with the backlight level; `shimmer` sweeps a gleam round them. `key(level:active:)` is the code-drawn fallback. |
-| `monitorLizard(brightness:nightShift:tongue:…)` | Monitor Lizard | Armonitor on a monitor whose screen fills blue with brightness, amber under Night Shift. |
+| `monitorLizard(brightness:nightShift:tongue:…)` | Panes | Armonitor on a monitor whose screen fills blue with brightness, amber under Night Shift. |
 | `caterpillar(effects:state:running:walking:sleeping:headphones:)` | SoundChain | Carol in headphones: one lit segment per running effect (up to five); colour is the state; `headphones: false` hangs them round her neck. `sleeping` (seconds, looping every `caterpillarSleepLoop`) shuts her eyes: she breathes, her head lifts and settles, and Zs rise over her back; it wins over a run or a walk, and each of its `caterpillarSleepFrames` frames is cached. `walking` (a `CaterpillarWalk`, advanced by the app each `frameInterval` with a drive of 0 … 1) walks her on the spot, a hump rolling from tail to head; the drive sets how high and how fast she steps, rising over `attack` and falling over `release`. Every pose is drawn once and cached. |
 | `house(lightsOn:fanOn:reachable:configured:weather:night:door:weatherPhase:intensity:)` | Homestead | Gertie, a cottage whose windows light with the lights on, a fan in one window while a fan runs, hollow when Home Assistant is unreachable, and an optional `HouseWeather` drawn around it; `door` swings the front door open a crack. `weatherPhase` (0 ..< 1 through `houseWeatherLoopDuration`) sets the weather moving — gleaming sun, drifting clouds, falling rain and snow, sliding fog, gusts, a flickering bolt — and `intensity` (0 … 1) how hard it rains or snows. |
 | `menuCrane(state:grab:)` | Menu Crane | Mendoza's head with a grab bucket: open while searching, shut on a copy, open and empty on no results. `grab` (seconds into `menuCraneGrabDuration`, see `craneGrab(at:)`) drops the bucket open, snaps it shut and lifts it home. |
@@ -170,14 +170,14 @@ deprecated forwarders to `iguana(…)` and `iguanaLickDuration`.
 
 ### Mascot animations
 
-Twelve glyphs animate twice a minute, on the minute and the half minute: Archimedes blinks (Claude Usage), Menu
+Eleven glyphs animate twice a minute, on the minute and the half minute: Archimedes blinks (Claude Usage), Menu
 Pimp grins with a gold gleam (Mac Daddy), Carol runs (SoundChain), Iguanamous
-licks (VPN & DNS), Armonitor laps his monitor (Monitor Lizard), Volta blinks
+licks (VPN & DNS), Volta blinks
 while his charge sloshes (Battery Time), Apollo blinks (Apollo Monitor), a
 gleam sweeps round Lumen's rays (KeyLight), Manny focuses his lens (MacRecorder),
 Gertie opens her front door a crack (Homestead), Mendoza drops his bucket and
 grabs (Menu Crane) and Major Pane salutes (Panes; with its grid icon chosen,
-the windows slide into their tiles instead).
+the windows slide into their tiles instead, and with Armonitor chosen he laps his monitor).
 
 `MinuteCue` keeps them from moving at once. Every app wakes on each cue (the
 wall clock's :00 and :30, `MinuteCue.interval` apart) and waits one second for
@@ -191,7 +191,7 @@ at 60 fps whether or not a menu is open.
 Carol also walks outside the cue, to the loudness of the sound SoundChain is
 playing (`CaterpillarWalk`); she skips her run while she walks.
 
-Monitor Lizard also plays `MonitorLizardLap` at launch, when a new display
+Panes, with the Armonitor icon chosen, also plays `MonitorLizardLap` at launch, when a new display
 appears and when Night Shift turns on or off; his regular lap stays in
 the icon (`monitorLizard(…, lap:)`).
 
@@ -451,9 +451,8 @@ together.
 | [VPN & DNS](https://github.com/nicholaspsmith/vpn-dns-menubar) | An iguana for Mullvad + Tailscale state, with a DNS watcher |
 | [Mac Daddy](https://github.com/nicholaspsmith/mac-daddy-menubar) | Kills media trackers, trashes stale downloads, reaps hung processes, watches the UA mixer engine, and sweats as your process count climbs |
 | [KeyLight](https://github.com/nicholaspsmith/keylight-menubar) | Ctrl+brightness keys remapped to keyboard backlight |
-| [Monitor Lizard](https://github.com/nicholaspsmith/monitor-lizard-menubar) | External-monitor brightness, contrast and resolution, Night Shift, and the built-in screen from dimmer than macOS allows to XDR |
 | [Homestead](https://github.com/nicholaspsmith/home-assistant-menubar) | Home Assistant dashboards and device controls in the menu |
-| [Panes](https://github.com/nicholaspsmith/panes-menubar) | Window tiling on ⌘⌥ shortcuts, a grid in the menu, and drag-to-edge snapping |
+| [Panes](https://github.com/nicholaspsmith/panes-menubar) | Window shortcuts, a layout grid and edge snapping, plus external-monitor brightness and contrast, the built-in screen from dimmer than macOS allows to XDR, and Night Shift |
 | [SoundChain](https://github.com/nicholaspsmith/soundchain-menubar) | One chain of Audio Unit effects over all system audio |
 | [Menu Crane](https://github.com/nicholaspsmith/menu-crane) | A ⌘Space launcher for apps, arithmetic, unit conversions and emoji |
 | [MacRecorder](https://github.com/nicholaspsmith/MacRecorder) | Screen recording with system audio |

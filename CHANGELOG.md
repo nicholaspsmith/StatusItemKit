@@ -8,6 +8,13 @@ without one is refused (`[no release]` in the tip commit is the only exception).
 Versions follow [Semantic Versioning](https://semver.org/). The full rule:
 [StatusItemKit — Releases](https://github.com/nicholaspsmith/StatusItemKit#releases-every-push-is-one).
 
+## [0.36.0] - 2026-11-01
+
+- The minute cue no longer waits for Monitor Lizard: it is retired into Panes, so the apps after it each move up a second
+- Armonitor's drawing and his lap stay, now used by Panes' Armonitor icon; the minute-cue comment says what Panes does on the cue
+- The release adoption script no longer lists Monitor Lizard, and the README's app table and prose describe Panes as the app that does window shortcuts, brightness and Night Shift
+- Fixed a compiler warning in the house glyph (a `return` followed by a newline)
+
 ## [0.35.0] - 2026-10-20
 
 ### Changed

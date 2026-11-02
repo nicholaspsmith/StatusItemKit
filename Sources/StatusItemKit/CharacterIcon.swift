@@ -823,8 +823,7 @@ public enum CharacterIcon {
                              weather: HouseWeather? = nil, night: Bool = false, door doorProgress: CGFloat = 0,
                              weatherPhase: CGFloat = 0, intensity: CGFloat? = nil) -> NSImage {
         let motion = SkyMotion(phase: weatherPhase, intensity: intensity)
-        return
-        canvas(width: 26, height: 22) { ctx in
+        return canvas(width: 26, height: 22) { ctx in
             let wallLight = NSColor(srgbRed: 0.96, green: 0.93, blue: 0.86, alpha: 1)
             let wallShade = NSColor(srgbRed: 0.85, green: 0.81, blue: 0.72, alpha: 1)
             let roofColor = NSColor(srgbRed: 0.33, green: 0.42, blue: 0.64, alpha: 1)
