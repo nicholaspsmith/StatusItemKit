@@ -8,6 +8,11 @@ without one is refused (`[no release]` in the tip commit is the only exception).
 Versions follow [Semantic Versioning](https://semver.org/). The full rule:
 [StatusItemKit — Releases](https://github.com/nicholaspsmith/StatusItemKit#releases-every-push-is-one).
 
+## [0.37.0] - 2026-11-02
+
+- The minute cue no longer waits for Menu Crane: it is retired into Mac Daddy 1.17.0, so Panes moves up a second
+- Mendoza's drawing and grab stay in `CharacterIcon` (no app shows him now); the README's app table and mascot list drop Menu Crane, and Mac Daddy's row mentions its launcher; the release adoption script no longer lists Menu Crane, and now lists Mac Daddy, which it had been missing
+
 ## [0.36.0] - 2026-11-01
 
 - The minute cue no longer waits for Monitor Lizard: it is retired into Panes, so the apps after it each move up a second

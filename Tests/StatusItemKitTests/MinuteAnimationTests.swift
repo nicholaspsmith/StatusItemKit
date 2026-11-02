@@ -391,10 +391,10 @@ final class CraneGrabTests: XCTestCase {
         XCTAssertNotEqual(png(CharacterIcon.menuCrane(state: .idle, grab: 0.4)), rest)
     }
 
-    func testMendozaAndPanesTakeTheirTurnsAfterGertie() {
+    func testPanesTakesItsTurnAfterGertie() {
         let order = MinuteCue.order
         let gertie = order.firstIndex(of: "com.nicholaspsmith.Homestead")!
-        XCTAssertEqual(order.firstIndex(of: "com.nicholaspsmith.MenuCrane"), gertie + 1)
-        XCTAssertEqual(order.firstIndex(of: "com.nicholaspsmith.Panes"), gertie + 2)
+        XCTAssertEqual(order.firstIndex(of: "com.nicholaspsmith.Panes"), gertie + 1)
+        XCTAssertFalse(order.contains("com.nicholaspsmith.MenuCrane"), "Menu Crane is retired into Mac Daddy")
     }
 }

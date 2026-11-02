@@ -160,7 +160,7 @@ app's state. Each app offers it as `MeterStyle.character` in the Icon picker.
 | `monitorLizard(brightness:nightShift:tongue:…)` | Panes | Armonitor on a monitor whose screen fills blue with brightness, amber under Night Shift. |
 | `caterpillar(effects:state:running:walking:sleeping:headphones:)` | SoundChain | Carol in headphones: one lit segment per running effect (up to five); colour is the state; `headphones: false` hangs them round her neck. `sleeping` (seconds, looping every `caterpillarSleepLoop`) shuts her eyes: she breathes, her head lifts and settles, and Zs rise over her back; it wins over a run or a walk, and each of its `caterpillarSleepFrames` frames is cached. `walking` (a `CaterpillarWalk`, advanced by the app each `frameInterval` with a drive of 0 … 1) walks her on the spot, a hump rolling from tail to head; the drive sets how high and how fast she steps, rising over `attack` and falling over `release`. Every pose is drawn once and cached. |
 | `house(lightsOn:fanOn:reachable:configured:weather:night:door:weatherPhase:intensity:)` | Homestead | Gertie, a cottage whose windows light with the lights on, a fan in one window while a fan runs, hollow when Home Assistant is unreachable, and an optional `HouseWeather` drawn around it; `door` swings the front door open a crack. `weatherPhase` (0 ..< 1 through `houseWeatherLoopDuration`) sets the weather moving — gleaming sun, drifting clouds, falling rain and snow, sliding fog, gusts, a flickering bolt — and `intensity` (0 … 1) how hard it rains or snows. |
-| `menuCrane(state:grab:)` | Menu Crane | Mendoza's head with a grab bucket: open while searching, shut on a copy, open and empty on no results. `grab` (seconds into `menuCraneGrabDuration`, see `craneGrab(at:)`) drops the bucket open, snaps it shut and lifts it home. |
+| `menuCrane(state:grab:)` | none (Menu Crane, retired into Mac Daddy 1.17.0) | Mendoza's head with a grab bucket: open while searching, shut on a copy, open and empty on no results. `grab` (seconds into `menuCraneGrabDuration`, see `craneGrab(at:)`) drops the bucket open, snaps it shut and lifts it home. |
 | `apollo(level:online:)` | Apollo Monitor | An Apollo Twin face whose knob's tick ring lights with the monitor level; dimmed when the level cannot be changed. |
 | `camcorder(recording:focus:)` | MacRecorder | Manny, a camcorder whose tally light and lens turn red while recording; `focus` closes and reopens his lens's iris. |
 | `octopus(fraction:)`, `raccoon(active:)`, `bin(active:)`, `battery(charge:color:)` | — | Not used by a current app: an octopus that gains arms and reddens with load, a raccoon and a wheelie bin that sleep when paused, and a battery with a face that fills with the charge (Battery Time draws its own glyph). |
@@ -170,13 +170,12 @@ deprecated forwarders to `iguana(…)` and `iguanaLickDuration`.
 
 ### Mascot animations
 
-Eleven glyphs animate twice a minute, on the minute and the half minute: Archimedes blinks (Claude Usage), Menu
+Ten glyphs animate twice a minute, on the minute and the half minute: Archimedes blinks (Claude Usage), Menu
 Pimp grins with a gold gleam (Mac Daddy), Carol runs (SoundChain), Iguanamous
 licks (VPN & DNS), Volta blinks
 while his charge sloshes (Battery Time), Apollo blinks (Apollo Monitor), a
 gleam sweeps round Lumen's rays (KeyLight), Manny focuses his lens (MacRecorder),
-Gertie opens her front door a crack (Homestead), Mendoza drops his bucket and
-grabs (Menu Crane) and Major Pane salutes (Panes; with its grid icon chosen,
+Gertie opens her front door a crack (Homestead) and Major Pane salutes (Panes; with its grid icon chosen,
 the windows slide into their tiles instead, and with Armonitor chosen he laps his monitor).
 
 `MinuteCue` keeps them from moving at once. Every app wakes on each cue (the
@@ -449,12 +448,11 @@ together.
 | [Apollo Monitor](https://github.com/nicholaspsmith/apollo-monitor-menubar) | Apollo audio-interface monitor level |
 | [Battery Time](https://github.com/nicholaspsmith/battery-time-menubar) | Time remaining, power mode, and 24h usage |
 | [VPN & DNS](https://github.com/nicholaspsmith/vpn-dns-menubar) | An iguana for Mullvad + Tailscale state, with a DNS watcher |
-| [Mac Daddy](https://github.com/nicholaspsmith/mac-daddy-menubar) | Kills media trackers, trashes stale downloads, reaps hung processes, watches the UA mixer engine, and sweats as your process count climbs |
+| [Mac Daddy](https://github.com/nicholaspsmith/mac-daddy-menubar) | Kills media trackers, trashes stale downloads, reaps hung processes, watches the UA mixer engine, sweats as your process count climbs, and (optionally) a ⌘Space launcher for apps, arithmetic, unit conversions and emoji |
 | [KeyLight](https://github.com/nicholaspsmith/keylight-menubar) | Ctrl+brightness keys remapped to keyboard backlight |
 | [Homestead](https://github.com/nicholaspsmith/home-assistant-menubar) | Home Assistant dashboards and device controls in the menu |
 | [Panes](https://github.com/nicholaspsmith/panes-menubar) | Window shortcuts, a layout grid and edge snapping, plus external-monitor brightness and contrast, the built-in screen from dimmer than macOS allows to XDR, and Night Shift |
 | [SoundChain](https://github.com/nicholaspsmith/soundchain-menubar) | One chain of Audio Unit effects over all system audio |
-| [Menu Crane](https://github.com/nicholaspsmith/menu-crane) | A ⌘Space launcher for apps, arithmetic, unit conversions and emoji |
 | [MacRecorder](https://github.com/nicholaspsmith/MacRecorder) | Screen recording with system audio |
 | [Barn](https://github.com/nicholaspsmith/menubar-barn) | macOS 26 and earlier only: hides a block of status icons by width (on macOS 27, use System Settings ▸ Menu Bar) |
 
