@@ -11,7 +11,7 @@ import XCTest
 final class MinuteCueTests: XCTestCase {
     let owl = "com.nicholaspsmith.ClaudeUsage", pimp = "com.nicholaspsmith.MacDaddy"
     let carol = "com.nicholaspsmith.SoundChain", cami = "com.nicholaspsmith.VPNDNSMenuBar"
-    let lizard = "com.nicholaspsmith.MonitorLizard"
+    let volta = "com.nicholaspsmith.BatteryTime"
 
     // The worked example: Archimedes and Menu Pimp → :00 and :01; add Carol → :02.
     func testSlotsFollowTheOrderOfWhatIsRunning() {
@@ -23,7 +23,7 @@ final class MinuteCueTests: XCTestCase {
     }
 
     func testAbsentAppsLeaveNoGap() {
-        XCTAssertEqual(MinuteCue.slot(of: lizard, running: [owl, lizard]), 1)
+        XCTAssertEqual(MinuteCue.slot(of: volta, running: [owl, volta]), 1)
         XCTAssertEqual(MinuteCue.slot(of: cami, running: [cami]), 0)
     }
 
