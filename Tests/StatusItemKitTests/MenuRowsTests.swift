@@ -103,6 +103,13 @@ final class MenuRowsTests: XCTestCase {
         XCTAssertEqual(FoldHeadingRow.chevronSymbol(expanded: true), "chevron.up")
     }
 
+    func testRowWidthMakesRoomForTheItemsImage() {
+        let item = NSMenuItem(title: "Mullvad · Connected", action: #selector(Target.pick(_:)), keyEquivalent: "")
+        let plain = KeepOpenMenuRow(item: item).frame.width
+        item.image = NSImage(size: NSSize(width: 10, height: 10))
+        XCTAssertEqual(KeepOpenMenuRow(item: item).frame.width, plain + 16, accuracy: 1)
+    }
+
     func testShortcutText() {
         XCTAssertEqual(MenuShortcutText.text(key: ",", command: true), "⌘,")
         XCTAssertEqual(MenuShortcutText.text(key: "q", command: true), "⌘Q")

@@ -277,7 +277,7 @@ public final class KeepOpenMenuRow: MenuItemRow {
         let font = NSFont.menuFont(ofSize: 0)
         let titleWidth = (item.title as NSString).size(withAttributes: [.font: font]).width
         let keyWidth = Self.keyText(of: item).map { ($0 as NSString).size(withAttributes: [.font: font]).width + 24 } ?? 0
-        super.init(width: ceil(Self.metrics.titleX + titleWidth + keyWidth + Self.trailingInset))
+        super.init(width: Self.width(titleWidth: titleWidth, imageWidth: item.image?.size.width, keyWidth: keyWidth))
         content.owner = self
         content.frame = bounds
         content.autoresizingMask = [.width]
@@ -285,6 +285,12 @@ public final class KeepOpenMenuRow: MenuItemRow {
     }
 
     public required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    /// The row's width: the title, the item's image in front of it (drawn
+    /// with a 6 pt gap) and the key equivalent, between the native insets.
+    static func width(titleWidth: CGFloat, imageWidth: CGFloat?, keyWidth: CGFloat) -> CGFloat {
+        ceil(metrics.titleX + (imageWidth.map { $0 + 6 } ?? 0) + titleWidth + keyWidth + trailingInset)
+    }
 
     public override func press() {
         guard let item = enclosingMenuItem, let action = item.action else { return }
