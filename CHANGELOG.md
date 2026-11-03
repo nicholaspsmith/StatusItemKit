@@ -8,6 +8,11 @@ without one is refused (`[no release]` in the tip commit is the only exception).
 Versions follow [Semantic Versioning](https://semver.org/). The full rule:
 [StatusItemKit — Releases](https://github.com/nicholaspsmith/StatusItemKit#releases-every-push-is-one).
 
+## [0.38.0] - 2026-11-03
+
+- New shared Preferences window, the Menumon convention after Mac Daddy's: `PreferencesPane` (the "<App> Preferences" window, Esc / ⌘W close it), `PreferencesForm` (grouped form with the version at the foot), `StartAtLoginToggle`, `PreferencesNote`, `IconTilePicker`, and `PreferencesMenu.addFooter` for the Preferences… (⌘,) and Quit foot. It replaces the Settings submenu (#56).
+- New shared menu rows: `KeepOpenMenu` leaves the menu open when an option is picked (all but Quit and "…" items), with `pickOne` for radio sets; `FoldingSection` adds a heading that folds its rows away (chevron down folded, up open); `InfoMenuItem` makes read-only rows that always draw grey, even when inserted while the menu is open (#57).
+
 ## [0.37.1] - 2026-11-02
 
 - Apollo Monitor's icon keeps showing the level while it is grey (Accessibility not granted, or the engine or the Apollo not reachable): the arc lights the level's ticks in grey instead of going dark, so it still tracks the level while the grey says it can't be changed right now. `CharacterIcon.apollo(level:online:false)` now lights the same ticks as online, in grey rather than `tickColor`
