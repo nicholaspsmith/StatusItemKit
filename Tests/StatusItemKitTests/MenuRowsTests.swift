@@ -103,10 +103,20 @@ final class MenuRowsTests: XCTestCase {
         XCTAssertEqual(FoldHeadingRow.chevronSymbol(expanded: true), "chevron.up")
     }
 
-    func testRowWidthMakesRoomForTheItemsImage() {
+    func testAnUntickedRowsImageSitsInTheCheckColumnSoItsTitleAligns() {
         let item = NSMenuItem(title: "Mullvad · Connected", action: #selector(Target.pick(_:)), keyEquivalent: "")
         let plain = KeepOpenMenuRow(item: item).frame.width
         item.image = NSImage(size: NSSize(width: 10, height: 10))
+        XCTAssertTrue(KeepOpenMenuRow.imageInColumn(item))
+        XCTAssertEqual(KeepOpenMenuRow(item: item).frame.width, plain, accuracy: 1)
+    }
+
+    func testATickedRowKeepsItsImageBeforeTheTitle() {
+        let item = NSMenuItem(title: "Zurich", action: #selector(Target.pick(_:)), keyEquivalent: "")
+        item.state = .on
+        let plain = KeepOpenMenuRow(item: item).frame.width
+        item.image = NSImage(size: NSSize(width: 10, height: 10))
+        XCTAssertFalse(KeepOpenMenuRow.imageInColumn(item))
         XCTAssertEqual(KeepOpenMenuRow(item: item).frame.width, plain + 16, accuracy: 1)
     }
 

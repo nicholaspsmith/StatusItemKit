@@ -277,7 +277,8 @@ public final class KeepOpenMenuRow: MenuItemRow {
         let font = NSFont.menuFont(ofSize: 0)
         let titleWidth = (item.title as NSString).size(withAttributes: [.font: font]).width
         let keyWidth = Self.keyText(of: item).map { ($0 as NSString).size(withAttributes: [.font: font]).width + 24 } ?? 0
-        super.init(width: Self.width(titleWidth: titleWidth, imageWidth: item.image?.size.width, keyWidth: keyWidth))
+        let leading = Self.imageInColumn(item) ? nil : item.image?.size.width
+        super.init(width: Self.width(titleWidth: titleWidth, imageWidth: leading, keyWidth: keyWidth))
         content.owner = self
         content.frame = bounds
         content.autoresizingMask = [.width]
@@ -286,8 +287,17 @@ public final class KeepOpenMenuRow: MenuItemRow {
 
     public required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
-    /// The row's width: the title, the item's image in front of it (drawn
-    /// with a 6 pt gap) and the key equivalent, between the native insets.
+    /// Where the item's image goes. With no tick to show it sits in the
+    /// checkmark column, like a status dot, so the title lines up with every
+    /// other row's; a ticked row keeps the column for its tick and draws the
+    /// image in front of the title instead.
+    static func imageInColumn(_ item: NSMenuItem) -> Bool {
+        item.image != nil && item.state != .on
+    }
+
+    /// The row's width: the title, an image drawn in front of it (with a
+    /// 6 pt gap; nil when the image sits in the checkmark column) and the key
+    /// equivalent, between the native insets.
     static func width(titleWidth: CGFloat, imageWidth: CGFloat?, keyWidth: CGFloat) -> CGFloat {
         ceil(metrics.titleX + (imageWidth.map { $0 + 6 } ?? 0) + titleWidth + keyWidth + trailingInset)
     }
@@ -315,8 +325,14 @@ public final class KeepOpenMenuRow: MenuItemRow {
         var x = Self.metrics.titleX
         if let image = item.image {
             let size = image.size
-            image.draw(in: NSRect(x: x, y: round((bounds.height - size.height) / 2), width: size.width, height: size.height))
-            x += size.width + 6
+            let y = round((bounds.height - size.height) / 2)
+            if Self.imageInColumn(item) {
+                image.draw(in: NSRect(x: round(Self.metrics.checkCenterX - size.width / 2), y: y,
+                                      width: size.width, height: size.height))
+            } else {
+                image.draw(in: NSRect(x: x, y: y, width: size.width, height: size.height))
+                x += size.width + 6
+            }
         }
         (item.title as NSString).draw(at: NSPoint(x: x, y: y), withAttributes: attrs)
 

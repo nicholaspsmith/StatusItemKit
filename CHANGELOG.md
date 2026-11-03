@@ -8,6 +8,10 @@ without one is refused (`[no release]` in the tip commit is the only exception).
 Versions follow [Semantic Versioning](https://semver.org/). The full rule:
 [StatusItemKit — Releases](https://github.com/nicholaspsmith/StatusItemKit#releases-every-push-is-one).
 
+## [0.38.2] - 2026-11-03
+
+- A keep-open menu row's image (a status dot) now sits in the checkmark column, so the row's title lines up with every other item instead of being pushed right. A row showing a tick still draws its image in front of the title.
+
 ## [0.38.1] - 2026-11-03
 
 - A keep-open menu row with an image (a status dot) is now wide enough for the image as well as its title, so a long row is no longer clipped at the end.
