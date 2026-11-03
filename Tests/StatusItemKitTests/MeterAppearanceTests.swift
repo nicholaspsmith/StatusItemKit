@@ -85,17 +85,10 @@ final class MeterColorTests: XCTestCase {
 
 final class MeterAppearanceTests: XCTestCase {
     private var defaults: UserDefaults!
-    private var suite: String!
 
     override func setUp() {
         super.setUp()
-        suite = "MeterAppearanceTests-\(UUID().uuidString)"
-        defaults = UserDefaults(suiteName: suite)
-    }
-
-    override func tearDown() {
-        defaults.removePersistentDomain(forName: suite)
-        super.tearDown()
+        defaults = scratchDefaults("MeterAppearanceTests")
     }
 
     func testDefaultsWhenNothingStored() {
