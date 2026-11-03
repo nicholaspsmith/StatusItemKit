@@ -81,6 +81,30 @@ final class CharacterIconTests: XCTestCase {
         return rep.colorAt(x: Int(x * scale), y: Int((img.size.height - y) * scale))!.usingColorSpace(.sRGB)!
     }
 
+    // Offline (muted, no Accessibility, engine down) the arc still tracks the
+    // level: the level's ticks light grey, never the online colour, and the
+    // rest stay the faint track.
+    func testApolloArcShowsTheLevelInGreyWhenOffline() {
+        // Midpoints of the first tick (225°, bottom-left) and the last (-45°,
+        // bottom-right), 6.6 pt out from the knob's centre at (11, 8).
+        let r: CGFloat = 6.6, d = r * cos(.pi / 4)
+        let first = (x: 11 - d, y: 8 - d), last = (x: 11 + d, y: 8 - d)
+        func isLitGrey(_ c: NSColor) -> Bool {
+            c.alphaComponent > 0.8 && abs(c.redComponent - c.greenComponent) < 0.05
+                && abs(c.greenComponent - c.blueComponent) < 0.05
+        }
+        let half = CharacterIcon.apollo(level: 0.5, online: false, tickColor: .systemRed)
+        XCTAssertTrue(isLitGrey(sample(half, first.x, first.y)), "offline: the level's first tick lights grey")
+        XCTAssertLessThan(sample(half, last.x, last.y).alphaComponent, 0.5, "offline: ticks past the level stay the track")
+        let full = CharacterIcon.apollo(level: 1, online: false, tickColor: .systemRed)
+        XCTAssertTrue(isLitGrey(sample(full, last.x, last.y)), "offline at 100%: the last tick lights grey")
+        let silent = CharacterIcon.apollo(level: 0, online: false)
+        XCTAssertLessThan(sample(silent, first.x, first.y).alphaComponent, 0.5, "offline at 0%: no tick lights")
+        // Online, the lit ticks take the given colour.
+        let red = sample(CharacterIcon.apollo(level: 0.5, online: true, tickColor: .systemRed), first.x, first.y)
+        XCTAssertGreaterThan(red.redComponent, red.greenComponent + 0.3, "online: the level's ticks take tickColor")
+    }
+
     // Both pupils are one colour: dark green (#005401) with the weekly window
     // untouched, orange-red (#FF5401) when it is spent, and the eyes always match.
     func testOwlPupilsRunGreenToRedWithTheWeeklyWindow() {

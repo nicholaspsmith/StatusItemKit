@@ -8,6 +8,10 @@ without one is refused (`[no release]` in the tip commit is the only exception).
 Versions follow [Semantic Versioning](https://semver.org/). The full rule:
 [StatusItemKit — Releases](https://github.com/nicholaspsmith/StatusItemKit#releases-every-push-is-one).
 
+## [0.37.1] - 2026-11-02
+
+- Apollo Monitor's icon keeps showing the level while it is grey (Accessibility not granted, or the engine or the Apollo not reachable): the arc lights the level's ticks in grey instead of going dark, so it still tracks the level while the grey says it can't be changed right now. `CharacterIcon.apollo(level:online:false)` now lights the same ticks as online, in grey rather than `tickColor`
+
 ## [0.37.0] - 2026-11-02
 
 - The minute cue no longer waits for Menu Crane: it is retired into Mac Daddy 1.17.0, so Panes moves up a second

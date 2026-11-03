@@ -735,7 +735,8 @@ public enum CharacterIcon {
     // APOLLO: an Apollo Twin's face — the monitor knob with its tick arc is
     // the mouth, and two squircle buttons above it are the eyes. The arc runs
     // from bottom-left over the top to bottom-right, ticks lighting green with
-    // the level. Everything dims when the level cannot be changed.
+    // the level. Everything dims when the level cannot be changed, but the
+    // level's ticks still light, in grey, so the arc keeps tracking it.
     /// How long Apollo's once-a-minute blink lasts, the same 550 ms as Archimedes'.
     public static let apolloBlinkDuration: TimeInterval = 0.55
 
@@ -752,6 +753,8 @@ public enum CharacterIcon {
 
     /// - Parameters:
     ///   - blink: 0 eyes open … 1 shut (see `apolloBlinkClosure`).
+    ///   - online: false when the level cannot be changed right now. The knob
+    ///     and eyes dim, and the level's ticks light grey instead of `tickColor`.
     ///   - tickColor: the lit ticks' colour while online — e.g. red for muted.
     public static func apollo(level: CGFloat, online: Bool, blink: CGFloat = 0,
                               tickColor: NSColor = .systemGreen) -> NSImage {
@@ -762,7 +765,7 @@ public enum CharacterIcon {
             let c = NSPoint(x: 11, y: 8)
             // volume ticks: 13 of them across 270°, starting bottom-left
             let ticks = 13
-            let litCount = online ? Int((max(0, min(1, level)) * CGFloat(ticks)).rounded()) : 0
+            let litCount = Int((max(0, min(1, level)) * CGFloat(ticks)).rounded())
             for i in 0..<ticks {
                 let a = (225 - CGFloat(i) * 270 / CGFloat(ticks - 1)) * .pi / 180
                 let t = NSBezierPath()
