@@ -88,6 +88,16 @@ final class MenuRowsTests: XCTestCase {
         XCTAssertEqual(defaults.object(forKey: FoldingSection.defaultsKey("stats")) as? Bool, false)
     }
 
+    func testFoldHeadingSurvivesAnAutoenablingMenu() {
+        let menu = NSMenu()
+        XCTAssertTrue(menu.autoenablesItems)
+        let heading = FoldingSection.add(title: "Battery Stats", key: "stats", defaults: scratchDefaults("FoldingSection"),
+                                         items: [InfoMenuItem.make("Battery: 62%")], to: menu)
+        menu.update()
+        XCTAssertTrue(menu.items[0].isEnabled, "a disabled heading ignores its clicks")
+        XCTAssertTrue(heading.isRowEnabled)
+    }
+
     func testFoldingSectionRemembersItsState() {
         let defaults = scratchDefaults("FoldingSection")
         defaults.set(true, forKey: FoldingSection.defaultsKey("stats"))
