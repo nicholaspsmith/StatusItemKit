@@ -37,6 +37,8 @@ Menumon mascot glyphs, and a build-and-sign script that produces a proper
 | `AppVersion` | The version `make-app.sh` stamped into the bundle; `menuItem()` is a disabled "Version …" row. |
 | `ToggleMenuItem` | A checkbox menu item that keeps the menu open: `ToggleMenuItem.make(title:isOn:enabled:toolTip:onToggle:)`. A click, or Return / Space on the row the arrow keys highlighted, flips the tick and calls `onToggle(newValue)` while the menu stays up. View based, drawn to match a native checkbox row exactly (menu font, native checkmark and column, same title inset, the native vibrant `.selection` highlight), an accessibility checkbox, and `ToggleMenuItem.view(of:)` gives back the view so `isOn` / `title` can change in place. Use it for every checkbox; actions (Open…, Quit) and radio choices stay ordinary items. |
 | `SettingsMenu` | The foot every app's menu ends with: `Settings ▸` (the app's own settings, then Start at Login as a keep-open `ToggleMenuItem`, then the version in grey), then `Icon ▸` directly below it in the main menu, then Quit. `addFooter(to:appName:items:appearance:startAtLogin:belowSettings:)` adds them together; `appearance:` supplies the shared Icon picker, and `belowSettings:` lets an app put its own pickers (a hand-built Icon, a Color submenu) in that same slot, above Quit. |
+| `PreferencesPane`, `PreferencesForm`, `PreferencesMenu` | **The Menumon Preferences convention (replaces `SettingsMenu`).** The menu ends **Preferences…** (⌘,) then **Quit <App>** (`PreferencesMenu.addFooter(to:appName:open:)`); the window is "<App> Preferences", not resizable, Esc / ⌘W close it (`PreferencesPane(appName:content:)`, `show()`). Inside, `PreferencesForm { … }` is Mac Daddy's grouped form at 460 pt with the version centred in grey at the bottom; put `StartAtLoginToggle()` in the General section, explanations in `PreferencesNote`, icon choices in `IconTilePicker`. A tabbed window ends its General tab with `PreferencesVersionSection()`. |
+| `KeepOpenMenu`, `FoldingSection`, `InfoMenuItem` | **Menu rows every app shares.** `KeepOpenMenu.apply(to: menu.items)` redraws every action item except Quit and the "…" ones as a `KeepOpenMenuRow`, so picking an option leaves the menu open; `KeepOpenMenu.pickOne(items)` marks a radio set whose tick moves to the one clicked. `FoldingSection.add(title:key:items:to:)` adds a `FoldHeadingRow` (chevron down folded, up open) that folds its rows away and remembers its state under `menuSection.<key>.expanded`. `InfoMenuItem.make(_:)` is a read-only row, disabled so it draws grey even when inserted while the menu is open; a folding section disables any inert row it holds. `MenuItemRow` is the base for an app's own view rows. |
 | `MenuBarYield` / `YieldClient` | Lets a menu-bar manager (Barn) ask apps to hide their item briefly while it reveals hidden icons. One line opts an app in: `YieldClient(item: controller).start()`. The hide expires on its own after the TTL in the message, so a crashed manager cannot leave an icon hidden. |
 | `LoginItem` | `SMAppService.mainApp` register/unregister, plus the "must live in /Applications" alert. |
 | `LoginRequest` | Parses `--login [on\|off\|status]` from a command line. A bare flag or `status` only reports, so a mistyped command never changes Start at Login. Unit-tested. |
@@ -73,6 +75,9 @@ import StatusItemKit
 
 final class App: NSObject, NSApplicationDelegate {
     var controller: StatusItemController!
+    lazy var preferences = PreferencesPane(appName: "Demo") {
+        PreferencesForm { Section("General") { StartAtLoginToggle() } }
+    }
 
     func applicationDidFinishLaunching(_ n: Notification) {
         controller = StatusItemController(
@@ -90,8 +95,9 @@ final class App: NSObject, NSApplicationDelegate {
     }
 
     func build(_ menu: NSMenu) {
-        // …the app's own rows, then Settings ▸, Icon ▸ (when given) and Quit.
-        SettingsMenu.addFooter(to: menu, appName: "Demo")
+        // …the app's own rows, then Preferences… and Quit.
+        PreferencesMenu.addFooter(to: menu, appName: "Demo") { [weak self] in self?.preferences.show() }
+        KeepOpenMenu.apply(to: menu.items)   // options leave the menu open
     }
 }
 ```
