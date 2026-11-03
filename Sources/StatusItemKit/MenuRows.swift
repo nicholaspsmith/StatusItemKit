@@ -198,6 +198,8 @@ public final class FoldHeadingRow: MenuItemRow {
 
     public override func press() { onClick?() }
 
+    @objc func menuItemAction(_ sender: Any?) { press() }
+
     public override func updateColors() {
         label.textColor = textColor
         tagLabel.textColor = isRowHighlighted ? .selectedMenuItemTextColor : .tertiaryLabelColor
@@ -252,6 +254,10 @@ public enum FoldingSection {
             }
         }
         header.view = row
+        // The item needs a target and an action: an autoenabling menu disables
+        // an item without one, and a disabled row ignores its clicks.
+        header.target = row
+        header.action = #selector(FoldHeadingRow.menuItemAction(_:))
         // AppKit lays the menu out around whether any item has a state: with
         // none it drops the checkmark column and the native titles move left
         // of this row's. Saying `.on` keeps the column, as ToggleMenuItem
