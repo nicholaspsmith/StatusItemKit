@@ -225,6 +225,41 @@ public final class FoldHeadingRow: MenuItemRow {
     public override func accessibilityValue() -> Any? { NSNumber(value: expanded ? 1 : 0) }
 }
 
+// MARK: - Read-only view row
+
+/// A read-only line drawn as a view, for a section whose rows unfold into a
+/// menu with key equivalents (see `FoldingSection`).
+public final class InfoMenuRow: MenuItemRow {
+    /// What a menu adds to a view row's width (macOS 27).
+    private static let menuPadding: CGFloat = 15
+
+    /// The menu width that shows the text with the native right inset.
+    public var menuWidth: CGFloat { frame.width + Self.menuPadding }
+
+    public let text: String
+    private let label = NSTextField(labelWithString: "")
+
+    public init(text: String) {
+        self.text = text
+        let textWidth = (text as NSString).size(withAttributes: [.font: NSFont.menuFont(ofSize: 0)]).width
+        super.init(width: ceil(Self.metrics.titleX + textWidth + Self.trailingInset - Self.menuPadding))
+        label.font = .menuFont(ofSize: 0)
+        label.stringValue = text
+        label.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(label)
+        NSLayoutConstraint.activate([
+            label.leadingAnchor.constraint(equalTo: leadingAnchor, constant: Self.metrics.titleX),
+            label.centerYAnchor.constraint(equalTo: centerYAnchor),
+        ])
+    }
+
+    public required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    public override func updateColors() { label.textColor = textColor }
+    public override func accessibilityRole() -> NSAccessibility.Role? { .staticText }
+    public override func accessibilityLabel() -> String? { text }
+}
+
 /// A folding section of a menu: a `FoldHeadingRow` with its rows below it
 /// while open. `key` remembers the state between openings (under
 /// `menuSection.<key>.expanded`); without one the section starts as
@@ -238,6 +273,17 @@ public enum FoldingSection {
                            items: [NSMenuItem], to menu: NSMenu) -> FoldHeadingRow {
         KeepOpenMenu.apply(to: items)
         InfoMenuItem.disableInert(items)
+        // A menu adds its key-equivalent column to the width of every title,
+        // even a view row's and whichever row the keys are on. So a read-only
+        // row draws its text itself and its item has no title.
+        for item in items where !item.isSeparatorItem && item.view == nil && item.action == nil && item.submenu == nil {
+            let info = InfoMenuRow(text: item.title)
+            item.view = info
+            item.title = ""
+            // An open menu never narrows, so one that grew to show this row
+            // would stay wide after folding: start wide enough for it instead.
+            menu.minimumWidth = max(menu.minimumWidth, info.menuWidth)
+        }
         let storeKey = key.map(defaultsKey)
         let expanded = storeKey.map { defaults.object(forKey: $0) as? Bool ?? defaultExpanded } ?? defaultExpanded
         let header = NSMenuItem()

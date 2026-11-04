@@ -181,6 +181,7 @@ public final class StatusItemController: NSObject, NSMenuDelegate {
 
     public func menuNeedsUpdate(_ menu: NSMenu) {
         menu.removeAllItems()
+        menu.minimumWidth = 0
         onBuildMenu(menu)
     }
 

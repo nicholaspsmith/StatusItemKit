@@ -80,7 +80,7 @@ final class MenuRowsTests: XCTestCase {
 
         heading.press()
         XCTAssertTrue(heading.expanded)
-        XCTAssertEqual(menu.items.map(\.title).suffix(2), ["Battery: 62%", "Plain stat"])
+        XCTAssertEqual(menu.items.suffix(2).compactMap { ($0.view as? InfoMenuRow)?.text }, ["Battery: 62%", "Plain stat"])
         XCTAssertEqual(defaults.object(forKey: FoldingSection.defaultsKey("stats")) as? Bool, true)
 
         heading.press()
@@ -96,6 +96,21 @@ final class MenuRowsTests: XCTestCase {
         menu.update()
         XCTAssertTrue(menu.items[0].isEnabled, "a disabled heading ignores its clicks")
         XCTAssertTrue(heading.isRowEnabled)
+    }
+
+    func testFoldedInfoRowsDoNotWidenTheMenu() {
+        let menu = NSMenu()
+        let keyed = NSMenuItem(title: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        menu.addItem(keyed)
+        let stat = InfoMenuItem.make(String(repeating: "a long stat line ", count: 3))
+        FoldingSection.add(title: "Stats", defaults: scratchDefaults("FoldingSection"), items: [stat], to: menu)
+        let row = stat.view as! InfoMenuRow
+        XCTAssertEqual(stat.title, "", "a menu adds its key column to any title, even a view row's")
+        XCTAssertEqual(menu.minimumWidth, row.menuWidth)
+        let folded = menu.size.width
+        XCTAssertEqual(folded, row.menuWidth)
+        menu.items[1].view.map { ($0 as! FoldHeadingRow).press() }
+        XCTAssertEqual(menu.size.width, folded, "folding must not change the width")
     }
 
     func testFoldingSectionRemembersItsState() {
