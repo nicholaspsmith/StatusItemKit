@@ -130,13 +130,55 @@ final class MeterAppearanceTests: XCTestCase {
         XCTAssertFalse(appearance.image(fraction: 0.5).size.width.isZero)
     }
 
-    // The health ramp runs #005401 to #FF5401, only red rising, and clamps
+    // The health ramp runs #00860B through #9E5400 to #A50000, and clamps
     // outside that.
-    func testHealthRampRaisesOnlyRedFrom005401ToFF5401() {
-        XCTAssertEqual(MeterColor.hex(from: MeterColor.health(0)), "#005401")
-        XCTAssertEqual(MeterColor.hex(from: MeterColor.health(0.5)), "#805401")
-        XCTAssertEqual(MeterColor.hex(from: MeterColor.health(1)), "#FF5401")
+    func testHealthRampRunsFrom00860BToA50000() {
+        XCTAssertEqual(MeterColor.hex(from: MeterColor.health(0)), "#00860B")
+        XCTAssertEqual(MeterColor.hex(from: MeterColor.health(0.5)), "#9E5400")
+        XCTAssertEqual(MeterColor.hex(from: MeterColor.health(1)), "#A50000")
         XCTAssertEqual(MeterColor.hex(from: MeterColor.health(-1)), MeterColor.hex(from: MeterColor.health(0)))
         XCTAssertEqual(MeterColor.hex(from: MeterColor.health(2)), MeterColor.hex(from: MeterColor.health(1)))
+    }
+
+    // A pupil has to stand out from the owl's eye white, which pinks with the
+    // same fraction (white to #FFB3B3 from a quarter used): 4.5:1 at every stop.
+    func testHealthRampContrastsWithTheEyeWhiteAtEveryStop() {
+        for step in 0...100 {
+            let f = CGFloat(step) / 100
+            let tired = max(0, (f - 0.25) / 0.75)
+            let white = NSColor(srgbRed: 1, green: 1 - 0.3 * tired, blue: 1 - 0.3 * tired, alpha: 1)
+            let ratio = (luminance(white) + 0.05) / (luminance(MeterColor.health(f)) + 0.05)
+            XCTAssertGreaterThan(ratio, 4.5, "at \(f)")
+        }
+    }
+
+    // On a dark menu the bars use the bright ramp: 4.5:1 on #2A2A2A at every
+    // stop, where the deep one would all but vanish.
+    func testHealthOnDarkContrastsWithADarkMenuAtEveryStop() {
+        let menu = luminance(NSColor(srgbRed: 0x2A / 255.0, green: 0x2A / 255.0, blue: 0x2A / 255.0, alpha: 1))
+        for step in 0...100 {
+            let f = CGFloat(step) / 100
+            XCTAssertGreaterThan((luminance(MeterColor.healthOnDark(f)) + 0.05) / (menu + 0.05), 4.5, "at \(f)")
+        }
+        XCTAssertEqual(MeterColor.hex(from: MeterColor.healthOnDark(0)), "#30D158")
+        XCTAssertEqual(MeterColor.hex(from: MeterColor.healthOnDark(1)), "#FF6961")
+    }
+
+    // The adaptive colour is the deep ramp on a light menu, the bright on a dark.
+    func testHealthAdaptiveFollowsTheAppearance() {
+        func resolved(_ name: NSAppearance.Name) -> String {
+            var hex = ""
+            NSAppearance(named: name)!.performAsCurrentDrawingAppearance {
+                hex = MeterColor.hex(from: MeterColor.healthAdaptive(0.5).usingColorSpace(.sRGB)!)
+            }
+            return hex
+        }
+        XCTAssertEqual(resolved(.aqua), MeterColor.hex(from: MeterColor.health(0.5)))
+        XCTAssertEqual(resolved(.darkAqua), MeterColor.hex(from: MeterColor.healthOnDark(0.5)))
+    }
+
+    private func luminance(_ c: NSColor) -> CGFloat {
+        func lin(_ v: CGFloat) -> CGFloat { v <= 0.04045 ? v / 12.92 : pow((v + 0.055) / 1.055, 2.4) }
+        return 0.2126 * lin(c.redComponent) + 0.7152 * lin(c.greenComponent) + 0.0722 * lin(c.blueComponent)
     }
 }

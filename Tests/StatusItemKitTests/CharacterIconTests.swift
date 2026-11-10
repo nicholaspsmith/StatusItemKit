@@ -105,8 +105,8 @@ final class CharacterIconTests: XCTestCase {
         XCTAssertGreaterThan(red.redComponent, red.greenComponent + 0.3, "online: the level's ticks take tickColor")
     }
 
-    // Both pupils are one colour: dark green (#005401) with the weekly window
-    // untouched, orange-red (#FF5401) when it is spent, and the eyes always match.
+    // Both pupils are one colour: green (#00860B) with the weekly window
+    // untouched, red (#A50000) when it is spent, and the eyes always match.
     func testOwlPupilsRunGreenToRedWithTheWeeklyWindow() {
         let fresh = CharacterIcon.owl(session: 0, weekly: 0)
         for x in [CGFloat(8.6), 23.4] {
@@ -117,8 +117,8 @@ final class CharacterIconTests: XCTestCase {
         let spent = CharacterIcon.owl(session: 0, weekly: 1)
         for x in [CGFloat(8.6), 23.4] {
             let c = sample(spent, x, 11)
-            XCTAssertGreaterThan(c.redComponent, 0.95, "spent pupil is red")
-            XCTAssertLessThan(c.greenComponent, 0.5); XCTAssertLessThan(c.blueComponent, 0.05)
+            XCTAssertGreaterThan(c.redComponent, 0.6, "spent pupil is red")
+            XCTAssertLessThan(c.greenComponent, 0.15); XCTAssertLessThan(c.blueComponent, 0.05)
         }
         // The session window does not touch the pupil.
         let busy = sample(CharacterIcon.owl(session: 0.4, weekly: 0), 8.6, 11)
