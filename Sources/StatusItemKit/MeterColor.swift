@@ -48,14 +48,59 @@ public struct MeterColor: Equatable, Sendable {
         return NSColor(hue: hue, saturation: 0.85, brightness: 0.92, alpha: 1).usingColorSpace(.sRGB)!
     }
 
-    /// The colour of a usage fraction: #005401 (dark green) at 0, with only
-    /// the red channel rising, to #FF5401 (orange-red) at 1. Claude Usage's
-    /// owl pupils and its menu bars draw with this, so each bar matches a
-    /// pupil at its own percentage.
+    /// The colour of a usage fraction: green (#00860B) at 0, through orange
+    /// (#9E5400) at a half, to red (#A50000) at 1. Claude Usage's owl pupils
+    /// and its menu bars draw with this, so each bar matches a pupil at its own
+    /// percentage.
+    ///
+    /// Each stop is the brightest fully saturated colour of its hue that still
+    /// stands 4.5:1 against the owl's eye white at that fraction, which pinks
+    /// from white to #FFB3B3 as the week is spent, so the ramp darkens as the
+    /// eye does. The old ramp (#005401 to #FF5401) fell to 1.9:1 at the end.
     public static func health(_ fraction: CGFloat) -> NSColor {
-        let f = max(0, min(1, fraction))
-        return NSColor(srgbRed: f, green: 0x54 / 255.0, blue: 0x01 / 255.0, alpha: 1)
+        blend(healthStops, at: fraction)
     }
+
+    /// `health` for a dark background, where its deep colours all but vanish:
+    /// the same green-to-red run in light, bright shades, #30D158 through
+    /// #FFC02E to #FF6961, each at least 4.5:1 on a dark menu (#2A2A2A).
+    public static func healthOnDark(_ fraction: CGFloat) -> NSColor {
+        blend(healthOnDarkStops, at: fraction)
+    }
+
+    /// `health` on a light appearance and `healthOnDark` on a dark one,
+    /// resolved when drawn: for a menu's bars and text, which sit on whichever
+    /// the system is showing. The owl's pupils always sit on his eye white, so
+    /// they draw with `health` itself.
+    public static func healthAdaptive(_ fraction: CGFloat) -> NSColor {
+        NSColor(name: nil) { appearance in
+            appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua ? healthOnDark(fraction) : health(fraction)
+        }
+    }
+
+    private typealias Stop = (at: CGFloat, red: CGFloat, green: CGFloat, blue: CGFloat)
+
+    private static func blend(_ stops: [Stop], at fraction: CGFloat) -> NSColor {
+        let f = max(0, min(1, fraction))
+        let upper = stops.firstIndex(where: { f <= $0.at }) ?? stops.count - 1
+        let (a, b) = (stops[max(0, upper - 1)], stops[upper])
+        let t = b.at > a.at ? (f - a.at) / (b.at - a.at) : 0
+        return NSColor(srgbRed: (a.red + (b.red - a.red) * t) / 255, green: (a.green + (b.green - a.green) * t) / 255,
+                       blue: (a.blue + (b.blue - a.blue) * t) / 255, alpha: 1)
+    }
+
+    /// `health`'s stops, blended linearly in between: #00860B, #2C8400,
+    /// #9E5400, #AE2900, #A50000.
+    private static let healthStops: [Stop] = [
+        (0, 0x00, 0x86, 0x0B), (0.25, 0x2C, 0x84, 0x00), (0.5, 0x9E, 0x54, 0x00),
+        (0.75, 0xAE, 0x29, 0x00), (1, 0xA5, 0x00, 0x00),
+    ]
+
+    /// `healthOnDark`'s stops: #30D158, #9BD13A, #FFC02E, #FF9040, #FF6961.
+    private static let healthOnDarkStops: [Stop] = [
+        (0, 0x30, 0xD1, 0x58), (0.25, 0x9B, 0xD1, 0x3A), (0.5, 0xFF, 0xC0, 0x2E),
+        (0.75, 0xFF, 0x90, 0x40), (1, 0xFF, 0x69, 0x61),
+    ]
 
     // MARK: - Hex
 

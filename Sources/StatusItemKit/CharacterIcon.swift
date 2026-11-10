@@ -51,7 +51,7 @@ public enum CharacterIcon {
     /// The owl is eyelid-brown all over, and its two eyes always match. Each is a real eye: white,
     /// pupil, and a brown eyelid. The lids drop with the `session` fraction — wide open at 0, half
     /// closed at 0.5, shut at 1. The `weekly` fraction is the owl's health: the whites go bloodshot
-    /// past a quarter used, and both pupils run `MeterColor.health` from #005401 at 0 to #FF5401 at 1.
+    /// past a quarter used, and both pupils run `MeterColor.health` from #00860B at 0 to #A50000 at 1.
     /// `pupils` overrides the pupils' colour, left and right, for an app that lets the user pick
     /// one per eye; the whites still go bloodshot with `weekly`.
     public static func owl(session: CGFloat, weekly: CGFloat, pupils: (NSColor, NSColor)? = nil) -> NSImage {
@@ -91,7 +91,7 @@ public enum CharacterIcon {
             for (index, (cx, eyeState)) in zip([CGFloat(8.6), 23.4], eyes).enumerated() {
                 let closed = max(0, min(1, eyeState.lid))
                 let health = max(0, min(1, eyeState.health))
-                // Pupils: dark green on a fresh week, reddening as it is spent,
+                // Pupils: green on a fresh week, reddening as it is spent,
                 // unless the app has given each eye a colour of its own.
                 let pupil = pupils.map { index == 0 ? $0.0 : $0.1 } ?? MeterColor.health(health)
                 let c = NSPoint(x: cx, y: 11); let r: CGFloat = 7.4
