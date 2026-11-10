@@ -8,6 +8,10 @@ without one is refused (`[no release]` in the tip commit is the only exception).
 Versions follow [Semantic Versioning](https://semver.org/). The full rule:
 [StatusItemKit — Releases](https://github.com/nicholaspsmith/StatusItemKit#releases-every-push-is-one).
 
+## [0.40.0] - 2026-11-10
+
+- `IconTilePicker` can space its tiles evenly: given a `columnWidth` (`IconTilePicker.columnWidth(for:)` spreads them across the form) each tile sits in a column of that width whatever its name, and a long name shrinks slightly to fit instead of being cut off.
+
 ## [0.39.0] - 2026-11-10
 
 - New `MeterColor.healthAdaptive` (and `healthOnDark`): the usage ramp for a menu's bars and text. It is bright on a dark menu and deep on a light one, so it reads on both.
